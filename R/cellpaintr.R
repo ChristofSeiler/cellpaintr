@@ -230,12 +230,7 @@ fitModel <- function(sce,
 
   })
 
-  dplyr::bind_rows(rf_list) |>
-    mutate(
-      target = target,
-      interest_level = interest_level,
-      reference_level = reference_level
-    )
+  dplyr::bind_rows(rf_list)
 
 }
 
@@ -254,14 +249,14 @@ plotROC <- function(result) {
 
   mean_auc <- result |>
     group_by(fold) |>
-    roc_auc(".target", names(result)[3]) |>
+    roc_auc(names(result)[1], names(result)[3]) |>
     pull(.estimate) |>
     mean() |>
     round(digits = 3)
 
   result |>
     group_by(fold) |>
-    roc_curve(".target", names(result)[3]) |>
+    roc_curve(names(result)[1], names(result)[3]) |>
     ggplot(aes(x = 1 - specificity, y = sensitivity, group = fold)) +
     geom_path(alpha = 0.2) +
     geom_abline(lty = 3) +
@@ -277,5 +272,44 @@ plotROC <- function(result) {
              mean_auc,
              ")")
     )
+
+}
+
+#' Plot AUC comparison
+#'
+#' @import ggplot2
+#' @import dplyr
+#' @importFrom yardstick roc_auc
+#' @importFrom stringr str_remove
+#' @export
+#'
+#' @param result_list \code{\link[list]{list}} of data frames from `fitModel`
+#' @return \code{\link[ggplot2]{ggplot2}} object
+#'
+plotAUC <- function(result_list) {
+
+  aucs <- lapply(result_list, function(result) {
+
+    level <- names(result)[3] |> stringr::str_remove(".pred_")
+    result |>
+      group_by(fold) |>
+      yardstick::roc_auc(names(result)[1], names(result)[3]) |>
+      mutate(predict = level)
+
+  }) |> dplyr::bind_rows()
+
+  fct_order <- aucs |>
+    group_by(predict) |>
+    summarize(median = median(.estimate)) |>
+    arrange(desc(median)) |>
+    pull(predict)
+
+  aucs |>
+    mutate(predict = factor(predict, levels = fct_order)) |>
+    ggplot(aes(predict, .estimate)) +
+    geom_boxplot(outlier.shape = NA, width = 0.2) +
+    geom_jitter(width = 0.1) +
+    ylab("AUC") +
+    ggtitle("Area under the ROC curves")
 
 }
