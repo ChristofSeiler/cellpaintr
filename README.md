@@ -6,7 +6,7 @@ Analyze CRISPR and drug perturbations with CellProfiler features.
 
 ## Installation
 
-Then, you can install `cellpaintr`:
+Install `cellpaintr` through our GitHub repository:
 
 ```r
 install.packages("devtools")
