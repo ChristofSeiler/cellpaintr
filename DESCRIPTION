@@ -1,0 +1,41 @@
+Package: cellpaintr
+Type: Package
+Title: Perturbation analysis for cell painting
+Version: 0.1.0
+Authors@R: c(
+    person("Christof", "Seiler", 
+    email = "christof.seiler@maastrichtuniversity.nl", 
+    role = c("aut", "cre"), comment = c(ORCID = "0000-0001-8802-3642"))
+    )
+Description: We a random forest model to predict CRISPR or 
+    drug interventations from CellProfiler features. Load 
+    cell painting data into R and preprocess feature to make 
+    them ready for machine learning. 
+biocViews: 
+    SingleCell, 
+    Software  
+License: LGPL-3
+Encoding: UTF-8
+LazyData: false
+Config/testthat/edition: 3
+RoxygenNote: 7.3.1
+Imports: 
+    SingleCellExperiment,
+    tidySingleCellExperiment,
+    ggplot2,
+    readr,
+    stringr,
+    dplyr,
+    tidymodels,
+    parsnip,
+    ranger,
+    yardstick,
+    rsample
+Depends:
+    R (>= 4.3.0)
+Suggests: 
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0),
+    BiocStyle
+VignetteBuilder: knitr
