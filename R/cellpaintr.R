@@ -3,7 +3,7 @@
 #' @import SingleCellExperiment
 #' @import dplyr
 #' @importFrom readr read_csv
-#' @importFrom stringr str_detect
+#' @importFrom stringr str_detect str_remove
 #' @export
 #'
 #' @param path meta_file
@@ -153,7 +153,7 @@ transformLogScale <- function(sce) {
 #'
 #' @import SingleCellExperiment
 #' @import dplyr
-#' @import tidymodels
+#' @importFrom parsnip rand_forest set_mode set_engine
 #' @importFrom rsample group_initial_split training testing
 #' @export
 #'
@@ -214,11 +214,11 @@ fitModel <- function(sce,
 
     # train model
     rf_spec <-
-      rand_forest() |>
-      set_mode("classification") |>
-      set_engine("ranger", num.threads = n_threads)
+      parsnip::rand_forest() |>
+      parsnip::set_mode("classification") |>
+      parsnip::set_engine("ranger", num.threads = n_threads)
     rf_fit <- rf_spec |>
-      fit(Target ~ ., data = ml_data[train_ids, ])
+      parsnip::fit(Target ~ ., data = ml_data[train_ids, ])
 
     # evaluate model
     dplyr::bind_cols(
@@ -243,6 +243,8 @@ fitModel <- function(sce,
 #'
 #' @import ggplot2
 #' @import dplyr
+#' @importFrom yardstick roc_auc roc_curve
+#' @importFrom stringr str_remove
 #' @export
 #'
 #' @param result \code{\link[tibble]{tibble}} data frame
