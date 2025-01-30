@@ -212,6 +212,12 @@ fitModel <- function(sce,
       pull(.cell) |>
       as.integer()
 
+    # keep track of samples info
+    train_info <- cells[train_ids, ] |>
+      count(across(c(group, strata)))
+    test_info <- cells[test_ids, ] |>
+      count(across(c(group, strata)))
+
     # train model
     rf_spec <-
       parsnip::rand_forest() |>
@@ -226,6 +232,9 @@ fitModel <- function(sce,
       predict(rf_fit, ml_data[test_ids, ]),
       predict(rf_fit, ml_data[test_ids, ], type = "prob"),
       fold = i
+    ) |> mutate(
+      train_info = list(train_info),
+      test_info = list(test_info)
     )
 
   })
@@ -272,6 +281,35 @@ plotROC <- function(result) {
              mean_auc,
              ")")
     )
+
+}
+
+#' Print sample info of the ROC curves
+#'
+#' @import dplyr
+#' @export
+#'
+#' @param result \code{\link[tibble]{tibble}} data frame
+#' @param fold_id Fold id to print
+#' @return NULL.
+#'
+printROC <- function(result, fold_id) {
+
+  info <- result |>
+    filter(fold == fold_id) |>
+    slice(1)
+
+  train_info <- info[["train_info"]][[1]]
+  test_info <- info[["test_info"]][[1]]
+
+  cat("-----------------\n")
+  cat("training samples:\n\n")
+  print(train_info)
+
+  cat("\n")
+  cat("testing samples:\n\n")
+  print(test_info)
+  cat("-----------------")
 
 }
 
