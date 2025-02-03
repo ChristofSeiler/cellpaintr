@@ -214,9 +214,9 @@ fitModel <- function(sce,
 
     # keep track of samples info
     train_info <- cells[train_ids, ] |>
-      count(across(c(group, strata)))
+      count(across(c(target, group, strata)))
     test_info <- cells[test_ids, ] |>
-      count(across(c(group, strata)))
+      count(across(c(target, group, strata)))
 
     # train model
     rf_spec <-
@@ -309,6 +309,26 @@ printROC <- function(result, fold_id) {
   cat("\n")
   cat("testing samples:\n\n")
   print(test_info)
+
+  cat("\n")
+  cat("class balance:\n\n")
+
+  treatment_var <- names(test_info)[1]
+  train_n <- sum(train_info$n)
+  test_n <- sum(test_info$n)
+
+  print(
+    left_join(
+      test_info |>
+        group_by(across(treatment_var)) |>
+        summarize(test = sum(n)/test_n),
+      train_info |>
+        group_by(across(treatment_var)) |>
+        summarize(train = sum(n)/train_n),
+      by = treatment_var
+    )
+  )
+
   cat("-----------------")
 
 }
