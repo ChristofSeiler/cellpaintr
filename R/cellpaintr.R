@@ -319,12 +319,12 @@ printROC <- function(result, fold_id) {
 
   print(
     left_join(
-      test_info |>
-        group_by(across(treatment_var)) |>
-        summarize(test = sum(n)/test_n),
       train_info |>
         group_by(across(treatment_var)) |>
         summarize(train = sum(n)/train_n),
+      test_info |>
+        group_by(across(treatment_var)) |>
+        summarize(test = sum(n)/test_n),
       by = treatment_var
     )
   )
