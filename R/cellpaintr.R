@@ -17,7 +17,11 @@ loadData <- function(cell_file) {
 
   # split into meta data and features
   meta_cols <- str_detect(names(data), "Metadata_")
-  meta_vars <- c("ImageNumber", "ObjectNumber", names(data)[meta_cols])
+  meta_vars <- c(
+    "ImageNumber", "ObjectNumber", names(data)[meta_cols],
+    "Location_Center_X", "Location_Center_Y", "Location_Center_Z",
+    "Number_Object_Number", "Parent_FilteredCell"
+    )
   feature_vars <- names(data)[!names(data) %in% meta_vars]
   meta_cell <- data[,meta_vars]
   features  <- data[,feature_vars] |> t() # columns represent cells
@@ -37,9 +41,9 @@ loadData <- function(cell_file) {
 #' Plot number of cells per image
 #'
 #' @import SingleCellExperiment
-#' @import tidySingleCellExperiment
 #' @import ggplot2
 #' @import dplyr
+#' @importFrom tibble as_tibble
 #' @export
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
@@ -48,7 +52,8 @@ loadData <- function(cell_file) {
 #'
 plotCellsPerImage <- function(sce, bins = 100) {
 
-  as_tibble(sce) |>
+  colData(sce) |>
+    as_tibble() |>
     group_by(ImageNumber) |>
     tally() |>
     ggplot(aes(n)) +
@@ -61,8 +66,8 @@ plotCellsPerImage <- function(sce, bins = 100) {
 #' Remove cells if not enough or too many in one image
 #'
 #' @import SingleCellExperiment
-#' @import tidySingleCellExperiment
 #' @import dplyr
+#' @importFrom tibble as_tibble
 #' @export
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
@@ -72,7 +77,9 @@ plotCellsPerImage <- function(sce, bins = 100) {
 #'
 removeOutliers <- function(sce, min, max) {
 
-  cell_ids <- as_tibble(sce) |>
+  cell_ids <-
+    colData(sce) |>
+    as_tibble() |>
     group_by(ImageNumber) |>
     tally() |>
     filter(n >= min & n <= max) |>
