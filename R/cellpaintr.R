@@ -63,6 +63,50 @@ plotCellsPerImage <- function(sce, bins = 100) {
 
 }
 
+#' Plot number of cells per image
+#'
+#' @import SingleCellExperiment
+#' @import ggplot2
+#' @import dplyr
+#' @importFrom tibble as_tibble
+#' @importFrom tidyr pivot_longer
+#' @export
+#'
+#' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#' @param filter_by PC to use for feature selection
+#' @param top Number of top features to select
+#' @param pcs Number of PCs to plot
+#' @return \code{\link[ggplot2]{ggplot2}} object
+#'
+plotPCACor <- function(sce, filter_by = 1, top = 20, pcs = 1:5) {
+
+  features <- assay(sce, "tfmfeatures")
+  scores <- reducedDim(sce, "PCA")[,pcs]
+  features_pcs <- cor(t(features), scores)
+
+  keep <- rownames(features_pcs)
+  importance <- abs(features_pcs[,filter_by])
+
+  features_pcs <- features_pcs |>
+    as_tibble() |>
+    mutate(name = keep, importance = importance) |>
+    top_n(top, importance)
+
+  features_pcs <- features_pcs |>
+    pivot_longer(!c(name, importance), names_to = "PC", values_to = "cor") |>
+    mutate(PC = str_remove(PC, "PC"))
+
+  ggplot(features_pcs, aes(PC, name, fill = cor)) +
+    geom_tile(color = "white") +
+    scale_fill_gradient2(low = "blue", high = "red", mid = "white",
+                         midpoint = 0, limit = c(-1,1), space = "Lab",
+                         name = "Pearson\nCorrelation") +
+    theme_minimal() +
+    coord_fixed() +
+    ylab("feature name")
+
+}
+
 #' Remove cells if not enough or too many in one image
 #'
 #' @import SingleCellExperiment
