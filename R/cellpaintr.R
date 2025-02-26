@@ -23,7 +23,7 @@ loadData <- function(cell_file) {
     "Number_Object_Number", "Parent_FilteredCell"
     )
   feature_vars <- names(data)[!names(data) %in% meta_vars]
-  meta_cell <- data[,meta_vars]
+  meta_cell <- data[,intersect(names(data), meta_vars)]
   features  <- data[,feature_vars] |> t() # columns represent cells
 
   # remove meta label from names
