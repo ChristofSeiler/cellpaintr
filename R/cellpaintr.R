@@ -227,10 +227,11 @@ fitModel <- function(sce,
   sce_subset <- sce[, sce$Treatment %in% c(reference_level, interest_level)]
 
   # create matching variable
-  cells <- sce_subset |> as_tibble()
+  cells <- colData(sce_subset) |> as_tibble()
   Match <- apply(cells[, strata], 1,
                  function(row) paste(row, collapse = "_"))
   cells$Match <- Match
+  cells$.cell <- 1:nrow(cells)
 
   # prepare data frame with target variable and predictor matrix
   X <- assay(sce_subset, name = "tfmfeatures") |> t()
