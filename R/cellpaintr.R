@@ -15,16 +15,28 @@ loadData <- function(cell_file) {
   # read file with cell data
   data      <- read_csv(cell_file, show_col_types = FALSE)
 
+  # remove features if they exist
+  rmv_vars <- c("Number_Object_Number", "Parent_FilteredCell")
+  keep_vars <- names(data)[!names(data) %in% rmv_vars]
+  data <- data[, keep_vars]
+
   # split into meta data and features
   meta_cols <- str_detect(names(data), "Metadata_")
   meta_vars <- c(
     "ImageNumber", "ObjectNumber", names(data)[meta_cols],
-    "Location_Center_X", "Location_Center_Y", "Location_Center_Z",
-    "Number_Object_Number", "Parent_FilteredCell"
+    "Location_Center_X", "Location_Center_Y", "Location_Center_Z"
     )
   feature_vars <- names(data)[!names(data) %in% meta_vars]
   meta_cell <- data[,intersect(names(data), meta_vars)]
   features  <- data[,feature_vars] |> t() # columns represent cells
+
+  # add NAs to location if it doesn't exist
+  if(sum(names(meta_cell) == "Location_Center_X") == 0)
+    meta_cell$Location_Center_X <- NA
+  if(sum(names(meta_cell) == "Location_Center_Y") == 0)
+    meta_cell$Location_Center_Y <- NA
+  if(sum(names(meta_cell) == "Location_Center_Z") == 0)
+    meta_cell$Location_Center_Z <- NA
 
   # remove meta label from names
   names(meta_cell) <- str_remove(names(meta_cell), "Metadata_")
