@@ -236,7 +236,7 @@ fitModel <- function(sce,
                      n_folds = 20, n_threads = 32) {
 
   # subset for binary classification
-  sce_subset <- sce[, sce$Treatment %in% c(reference_level, interest_level)]
+  sce_subset <- sce[, sce[[target]] %in% c(reference_level, interest_level)]
 
   # create matching variable
   cells <- colData(sce_subset) |> as_tibble()
