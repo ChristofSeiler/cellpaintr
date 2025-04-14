@@ -2,6 +2,7 @@
 
 export(fitModel)
 export(loadData)
+export(normalizeExclude)
 export(plotAUC)
 export(plotCellsPerImage)
 export(plotPCACor)

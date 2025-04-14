@@ -212,6 +212,35 @@ transformLogScale <- function(sce) {
 
 }
 
+#' Normalize by median absolute deviation and exclude zero features
+#'
+#' @import SingleCellExperiment
+#' @export
+#'
+#' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#'
+normalizeExclude <- function(sce) {
+
+  mat <- assay(sce, name = "features")
+
+  # TODO: calculate on control only and apply per plate
+
+  # normalize
+  median_features <- apply(mat, 1, function(x) median(x) )
+  mad_features <- apply(mat, 1, function(x) mad(x) )
+  mat <- (mat-median_features)/mad_features
+
+  # exclude
+  nonzero_features <- which(median_features != 0)
+  mat <- mat[nonzero_features, ]
+
+  # add transformed features
+  assays(sce)$tfmfeatures <- mat
+  sce
+
+}
+
 #' Predict target from features
 #'
 #' @import SingleCellExperiment
