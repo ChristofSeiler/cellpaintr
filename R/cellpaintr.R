@@ -254,7 +254,7 @@ normalizeExclude <- function(sce, plate = "Plate", treatment = "Treatment") {
   # exclude features that have zero median in at least one plate
   feature_name_list <- lapply(plate_list,
                               function(sce_plate) rownames(sce_plate))
-  include_features <- do.call(intersect, feature_name_list)
+  include_features <- Reduce(intersect, feature_name_list)
   plate_list <- lapply(plate_list,
                        function(sce_plate) sce_plate[include_features, ])
   do.call(cbind, plate_list)
