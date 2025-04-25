@@ -4,12 +4,12 @@
 \alias{treatmentEffect}
 \title{Evaluate treatment effect}
 \usage{
-treatmentEffect(sce, patient, treatment, n_perm = 100, n_threads = 10)
+treatmentEffect(sce, group, treatment, n_perm = 100, n_threads = 10)
 }
 \arguments{
 \item{sce}{\code{\link[SingleCellExperiment]{SingleCellExperiment}} object}
 
-\item{patient}{Patient variable}
+\item{group}{Grouping variable, e.g., patient}
 
 \item{treatment}{Treatment variable}
 

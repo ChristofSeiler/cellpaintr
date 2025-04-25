@@ -495,13 +495,15 @@ plotAUC <- function(result_list) {
 #' @export
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
-#' @param patient Patient variable
+#' @param group Grouping variable, e.g., patient
 #' @param treatment Treatment variable
 #' @param n_perm Number of permutations for the null distribution
 #' @param n_threads Number of parallel threads for fitting of models
 #' @return \code{\link[ggplot2]{ggplot2}} data frame
 #'
-treatmentEffect <- function(sce, patient, treatment, n_perm = 100, n_threads = 10) {
+treatmentEffect <- function(sce, group, treatment, n_perm = 100, n_threads = 10) {
+
+  group_ids <- unique(sce[[group]])
 
   # treatment label shuffle
   calculate_scores <- function(sce) {
@@ -511,17 +513,16 @@ treatmentEffect <- function(sce, patient, treatment, n_perm = 100, n_threads = 1
       sce,
       use.assay.type = "tfmfeatures",
       statistics = "mean",
-      ids = colData(sce)[ , c(patient, treatment)]
+      ids = colData(sce)[ , c(group, treatment)]
     )
     weights <- attr(reducedDim(sce, "PCA"), "varExplained")
     scores_aggr <- reducedDim(sce_aggr, "PCA")
     scores_weighted <- sweep(scores_aggr, 2, weights, FUN = "*")
     dist_mat <- as.matrix(dist(scores_weighted))
 
-    # extract distances per patient
-    patients <- unique(sce_aggr[[patient]])
-    pert_scores <- sapply(patients, function(current_patient) {
-      patient_pair <- which(sce_aggr[[patient]] == current_patient)
+    # extract distances per group
+    pert_scores <- sapply(group_ids, function(current_group) {
+      patient_pair <- which(sce_aggr[[group]] == current_group)
       dist_mat[patient_pair[1], patient_pair[2]]
     })
     pert_scores
@@ -539,15 +540,23 @@ treatmentEffect <- function(sce, patient, treatment, n_perm = 100, n_threads = 1
   param <- MulticoreParam(workers = n_threads, progressbar = TRUE)
   pert_null <- bplapply(seq(n_perm), function(i) permute(), BPPARAM = param)
   pert_null <- simplify2array(pert_null)
+  if(is.vector(pert_null)) {
+    # if group variables has only one level,
+    # then pert_null is a vector
+    pert_null <- data.frame(seq(n_perm), pert_null)
+  } else {
+    # if group variables has more than one level,
+    # then pert_null is a matrix
+    pert_null <- data.frame(seq(n_perm), t(pert_null))
+  }
+  names(pert_null) <- c("perm_id", group_ids)
 
   # compute observed perturbations distances
   pert_obsv <- calculate_scores(sce)
-  pert_obsv <- data.frame(name = names(pert_obsv), value = pert_obsv)
+  pert_obsv <- data.frame(name = group_ids, value = pert_obsv)
 
   # relate null distribution to observed distances
-  pert_null <- data.frame(t(pert_null))
-  pert_null$id <- seq(nrow(pert_null))
-  pivot_longer(pert_null, cols = -id) |>
+  pivot_longer(pert_null, cols = -perm_id) |>
     ggplot(aes(value)) +
     geom_density() +
     geom_vline(aes(xintercept = value), pert_obsv, colour = "red") +
