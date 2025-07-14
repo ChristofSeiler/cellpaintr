@@ -270,6 +270,7 @@ normalizeExclude <- function(sce, plate = "Plate", treatment = "Treatment") {
 #' @export
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#' @param assay_type A string specifying the assay
 #' @param target Name of target variable for prediction
 #' @param interest_level Factor interest level in `target` variable
 #' @param reference_level Factor reference level in `target` variable
@@ -279,7 +280,7 @@ normalizeExclude <- function(sce, plate = "Plate", treatment = "Treatment") {
 #' @param n_threads Number of parallel threads for fitting of models
 #' @return \code{\link[tibble]{tibble}} data frame
 #'
-fitModel <- function(sce,
+fitModel <- function(sce, assay_type = "tfmfeatures",
                      target, interest_level, reference_level,
                      group, strata,
                      n_folds = 20, n_threads = 32) {
@@ -295,7 +296,7 @@ fitModel <- function(sce,
   cells$.cell <- 1:nrow(cells)
 
   # prepare data frame with target variable and predictor matrix
-  X <- assay(sce_subset, name = "tfmfeatures") |> t()
+  X <- assay(sce_subset, name = assay_type) |> t()
   ml_data <- data.frame(Target = cells |> pull(target), X)
   ml_data$Target <- factor(ml_data$Target,
                            levels = c(interest_level, reference_level))
@@ -495,13 +496,15 @@ plotAUC <- function(result_list) {
 #' @export
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#' @param assay_type A string specifying the assay
 #' @param group Grouping variable, e.g., patient
 #' @param treatment Treatment variable
 #' @param n_perm Number of permutations for the null distribution
 #' @param n_threads Number of parallel threads for fitting of models
 #' @return \code{\link[ggplot2]{ggplot2}} data frame
 #'
-treatmentEffect <- function(sce, group, treatment, n_perm = 100, n_threads = 10) {
+treatmentEffect <- function(sce, assay_type = "tfmfeatures", group, treatment,
+                            n_perm = 100, n_threads = 10) {
 
   group_ids <- unique(sce[[group]])
 
@@ -511,7 +514,7 @@ treatmentEffect <- function(sce, group, treatment, n_perm = 100, n_threads = 10)
     # calculate perturbation score
     sce_aggr <- aggregateAcrossCells(
       sce,
-      use.assay.type = "tfmfeatures",
+      use.assay.type = assay_type,
       statistics = "mean",
       ids = colData(sce)[ , c(group, treatment)]
     )

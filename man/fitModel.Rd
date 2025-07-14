@@ -6,6 +6,7 @@
 \usage{
 fitModel(
   sce,
+  assay_type = "tfmfeatures",
   target,
   interest_level,
   reference_level,
@@ -17,6 +18,8 @@ fitModel(
 }
 \arguments{
 \item{sce}{\code{\link[SingleCellExperiment]{SingleCellExperiment}} object}
+
+\item{assay_type}{A string specifying the assay}
 
 \item{target}{Name of target variable for prediction}
 
