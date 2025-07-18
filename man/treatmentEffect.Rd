@@ -10,7 +10,7 @@ treatmentEffect(
   group,
   treatment,
   n_perm = 100,
-  n_threads = 10
+  n_threads = 1
 )
 }
 \arguments{

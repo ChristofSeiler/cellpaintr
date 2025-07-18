@@ -283,7 +283,7 @@ normalizeExclude <- function(sce, plate = "Plate", treatment = "Treatment") {
 fitModel <- function(sce, assay_type = "tfmfeatures",
                      target, interest_level, reference_level,
                      group, strata,
-                     n_folds = 20, n_threads = 32) {
+                     n_folds = 20, n_threads = 1) {
 
   # subset for binary classification
   sce_subset <- sce[, sce[[target]] %in% c(reference_level, interest_level)]
@@ -504,7 +504,7 @@ plotAUC <- function(result_list) {
 #' @return \code{\link[ggplot2]{ggplot2}} data frame
 #'
 treatmentEffect <- function(sce, assay_type = "tfmfeatures", group, treatment,
-                            n_perm = 100, n_threads = 10) {
+                            n_perm = 100, n_threads = 1) {
 
   group_ids <- unique(sce[[group]])
 
@@ -565,5 +565,138 @@ treatmentEffect <- function(sce, assay_type = "tfmfeatures", group, treatment,
     geom_vline(aes(xintercept = value), pert_obsv, colour = "red") +
     facet_wrap(~name) +
     xlab("perturbation distance")
+
+}
+
+#' Predict target from features
+#'
+#' @import SingleCellExperiment
+#' @import dplyr
+#' @importFrom parsnip rand_forest set_mode set_engine
+#' @importFrom rsample group_initial_split training testing
+#' @export
+#'
+#' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#' @param assay_type A string specifying the assay
+#' @param target Name of target variable for prediction
+#' @param interest_level Factor interest level in `target` variable
+#' @param reference_level Factor reference level in `target` variable
+#' @param group Grouping variable for cross-validation, e.g., patient
+#' @param n_threads Number of parallel threads for fitting of models
+#' @return \code{\link[tibble]{tibble}} data frame
+#'
+predictYhat <- function(sce, assay_type = "corrected", target = "Treatment",
+                        interest_level = "RBPJ", reference_level = "cont",
+                        group = "Patient", n_threads = 1) {
+
+  # subset for binary classification
+  sce_subset <- sce[, sce[[target]] %in% c(reference_level, interest_level)]
+
+  # prepare data frame with target variable and predictor matrix
+  X <- assay(sce_subset, name = assay_type) |> t()
+  cells <- colData(sce_subset) |> as_tibble()
+  ml_data <- data.frame(Target = cells |> pull(target), X)
+  ml_data$Target <- factor(ml_data$Target,
+                           levels = c(interest_level, reference_level))
+
+  # compute y hats
+  patients <- unique(sce_subset[[group]])
+  result_list <- lapply(patients, function(patient) {
+
+    train_ids <- which(sce_subset[[group]] != patient)
+    test_ids <- which(sce_subset[[group]] == patient)
+
+    # train model
+    rf_spec <-
+      parsnip::rand_forest() |>
+      parsnip::set_mode("classification") |>
+      parsnip::set_engine("ranger", num.threads = n_threads)
+    rf_fit <- rf_spec |>
+      parsnip::fit(Target ~ ., data = ml_data[train_ids, ])
+
+    # evaluate model
+    dplyr::bind_cols(
+      .target = ml_data[test_ids, ]$Target,
+      cell = test_ids,
+      predict(rf_fit, ml_data[test_ids, ], type = "prob"),
+      fold = patient
+    )
+
+  })
+  result <- result_list |>
+    bind_rows() |>
+    arrange(cell)
+
+  # add y_hat to sce object
+  y_hat_var <- paste0(".pred_", interest_level)
+  y_hat <- select(result, all = all_of(y_hat_var)) |> as.data.frame()
+  cell_id <- 1:ncol(sce_subset)
+  rownames(y_hat) <- cell_id
+  colnames(sce_subset) <- cell_id
+  reducedDim(sce_subset, "prevalidated") <- y_hat
+  sce_subset
+
+}
+
+#' Combine predicted leave-one-out probabilities with sample info
+#'
+#' @import dplyr
+#' @importFrom MultiAssayExperiment intersectRows
+#' @importFrom scater aggregateAcrossCells
+#' @export
+#'
+#' @param meta_vars a vector of variables from `colData`
+#' @return \code{\link[data.frame]{data.frame}}
+#'
+combinePanels <- function(mae,
+                          meta_vars = c("Patient", "Treatment", "Gender")) {
+
+  # keep only samples that common across panels
+  mae <- intersectRows(mae)
+
+  # aggregate over meta variables
+  summed_list <- lapply(experiments(mae), function(sce_panel) {
+
+    aggregateAcrossCells(
+      sce_panel, id = colData(sce_panel)[, meta_vars],
+      use.assay.type = "corrected", statistics = "mean"
+    )
+
+  })
+
+  # extract y_hat's
+  y_hat_list <- lapply(
+    summed_list, function(summed) reducedDim(summed, type = "prevalidated")
+  )
+
+  # merge y_hat's with sample info
+  merged <- Reduce(cbind, y_hat_list)
+  colnames(merged) <- names(mae)
+  col_data <- colData(first(summed_list))[, meta_vars] |> as.data.frame()
+  merged <- cbind(col_data, merged)
+  merged
+
+}
+
+#' Plot predicted leave-one-out probabilities
+#'
+#' @import ggplot2
+#' @import dplyr
+#' @importFrom tidyr pivot_longer
+#' @export
+#'
+#' @param merged a \code{\link[data.frame]{data.frame}} from `combinePanels`
+#' @return \code{\link[ggplot2]{ggplot2}} object
+#'
+plotPanels <- function(merged) {
+
+  merged |>
+    pivot_longer(cols = names(mae)) |>
+    mutate(name = factor(name, names(mae))) |>
+    ggplot(aes(Treatment, value, color = Treatment)) +
+    geom_boxplot(width = 0.2) +
+    geom_jitter(width = 0.1) +
+    facet_wrap(~name) +
+    ylab("predicted leave-one-out probability")
 
 }
