@@ -6,12 +6,13 @@
 \usage{
 predictYhat(
   sce,
-  assay_type = "corrected",
+  assay_type = "tfmfeatures",
   target = "Treatment",
   interest_level = "RBPJ",
   reference_level = "cont",
   group = "Patient",
-  n_threads = 1
+  n_threads = 1,
+  n_sub = NULL
 )
 }
 \arguments{

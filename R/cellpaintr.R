@@ -204,7 +204,7 @@ transformLogScale <- function(sce) {
   mat[non_neg_features, ] <- log(1 + mat[non_neg_features, ])
 
   # center and standardize
-  mat <- scale(mat)
+  mat <- mat |> t() |> scale() |> t()
 
   # add transformed features
   assays(sce)$tfmfeatures <- mat
@@ -585,12 +585,15 @@ treatmentEffect <- function(sce, assay_type = "tfmfeatures", group, treatment,
 #' @param n_threads Number of parallel threads for fitting of models
 #' @return \code{\link[tibble]{tibble}} data frame
 #'
-predictYhat <- function(sce, assay_type = "corrected", target = "Treatment",
+predictYhat <- function(sce, assay_type = "tfmfeatures", target = "Treatment",
                         interest_level = "RBPJ", reference_level = "cont",
-                        group = "Patient", n_threads = 1) {
+                        group = "Patient", n_threads = 1, n_sub = NULL) {
 
   # subset for binary classification
   sce_subset <- sce[, sce[[target]] %in% c(reference_level, interest_level)]
+  if(!is.null(n_sub)) {
+    sce_subset <- sce_subset[,sample(ncol(sce_subset), n_sub)]
+  }
 
   # prepare data frame with target variable and predictor matrix
   X <- assay(sce_subset, name = assay_type) |> t()
@@ -638,43 +641,31 @@ predictYhat <- function(sce, assay_type = "corrected", target = "Treatment",
 
 }
 
-#' Combine predicted leave-one-out probabilities with sample info
+#' Aggregate predicted leave-one-out probabilities over meta variables
 #'
-#' @import dplyr
-#' @importFrom MultiAssayExperiment intersectRows
 #' @importFrom scater aggregateAcrossCells
 #' @export
 #'
+#' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#' @param assay_type A string specifying the assay
 #' @param meta_vars a vector of variables from `colData`
 #' @return \code{\link[data.frame]{data.frame}}
 #'
-combinePanels <- function(mae,
+aggregateYhat <- function(sce,
+                          assay_type = "tfmfeatures",
                           meta_vars = c("Patient", "Treatment", "Gender")) {
 
-  # keep only samples that common across panels
-  mae <- intersectRows(mae)
-
-  # aggregate over meta variables
-  summed_list <- lapply(experiments(mae), function(sce_panel) {
-
-    aggregateAcrossCells(
-      sce_panel, id = colData(sce_panel)[, meta_vars],
-      use.assay.type = "corrected", statistics = "mean"
-    )
-
-  })
-
-  # extract y_hat's
-  y_hat_list <- lapply(
-    summed_list, function(summed) reducedDim(summed, type = "prevalidated")
+  summed <- aggregateAcrossCells(
+    sce, id = colData(sce)[, meta_vars],
+    use.assay.type = assay_type, statistics = "mean"
   )
 
-  # merge y_hat's with sample info
-  merged <- Reduce(cbind, y_hat_list)
-  colnames(merged) <- names(mae)
-  col_data <- colData(first(summed_list))[, meta_vars] |> as.data.frame()
-  merged <- cbind(col_data, merged)
-  merged
+  df <- cbind(
+    colData(summed)[, meta_vars] |> as.data.frame(),
+    reducedDim(summed, type = "prevalidated")
+  )
+  names(df) <- c(meta_vars, "y_hat")
+  df
 
 }
 
@@ -685,18 +676,16 @@ combinePanels <- function(mae,
 #' @importFrom tidyr pivot_longer
 #' @export
 #'
-#' @param merged a \code{\link[data.frame]{data.frame}} from `combinePanels`
+#' @param merged a \code{\link[data.frame]{data.frame}} from `aggregateYhat`
+#' @param target Name of target variable for prediction
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
-plotPanels <- function(merged) {
+plotYhat <- function(y_hat, target = "Treatment") {
 
-  merged |>
-    pivot_longer(cols = names(mae)) |>
-    mutate(name = factor(name, names(mae))) |>
-    ggplot(aes(Treatment, value, color = Treatment)) +
+  y_hat |>
+    ggplot(aes(.data[[target]], y_hat, color = .data[[target]])) +
     geom_boxplot(width = 0.2, outliers = FALSE) +
     geom_jitter(width = 0.1) +
-    facet_wrap(~name) +
     ylab("predicted leave-one-out probability")
 
 }
