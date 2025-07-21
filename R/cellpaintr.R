@@ -694,7 +694,7 @@ plotPanels <- function(merged) {
     pivot_longer(cols = names(mae)) |>
     mutate(name = factor(name, names(mae))) |>
     ggplot(aes(Treatment, value, color = Treatment)) +
-    geom_boxplot(width = 0.2) +
+    geom_boxplot(width = 0.2, outliers = FALSE) +
     geom_jitter(width = 0.1) +
     facet_wrap(~name) +
     ylab("predicted leave-one-out probability")
