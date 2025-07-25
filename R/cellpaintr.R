@@ -581,12 +581,15 @@ treatmentEffect <- function(sce, assay_type = "tfmfeatures", group, treatment,
 #' @param target Name of target variable for prediction
 #' @param interest_level Factor interest level in `target` variable
 #' @param reference_level Factor reference level in `target` variable
+#' @param types Vector of strings of feature types
+#' @param channels Vector of strings of feature channels
 #' @param group Grouping variable for cross-validation, e.g., patient
 #' @param n_threads Number of parallel threads for fitting of models
 #' @return \code{\link[tibble]{tibble}} data frame
 #'
 predictYhat <- function(sce, assay_type = "tfmfeatures", target = "Treatment",
                         interest_level = "RBPJ", reference_level = "cont",
+                        types = NULL, channels = NULL,
                         group = "Patient", n_threads = 1, n_sub = NULL) {
 
   # subset for binary classification
@@ -595,44 +598,85 @@ predictYhat <- function(sce, assay_type = "tfmfeatures", target = "Treatment",
     sce_subset <- sce_subset[,sample(ncol(sce_subset), n_sub)]
   }
 
-  # prepare data frame with target variable and predictor matrix
-  X <- assay(sce_subset, name = assay_type) |> t()
-  cells <- colData(sce_subset) |> as_tibble()
-  ml_data <- data.frame(Target = cells |> pull(target), X)
-  ml_data$Target <- factor(ml_data$Target,
-                           levels = c(interest_level, reference_level))
+  # function to compute y_hat on a subset of the features
+  compute_y_hat <- function(feature_name, sce_feature, starts = TRUE) {
 
-  # compute y hats
-  patients <- unique(sce_subset[[group]])
-  result_list <- lapply(patients, function(patient) {
+    # convert to regular expression
+    if(feature_name == "all") {
+      pattern <- ".*"
+    } else {
+      pattern <- feature_name
+    }
 
-    train_ids <- which(sce_subset[[group]] != patient)
-    test_ids <- which(sce_subset[[group]] == patient)
+    # subset features
+    features <- names(sce_feature)
+    if(starts) {
+      features <- features[str_starts(features, pattern)]
+    } else {
+      features <- features[str_detect(features, pattern)]
+    }
+    sce_feature <- sce_feature[features,]
 
-    # train model
-    rf_spec <-
-      parsnip::rand_forest() |>
-      parsnip::set_mode("classification") |>
-      parsnip::set_engine("ranger", num.threads = n_threads)
-    rf_fit <- rf_spec |>
-      parsnip::fit(Target ~ ., data = ml_data[train_ids, ])
+    # prepare data frame with target variable and predictor matrix
+    X <- assay(sce_feature, name = assay_type) |> t()
+    cells <- colData(sce_feature) |> as_tibble()
+    ml_data <- data.frame(Target = cells |> pull(target), X)
+    ml_data$Target <- factor(ml_data$Target,
+                             levels = c(interest_level, reference_level))
 
-    # evaluate model
-    dplyr::bind_cols(
-      .target = ml_data[test_ids, ]$Target,
-      cell = test_ids,
-      predict(rf_fit, ml_data[test_ids, ], type = "prob"),
-      fold = patient
+    # compute y hats
+    patients <- unique(sce_feature[[group]])
+    result_list <- lapply(patients, function(patient) {
+
+      train_ids <- which(sce_feature[[group]] != patient)
+      test_ids <- which(sce_feature[[group]] == patient)
+
+      # train model
+      rf_spec <-
+        parsnip::rand_forest() |>
+        parsnip::set_mode("classification") |>
+        parsnip::set_engine("ranger", num.threads = n_threads)
+      rf_fit <- rf_spec |>
+        parsnip::fit(Target ~ ., data = ml_data[train_ids, ])
+
+      # evaluate model
+      dplyr::bind_cols(
+        cell = test_ids,
+        predict(rf_fit, ml_data[test_ids, ], type = "prob")
+      )
+
+    })
+
+    # combine folds
+    result <- result_list |>
+      bind_rows() |>
+      arrange(cell)
+
+    # rename to feature type / channel
+    names(result)[2] <- feature_name
+    result |> select(all_of(feature_name))
+
+  }
+
+  # combine and add to reducedDim slot
+  y_hat <- compute_y_hat("all", sce_subset)
+  if(length(types) > 0) {
+    y_hat <- bind_cols(
+      y_hat,
+      lapply(types, compute_y_hat, sce_subset, starts = TRUE) |>
+        bind_cols()
     )
-
-  })
-  result <- result_list |>
-    bind_rows() |>
-    arrange(cell)
+  }
+  if(length(channels) > 0) {
+    y_hat <- bind_cols(
+      y_hat,
+      lapply(channels, compute_y_hat, sce_subset, starts = FALSE) |>
+        bind_cols()
+    )
+  }
+  y_hat <- y_hat |> as.matrix()
 
   # add y_hat to sce object
-  y_hat_var <- paste0(".pred_", interest_level)
-  y_hat <- select(result, all = all_of(y_hat_var)) |> as.data.frame()
   cell_id <- 1:ncol(sce_subset)
   rownames(y_hat) <- cell_id
   colnames(sce_subset) <- cell_id
@@ -660,12 +704,10 @@ aggregateYhat <- function(sce,
     use.assay.type = assay_type, statistics = "mean"
   )
 
-  df <- cbind(
+  cbind(
     colData(summed)[, meta_vars] |> as.data.frame(),
     reducedDim(summed, type = "prevalidated")
   )
-  names(df) <- c(meta_vars, "y_hat")
-  df
 
 }
 
@@ -678,14 +720,21 @@ aggregateYhat <- function(sce,
 #'
 #' @param merged a \code{\link[data.frame]{data.frame}} from `aggregateYhat`
 #' @param target Name of target variable for prediction
+#' @param meta_vars a vector of variables from `colData`
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
-plotYhat <- function(y_hat, target = "Treatment") {
+plotYhat <- function(y_hat,
+                     target = "Treatment",
+                     meta_vars = c("Patient", "Treatment", "Gender")) {
 
   y_hat |>
-    ggplot(aes(.data[[target]], y_hat, color = .data[[target]])) +
+    pivot_longer(cols = -c(all_of(meta_vars)),
+                 names_to = "features", values_to = "value") |>
+    ggplot(aes(.data[[target]], value, color = .data[[target]])) +
     geom_boxplot(width = 0.2, outliers = FALSE) +
     geom_jitter(width = 0.1) +
-    ylab("predicted leave-one-out probability")
+    ylab("predicted leave-one-out probability") +
+    facet_wrap(~features) +
+    geom_hline(yintercept = 0.5, alpha = 0.5, linetype = "dashed")
 
 }

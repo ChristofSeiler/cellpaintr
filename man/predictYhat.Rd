@@ -10,6 +10,8 @@ predictYhat(
   target = "Treatment",
   interest_level = "RBPJ",
   reference_level = "cont",
+  types = NULL,
+  channels = NULL,
   group = "Patient",
   n_threads = 1,
   n_sub = NULL
@@ -25,6 +27,10 @@ predictYhat(
 \item{interest_level}{Factor interest level in `target` variable}
 
 \item{reference_level}{Factor reference level in `target` variable}
+
+\item{types}{Vector of strings of feature types}
+
+\item{channels}{Vector of strings of feature channels}
 
 \item{group}{Grouping variable for cross-validation, e.g., patient}
 

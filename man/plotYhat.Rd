@@ -4,10 +4,16 @@
 \alias{plotYhat}
 \title{Plot predicted leave-one-out probabilities}
 \usage{
-plotYhat(y_hat, target = "Treatment")
+plotYhat(
+  y_hat,
+  target = "Treatment",
+  meta_vars = c("Patient", "Treatment", "Gender")
+)
 }
 \arguments{
 \item{target}{Name of target variable for prediction}
+
+\item{meta_vars}{a vector of variables from `colData`}
 
 \item{merged}{a \code{\link[data.frame]{data.frame}} from `aggregateYhat`}
 }
