@@ -738,3 +738,80 @@ plotYhat <- function(y_hat,
     geom_hline(yintercept = 0.5, alpha = 0.5, linetype = "dashed")
 
 }
+
+#' Aggregate predicted leave-one-out probabilities over meta variables
+#' over a list of SingleCellExperiment objects
+#'
+#' @importFrom scater aggregateAcrossCells
+#' @export
+#'
+#' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#' @param assay_type A string specifying the assay
+#' @param meta_vars a vector of variables from `colData`
+#' @param target Name of target variable for prediction
+#' @param panel Name of panel variable
+#' @return \code{\link[data.frame]{data.frame}}
+#'
+calculateStats <- function(sce_list,
+                           assay_type = "tfmfeatures",
+                           meta_vars = c("Patient", "Treatment", "Gender"),
+                           target = "Treatment",
+                           panel = "Panel") {
+
+  lapply(sce_list, function(sce) {
+
+    y_hat <- aggregateYhat(sce, assay_type = assay_type, meta_vars = meta_vars)
+    interest_level <- y_hat |>
+      pull(all_of(target)) |>
+      droplevels() |>
+      levels() |>
+      setdiff(reference_level)
+    y_hat$Target <- interest_level
+
+    wide <- y_hat |>
+      select(all_of(c(meta_vars, "all"))) |>
+      pivot_wider(names_from = all_of(target), values_from = all)
+
+    x = pull(wide, all_of(reference_level))
+    y = pull(wide, all_of(interest_level))
+    result <- t.test(x, y, paired = TRUE, var.equal = TRUE, alternative = "less")
+
+    data.frame(
+      Panel = unique(sce[[panel]]),
+      Target = interest_level,
+      pvalue = result$p.value,
+      log2FoldChange = log2(mean(y)/mean(x))
+    )
+
+  }) |> bind_rows()
+
+}
+
+#' Plot predicted leave-one-out probabilities
+#'
+#' @import ggplot2
+#' @export
+#'
+#' @param stats a \code{\link[data.frame]{data.frame}} from `calculateStats`
+#' @param p_cutoff Cut-off for statistical significance. A horizontal line will
+#'                 be drawn at -log10(p_cutoff).
+#' @param fc_cutoff Cut-off for absolute log2 fold-change. A vertical lines
+#'                  will be drawn at fc_cutoff.
+#' @param color Name of color variable
+#' @param label Name of label variable
+#' @return \code{\link[ggplot2]{ggplot2}} object
+#'
+volcanoPlot <- function(stats, p_cutoff = 0.0001, fc_cutoff = 0.5,
+                          color = "Panel", label = "Target") {
+
+  ggplot(stats, aes(log2FoldChange, -log10(pvalue),
+                    color = .data[[color]], label = .data[[label]])) +
+    geom_vline(xintercept = c(0, 0.5), alpha = 0.5, linetype = "dashed") +
+    geom_hline(yintercept = c(0, -log10(0.0001)), alpha = 0.5,
+               linetype = "dashed") +
+    geom_point() +
+    geom_text(hjust = 0, nudge_x = 0.01) +
+    xlab("log2 fold change") +
+    ylab("-log10 p-value")
+
+}
