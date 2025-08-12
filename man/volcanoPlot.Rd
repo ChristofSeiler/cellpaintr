@@ -6,10 +6,11 @@
 \usage{
 volcanoPlot(
   stats,
-  p_cutoff = 1e-04,
-  fc_cutoff = 0.5,
-  color = "Panel",
-  label = "Target"
+  p_cutoff = 0.01/100,
+  fc_cutoff = 0.3,
+  color = "Target",
+  label = "Feature",
+  facet = "Panel"
 )
 }
 \arguments{
@@ -24,6 +25,8 @@ will be drawn at fc_cutoff.}
 \item{color}{Name of color variable}
 
 \item{label}{Name of label variable}
+
+\item{facet}{Name of facet variable}
 }
 \value{
 \code{\link[ggplot2]{ggplot2}} object

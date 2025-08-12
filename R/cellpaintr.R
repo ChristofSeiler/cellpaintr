@@ -766,22 +766,30 @@ calculateStats <- function(sce_list,
       droplevels() |>
       levels() |>
       setdiff(reference_level)
+    feature_vars <- setdiff(names(y_hat), meta_vars)
     y_hat$Target <- interest_level
 
-    wide <- y_hat |>
-      select(all_of(c(meta_vars, "all"))) |>
-      pivot_wider(names_from = all_of(target), values_from = all)
+    # test one feature at a time
+    lapply(feature_vars, function(feature) {
 
-    x = pull(wide, all_of(reference_level))
-    y = pull(wide, all_of(interest_level))
-    result <- t.test(x, y, paired = TRUE, var.equal = TRUE, alternative = "less")
+      wide <- y_hat |>
+        select(all_of(c(meta_vars, feature))) |>
+        pivot_wider(names_from = all_of(target), values_from = all_of(feature))
 
-    data.frame(
-      Panel = unique(sce[[panel]]),
-      Target = interest_level,
-      pvalue = result$p.value,
-      log2FoldChange = log2(mean(y)/mean(x))
-    )
+      x = pull(wide, all_of(reference_level))
+      y = pull(wide, all_of(interest_level))
+      result <- t.test(x, y, paired = TRUE, var.equal = TRUE,
+                       alternative = "less")
+
+      data.frame(
+        Panel = unique(sce[[panel]]),
+        Target = interest_level,
+        Feature = feature,
+        pvalue = result$p.value,
+        log2FoldChange = log2(mean(y)/mean(x))
+      )
+
+    }) |> bind_rows()
 
   }) |> bind_rows()
 
@@ -790,6 +798,7 @@ calculateStats <- function(sce_list,
 #' Plot predicted leave-one-out probabilities
 #'
 #' @import ggplot2
+#' @importFrom ggrepel geom_text_repel
 #' @export
 #'
 #' @param stats a \code{\link[data.frame]{data.frame}} from `calculateStats`
@@ -799,19 +808,24 @@ calculateStats <- function(sce_list,
 #'                  will be drawn at fc_cutoff.
 #' @param color Name of color variable
 #' @param label Name of label variable
+#' @param facet Name of facet variable
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
-volcanoPlot <- function(stats, p_cutoff = 0.0001, fc_cutoff = 0.5,
-                          color = "Panel", label = "Target") {
+volcanoPlot <- function(stats, p_cutoff = 0.01/100, fc_cutoff = 0.3,
+                        color = "Target", label = "Feature", facet = "Panel") {
 
-  ggplot(stats, aes(log2FoldChange, -log10(pvalue),
-                    color = .data[[color]], label = .data[[label]])) +
-    geom_vline(xintercept = c(0, 0.5), alpha = 0.5, linetype = "dashed") +
-    geom_hline(yintercept = c(0, -log10(0.0001)), alpha = 0.5,
+  stats |>
+    mutate(Feature = ifelse(pvalue < p_cutoff & log2FoldChange > fc_cutoff,
+                            Feature, "")) |>
+    ggplot(aes(log2FoldChange, -log10(pvalue),
+               color = .data[[color]], label = .data[[label]])) +
+    geom_vline(xintercept = c(0, fc_cutoff), alpha = 0.5, linetype = "dashed") +
+    geom_hline(yintercept = c(0, -log10(p_cutoff)), alpha = 0.5,
                linetype = "dashed") +
     geom_point() +
-    geom_text(hjust = 0, nudge_x = 0.01) +
+    geom_text_repel(max.overlaps = Inf) +
     xlab("log2 fold change") +
-    ylab("-log10 p-value")
+    ylab("-log10 p-value") +
+    facet_wrap(~.data[[facet]], ncol = 1)
 
 }
