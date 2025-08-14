@@ -94,7 +94,7 @@ plotPCACor <- function(sce, filter_by = 1, top = 20, pcs = 1:5) {
 
   features <- assay(sce, "tfmfeatures")
   scores <- reducedDim(sce, "PCA")[,pcs]
-  features_pcs <- cor(t(features), scores)
+  features_pcs <- cor(t(as.matrix(features)), scores)
 
   keep <- rownames(features_pcs)
   importance <- abs(features_pcs[,filter_by])
