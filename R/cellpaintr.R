@@ -274,313 +274,6 @@ normalizeExclude <- function(sce, plate = "Plate", treatment = "Treatment") {
 #' @param target Name of target variable for prediction
 #' @param interest_level Factor interest level in `target` variable
 #' @param reference_level Factor reference level in `target` variable
-#' @param group Grouping variable for cross-validation, e.g., patient
-#' @param strata Stratification variable for cross-validation, e.g., joint
-#' @param n_folds Number of cross-validation folds
-#' @param n_threads Number of parallel threads for fitting of models
-#' @return \code{\link[tibble]{tibble}} data frame
-#'
-fitModel <- function(sce, assay_type = "tfmfeatures",
-                     target, interest_level, reference_level,
-                     group, strata,
-                     n_folds = 20, n_threads = 1) {
-
-  # subset for binary classification
-  sce_subset <- sce[, sce[[target]] %in% c(reference_level, interest_level)]
-
-  # create matching variable
-  cells <- colData(sce_subset) |> as_tibble()
-  Match <- apply(cells[, strata], 1,
-                 function(row) paste(row, collapse = "_"))
-  cells$Match <- Match
-  cells$.cell <- 1:nrow(cells)
-
-  # prepare data frame with target variable and predictor matrix
-  X <- assay(sce_subset, name = assay_type) |> t()
-  ml_data <- data.frame(Target = cells |> pull(target), X)
-  ml_data$Target <- factor(ml_data$Target,
-                           levels = c(interest_level, reference_level))
-
-  # cross-validation
-  rf_list <- lapply(1:n_folds, function(i) {
-
-    system(paste("echo fold = ", i))
-
-    # split into train and test sets
-    cells_split <- rsample::group_initial_split(
-      cells,
-      prop = 1/2,
-      group = group,
-      strata = "Match"
-    )
-
-    # prepare train data
-    train_ids <- rsample::training(cells_split) |>
-      ungroup() |>
-      pull(.cell) |>
-      as.integer()
-
-    # prepare test data
-    test_ids <- rsample::testing(cells_split) |>
-      ungroup() |>
-      pull(.cell) |>
-      as.integer()
-
-    # keep track of samples info
-    train_info <- cells[train_ids, ] |>
-      count(across(c(target, group, strata)))
-    test_info <- cells[test_ids, ] |>
-      count(across(c(target, group, strata)))
-
-    # train model
-    rf_spec <-
-      parsnip::rand_forest() |>
-      parsnip::set_mode("classification") |>
-      parsnip::set_engine("ranger", num.threads = n_threads)
-    rf_fit <- rf_spec |>
-      parsnip::fit(Target ~ ., data = ml_data[train_ids, ])
-
-    # evaluate model
-    dplyr::bind_cols(
-      .target = ml_data[test_ids, ]$Target,
-      predict(rf_fit, ml_data[test_ids, ]),
-      predict(rf_fit, ml_data[test_ids, ], type = "prob"),
-      fold = i
-    ) |> mutate(
-      train_info = list(train_info),
-      test_info = list(test_info)
-    )
-
-  })
-
-  dplyr::bind_rows(rf_list)
-
-}
-
-#' Plot ROC curves
-#'
-#' @import ggplot2
-#' @import dplyr
-#' @importFrom yardstick roc_auc roc_curve
-#' @importFrom stringr str_remove
-#' @export
-#'
-#' @param result \code{\link[tibble]{tibble}} data frame
-#' @return \code{\link[ggplot2]{ggplot2}} object
-#'
-plotROC <- function(result) {
-
-  mean_auc <- result |>
-    group_by(fold) |>
-    roc_auc(names(result)[1], names(result)[3]) |>
-    pull(.estimate) |>
-    mean() |>
-    round(digits = 3)
-
-  result |>
-    group_by(fold) |>
-    roc_curve(names(result)[1], names(result)[3]) |>
-    ggplot(aes(x = 1 - specificity, y = sensitivity, group = fold)) +
-    geom_path(alpha = 0.2) +
-    geom_abline(lty = 3) +
-    coord_equal() +
-    xlab("false positive rate (1 - specificity)") +
-    ylab("true positive rate (sensitivity)") +
-    ggtitle(
-      paste0("Predict ",
-             str_remove(names(result)[3], ".pred_"),
-             " vs ",
-             str_remove(names(result)[4], ".pred_"),
-             " (mean AUC = ",
-             mean_auc,
-             ")")
-    )
-
-}
-
-#' Print sample info of the ROC curves
-#'
-#' @import dplyr
-#' @export
-#'
-#' @param result \code{\link[tibble]{tibble}} data frame
-#' @param fold_id Fold id to print
-#' @return NULL.
-#'
-printROC <- function(result, fold_id) {
-
-  info <- result |>
-    filter(fold == fold_id) |>
-    slice(1)
-
-  train_info <- info[["train_info"]][[1]]
-  test_info <- info[["test_info"]][[1]]
-
-  cat("-----------------\n")
-  cat("training samples:\n\n")
-  print(train_info)
-
-  cat("\n")
-  cat("testing samples:\n\n")
-  print(test_info)
-
-  cat("\n")
-  cat("class balance:\n\n")
-
-  treatment_var <- names(test_info)[1]
-  train_n <- sum(train_info$n)
-  test_n <- sum(test_info$n)
-
-  print(
-    left_join(
-      train_info |>
-        group_by(across(treatment_var)) |>
-        summarize(train = sum(n)/train_n),
-      test_info |>
-        group_by(across(treatment_var)) |>
-        summarize(test = sum(n)/test_n),
-      by = treatment_var
-    )
-  )
-
-  cat("-----------------")
-
-}
-
-#' Plot AUC comparison
-#'
-#' @import ggplot2
-#' @import dplyr
-#' @importFrom yardstick roc_auc
-#' @importFrom stringr str_remove
-#' @export
-#'
-#' @param result_list \code{\link[list]{list}} of data frames from `fitModel`
-#' @return \code{\link[ggplot2]{ggplot2}} object
-#'
-plotAUC <- function(result_list) {
-
-  aucs <- lapply(result_list, function(result) {
-
-    level <- names(result)[3] |> stringr::str_remove(".pred_")
-    result |>
-      group_by(fold) |>
-      yardstick::roc_auc(names(result)[1], names(result)[3]) |>
-      mutate(predict = level)
-
-  }) |> dplyr::bind_rows()
-
-  fct_order <- aucs |>
-    group_by(predict) |>
-    summarize(median = median(.estimate)) |>
-    arrange(desc(median)) |>
-    pull(predict)
-
-  aucs |>
-    mutate(predict = factor(predict, levels = fct_order)) |>
-    ggplot(aes(predict, .estimate)) +
-    geom_boxplot(outlier.shape = NA, width = 0.2) +
-    geom_jitter(width = 0.1) +
-    ylab("AUC") +
-    ggtitle("Area under the ROC curves")
-
-}
-
-#' Evaluate treatment effect
-#'
-#' @import SingleCellExperiment
-#' @import dplyr
-#' @import ggplot2
-#' @importFrom BiocParallel MulticoreParam bplapply
-#' @importFrom tidyr pivot_longer
-#' @export
-#'
-#' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
-#' @param assay_type A string specifying the assay
-#' @param group Grouping variable, e.g., patient
-#' @param treatment Treatment variable
-#' @param n_perm Number of permutations for the null distribution
-#' @param n_threads Number of parallel threads for fitting of models
-#' @return \code{\link[ggplot2]{ggplot2}} data frame
-#'
-treatmentEffect <- function(sce, assay_type = "tfmfeatures", group, treatment,
-                            n_perm = 100, n_threads = 1) {
-
-  group_ids <- unique(sce[[group]])
-
-  # treatment label shuffle
-  calculate_scores <- function(sce) {
-
-    # calculate perturbation score
-    sce_aggr <- aggregateAcrossCells(
-      sce,
-      use.assay.type = assay_type,
-      statistics = "mean",
-      ids = colData(sce)[ , c(group, treatment)]
-    )
-    weights <- attr(reducedDim(sce, "PCA"), "varExplained")
-    scores_aggr <- reducedDim(sce_aggr, "PCA")
-    scores_weighted <- sweep(scores_aggr, 2, weights, FUN = "*")
-    dist_mat <- as.matrix(dist(scores_weighted))
-
-    # extract distances per group
-    pert_scores <- sapply(group_ids, function(current_group) {
-      patient_pair <- which(sce_aggr[[group]] == current_group)
-      dist_mat[patient_pair[1], patient_pair[2]]
-    })
-    pert_scores
-
-  }
-
-  permute <- function() {
-
-    sce[[treatment]] <- sample(sce[[treatment]], replace = FALSE)
-    calculate_scores(sce)
-
-  }
-
-  # compute null distribution of perturbation distances
-  param <- MulticoreParam(workers = n_threads, progressbar = TRUE)
-  pert_null <- bplapply(seq(n_perm), function(i) permute(), BPPARAM = param)
-  pert_null <- simplify2array(pert_null)
-  if(is.vector(pert_null)) {
-    # if group variables has only one level,
-    # then pert_null is a vector
-    pert_null <- data.frame(seq(n_perm), pert_null)
-  } else {
-    # if group variables has more than one level,
-    # then pert_null is a matrix
-    pert_null <- data.frame(seq(n_perm), t(pert_null))
-  }
-  names(pert_null) <- c("perm_id", group_ids)
-
-  # compute observed perturbations distances
-  pert_obsv <- calculate_scores(sce)
-  pert_obsv <- data.frame(name = group_ids, value = pert_obsv)
-
-  # relate null distribution to observed distances
-  pivot_longer(pert_null, cols = -perm_id) |>
-    ggplot(aes(value)) +
-    geom_density() +
-    geom_vline(aes(xintercept = value), pert_obsv, colour = "red") +
-    facet_wrap(~name) +
-    xlab("perturbation distance")
-
-}
-
-#' Predict target from features
-#'
-#' @import SingleCellExperiment
-#' @import dplyr
-#' @importFrom parsnip rand_forest set_mode set_engine
-#' @importFrom rsample group_initial_split training testing
-#' @export
-#'
-#' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
-#' @param assay_type A string specifying the assay
-#' @param target Name of target variable for prediction
-#' @param interest_level Factor interest level in `target` variable
-#' @param reference_level Factor reference level in `target` variable
 #' @param types Vector of strings of feature types
 #' @param channels Vector of strings of feature channels
 #' @param group Grouping variable for cross-validation, e.g., patient
@@ -827,5 +520,119 @@ volcanoPlot <- function(stats, p_cutoff = 0.01/100, fc_cutoff = 0.3,
     xlab("log2 fold change") +
     ylab("-log10 p-value") +
     facet_wrap(~.data[[facet]], ncol = 1)
+
+}
+
+#' Plot ROC curves
+#'
+#' @import ggplot2
+#' @import dplyr
+#' @importFrom yardstick roc_auc roc_curve
+#' @export
+#'
+#' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#' @param assay_type A string specifying the assay
+#' @param meta_vars a vector of variables from `colData`
+#' @param target Name of target variable for prediction
+#' @return \code{\link[ggplot2]{ggplot2}} object
+#'
+plotROC <- function(sce, assay_type = "tfmfeatures",
+                    meta_vars = c("Patient", "Treatment", "Gender"),
+                    target = "Treatment") {
+
+  summed <- aggregateAcrossCells(
+    sce, id = colData(sce)[, meta_vars],
+    use.assay.type = assay_type, statistics = "mean"
+  )
+
+  result <- cbind(colData(summed)[, meta_vars] |> as.data.frame(),
+                  reducedDim(summed, type = "prevalidated")) |>
+    pivot_longer(cols = -c(all_of(meta_vars)),
+                 names_to = "features", values_to = "pred") |>
+    droplevels()
+
+  # title
+  reference_level <- levels(result$Treatment)[1]
+  interest_level <- levels(result$Treatment)[2]
+  mean_auc <- result |>
+    group_by(features) |>
+    yardstick::roc_auc(all_of(target), "pred", event_level = "second") |>
+    mutate(.estimate = round(.estimate, digits = 3)) |>
+    pull(.estimate) |>
+    mean() |>
+    round(digits = 3)
+  title_str <- paste0("Predict ", interest_level, " vs ", reference_level,
+                      " (mean AUC = ", mean_auc, ")")
+
+  result |>
+    group_by(features) |>
+    yardstick::roc_curve(all_of(target), "pred", event_level = "second") |>
+    ggplot(aes(x = 1 - specificity, y = sensitivity)) +
+    geom_path() +
+    geom_abline(lty = 3) +
+    coord_equal() +
+    scale_x_continuous(breaks = c(0, 0.5, 1)) +
+    scale_y_continuous(breaks = c(0, 0.5, 1)) +
+    xlab("false positive rate (1 - specificity)") +
+    ylab("true positive rate (sensitivity)") +
+    ggtitle(title_str) +
+    facet_wrap(~features)
+
+}
+
+#' Plot AUC comparison
+#'
+#' @import ggplot2
+#' @import dplyr
+#' @importFrom yardstick roc_auc
+#' @importFrom stringr str_remove
+#' @export
+#'
+#' @param sce_list A list of
+#'                 \code{\link[SingleCellExperiment]{SingleCellExperiment}}
+#'                 objects
+#' @param assay_type A string specifying the assay
+#' @param meta_vars a vector of variables from `colData`
+#' @param target Name of target variable for prediction
+#' @return \code{\link[ggplot2]{ggplot2}} object
+#'
+plotAUC <- function(sce_list,
+                     assay_type = "tfmfeatures",
+                     meta_vars = c("Patient", "Treatment", "Gender"),
+                     target = "Treatment") {
+
+  aucs <- lapply(sce_list, function(sce) {
+
+    summed <- aggregateAcrossCells(
+      sce, id = colData(sce)[, meta_vars],
+      use.assay.type = assay_type, statistics = "mean"
+    )
+
+    result <- cbind(colData(summed)[, meta_vars] |> as.data.frame(),
+                    reducedDim(summed, type = "prevalidated")) |>
+      pivot_longer(cols = -c(all_of(meta_vars)),
+                   names_to = "features", values_to = "pred") |>
+      droplevels()
+
+    interest_level <- levels(result$Treatment)[2]
+    result |>
+      group_by(features) |>
+      yardstick::roc_auc(all_of(target), "pred", event_level = "second") |>
+      mutate(Target = interest_level)
+
+  }) |> dplyr::bind_rows()
+
+  fct_order <- aucs |>
+    group_by(features) |>
+    summarize(median = median(.estimate)) |>
+    arrange(desc(median)) |>
+    pull(features)
+
+  aucs |>
+    mutate(features = factor(features, levels = fct_order)) |>
+    ggplot(aes(.estimate, features, color = Target)) +
+    geom_jitter(size = 3, height = 0.2) +
+    xlab("AUC") +
+    ggtitle("Area under the ROC curves")
 
 }

@@ -1,7 +1,7 @@
 Package: cellpaintr
 Type: Package
 Title: Perturbation analysis for cell painting
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: c(
     person("Christof", "Seiler", 
     email = "christof.seiler@maastrichtuniversity.nl", 

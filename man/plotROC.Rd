@@ -4,10 +4,21 @@
 \alias{plotROC}
 \title{Plot ROC curves}
 \usage{
-plotROC(result)
+plotROC(
+  sce,
+  assay_type = "tfmfeatures",
+  meta_vars = c("Patient", "Treatment", "Gender"),
+  target = "Treatment"
+)
 }
 \arguments{
-\item{result}{\code{\link[tibble]{tibble}} data frame}
+\item{sce}{\code{\link[SingleCellExperiment]{SingleCellExperiment}} object}
+
+\item{assay_type}{A string specifying the assay}
+
+\item{meta_vars}{a vector of variables from `colData`}
+
+\item{target}{Name of target variable for prediction}
 }
 \value{
 \code{\link[ggplot2]{ggplot2}} object

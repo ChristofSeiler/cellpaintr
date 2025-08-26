@@ -4,10 +4,23 @@
 \alias{plotAUC}
 \title{Plot AUC comparison}
 \usage{
-plotAUC(result_list)
+plotAUC(
+  sce_list,
+  assay_type = "tfmfeatures",
+  meta_vars = c("Patient", "Treatment", "Gender"),
+  target = "Treatment"
+)
 }
 \arguments{
-\item{result_list}{\code{\link[list]{list}} of data frames from `fitModel`}
+\item{sce_list}{A list of
+\code{\link[SingleCellExperiment]{SingleCellExperiment}}
+objects}
+
+\item{assay_type}{A string specifying the assay}
+
+\item{meta_vars}{a vector of variables from `colData`}
+
+\item{target}{Name of target variable for prediction}
 }
 \value{
 \code{\link[ggplot2]{ggplot2}} object
