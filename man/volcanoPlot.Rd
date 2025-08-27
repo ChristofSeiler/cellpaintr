@@ -5,28 +5,30 @@
 \title{Plot predicted leave-one-out probabilities}
 \usage{
 volcanoPlot(
-  stats,
+  sce_list,
+  assay_type = "tfmfeatures",
+  meta_vars = c("Patient", "Treatment", "Gender"),
+  target = "Treatment",
   p_cutoff = 0.01/100,
-  fc_cutoff = 0.3,
-  color = "Target",
-  label = "Feature",
-  facet = "Panel"
+  fc_cutoff = 0.3
 )
 }
 \arguments{
-\item{stats}{a \code{\link[data.frame]{data.frame}} from `calculateStats`}
+\item{sce_list}{A list of
+\code{\link[SingleCellExperiment]{SingleCellExperiment}}
+objects}
+
+\item{assay_type}{A string specifying the assay}
+
+\item{meta_vars}{a vector of variables from `colData`}
+
+\item{target}{Name of target variable for prediction}
 
 \item{p_cutoff}{Cut-off for statistical significance. A horizontal line will
 be drawn at -log10(p_cutoff).}
 
 \item{fc_cutoff}{Cut-off for absolute log2 fold-change. A vertical lines
 will be drawn at fc_cutoff.}
-
-\item{color}{Name of color variable}
-
-\item{label}{Name of label variable}
-
-\item{facet}{Name of facet variable}
 }
 \value{
 \code{\link[ggplot2]{ggplot2}} object

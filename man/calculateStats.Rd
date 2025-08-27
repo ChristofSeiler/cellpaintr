@@ -9,20 +9,19 @@ calculateStats(
   sce_list,
   assay_type = "tfmfeatures",
   meta_vars = c("Patient", "Treatment", "Gender"),
-  target = "Treatment",
-  panel = "Panel"
+  target = "Treatment"
 )
 }
 \arguments{
+\item{sce_list}{A list of
+\code{\link[SingleCellExperiment]{SingleCellExperiment}}
+objects}
+
 \item{assay_type}{A string specifying the assay}
 
 \item{meta_vars}{a vector of variables from `colData`}
 
 \item{target}{Name of target variable for prediction}
-
-\item{panel}{Name of panel variable}
-
-\item{sce}{\code{\link[SingleCellExperiment]{SingleCellExperiment}} object}
 }
 \value{
 \code{\link[data.frame]{data.frame}}

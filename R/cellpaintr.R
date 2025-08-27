@@ -280,10 +280,10 @@ normalizeExclude <- function(sce, plate = "Plate", treatment = "Treatment") {
 #' @param n_threads Number of parallel threads for fitting of models
 #' @return \code{\link[tibble]{tibble}} data frame
 #'
-predictYhat <- function(sce, assay_type = "tfmfeatures", target = "Treatment",
-                        interest_level = "RBPJ", reference_level = "cont",
-                        types = NULL, channels = NULL,
-                        group = "Patient", n_threads = 1, n_sub = NULL) {
+predictLOO <- function(sce, assay_type = "tfmfeatures", target = "Treatment",
+                       interest_level = "RBPJ", reference_level = "cont",
+                       types = NULL, channels = NULL,
+                       group = "Patient", n_threads = 1, n_sub = NULL) {
 
   # subset for binary classification
   sce_subset <- sce[, sce[[target]] %in% c(reference_level, interest_level)]
@@ -381,7 +381,6 @@ predictYhat <- function(sce, assay_type = "tfmfeatures", target = "Treatment",
 #' Aggregate predicted leave-one-out probabilities over meta variables
 #'
 #' @importFrom scater aggregateAcrossCells
-#' @export
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #' @param assay_type A string specifying the assay
@@ -411,15 +410,16 @@ aggregateYhat <- function(sce,
 #' @importFrom tidyr pivot_longer
 #' @export
 #'
-#' @param merged a \code{\link[data.frame]{data.frame}} from `aggregateYhat`
-#' @param target Name of target variable for prediction
+#' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#' @param assay_type A string specifying the assay
 #' @param meta_vars a vector of variables from `colData`
+#' @param target Name of target variable for prediction
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
-plotYhat <- function(sce,
-                     assay_type = "tfmfeatures",
-                     target = "Treatment",
-                     meta_vars = c("Patient", "Treatment", "Gender")) {
+plotLOO <- function(sce,
+                    assay_type = "tfmfeatures",
+                    meta_vars = c("Patient", "Treatment", "Gender"),
+                    target = "Treatment") {
 
   y_hat <- aggregateYhat(sce, assay_type, meta_vars)
 
@@ -439,24 +439,23 @@ plotYhat <- function(sce,
 #' over a list of SingleCellExperiment objects
 #'
 #' @importFrom scater aggregateAcrossCells
-#' @export
 #'
-#' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#' @param sce_list A list of
+#'                 \code{\link[SingleCellExperiment]{SingleCellExperiment}}
+#'                 objects
 #' @param assay_type A string specifying the assay
 #' @param meta_vars a vector of variables from `colData`
 #' @param target Name of target variable for prediction
-#' @param panel Name of panel variable
 #' @return \code{\link[data.frame]{data.frame}}
 #'
 calculateStats <- function(sce_list,
                            assay_type = "tfmfeatures",
                            meta_vars = c("Patient", "Treatment", "Gender"),
-                           target = "Treatment",
-                           panel = "Panel") {
+                           target = "Treatment") {
 
   lapply(sce_list, function(sce) {
 
-    y_hat <- aggregateYhat(sce, assay_type = assay_type, meta_vars = meta_vars)
+    y_hat <- aggregateYhat(sce, assay_type, meta_vars)
     interest_level <- y_hat |>
       pull(all_of(target)) |>
       droplevels() |>
@@ -478,7 +477,6 @@ calculateStats <- function(sce_list,
                        alternative = "less")
 
       data.frame(
-        Panel = unique(sce[[panel]]),
         Target = interest_level,
         Feature = feature,
         pvalue = result$p.value,
@@ -497,32 +495,38 @@ calculateStats <- function(sce_list,
 #' @importFrom ggrepel geom_text_repel
 #' @export
 #'
-#' @param stats a \code{\link[data.frame]{data.frame}} from `calculateStats`
+#' @param sce_list A list of
+#'                 \code{\link[SingleCellExperiment]{SingleCellExperiment}}
+#'                 objects
+#' @param assay_type A string specifying the assay
+#' @param meta_vars a vector of variables from `colData`
+#' @param target Name of target variable for prediction
 #' @param p_cutoff Cut-off for statistical significance. A horizontal line will
 #'                 be drawn at -log10(p_cutoff).
 #' @param fc_cutoff Cut-off for absolute log2 fold-change. A vertical lines
 #'                  will be drawn at fc_cutoff.
-#' @param color Name of color variable
-#' @param label Name of label variable
-#' @param facet Name of facet variable
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
-volcanoPlot <- function(stats, p_cutoff = 0.01/100, fc_cutoff = 0.3,
-                        color = "Target", label = "Feature", facet = "Panel") {
+volcanoPlot <- function(sce_list,
+                        assay_type = "tfmfeatures",
+                        meta_vars = c("Patient", "Treatment", "Gender"),
+                        target = "Treatment",
+                        p_cutoff = 0.01/100, fc_cutoff = 0.3) {
+
+  stats <- calculateStats(sce_list, assay_type, meta_vars, target)
 
   stats |>
     mutate(Feature = ifelse(pvalue < p_cutoff & log2FoldChange > fc_cutoff,
                             Feature, "")) |>
     ggplot(aes(log2FoldChange, -log10(pvalue),
-               color = .data[[color]], label = .data[[label]])) +
+               color = Target, label = Feature)) +
     geom_vline(xintercept = c(0, fc_cutoff), alpha = 0.5, linetype = "dashed") +
     geom_hline(yintercept = c(0, -log10(p_cutoff)), alpha = 0.5,
                linetype = "dashed") +
     geom_point() +
     geom_text_repel(max.overlaps = Inf) +
     xlab("log2 fold change") +
-    ylab("-log10 p-value") +
-    facet_wrap(~.data[[facet]], ncol = 1)
+    ylab("-log10 p-value")
 
 }
 
@@ -634,7 +638,7 @@ plotAUC <- function(sce_list,
   aucs |>
     mutate(features = factor(features, levels = fct_order)) |>
     ggplot(aes(.estimate, features, color = Target)) +
-    geom_jitter(size = 3, height = 0.2) +
+    geom_jitter(height = 0.2) +
     xlab("AUC") +
     ggtitle("Area under the ROC curves")
 
