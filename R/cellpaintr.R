@@ -416,9 +416,12 @@ aggregateYhat <- function(sce,
 #' @param meta_vars a vector of variables from `colData`
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
-plotYhat <- function(y_hat,
+plotYhat <- function(sce,
+                     assay_type = "tfmfeatures",
                      target = "Treatment",
                      meta_vars = c("Patient", "Treatment", "Gender")) {
+
+  y_hat <- aggregateYhat(sce, assay_type, meta_vars)
 
   y_hat |>
     pivot_longer(cols = -c(all_of(meta_vars)),
