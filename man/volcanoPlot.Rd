@@ -9,8 +9,8 @@ volcanoPlot(
   assay_type = "tfmfeatures",
   meta_vars = c("Patient", "Treatment", "Gender"),
   target = "Treatment",
-  p_cutoff = 0.01/100,
-  fc_cutoff = 0.3
+  p_cutoff = NULL,
+  fc_cutoff = 1
 )
 }
 \arguments{

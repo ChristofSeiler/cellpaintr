@@ -492,6 +492,7 @@ calculateStats <- function(sce_list,
 #' Plot predicted leave-one-out probabilities
 #'
 #' @import ggplot2
+#' @import dplyr
 #' @importFrom ggrepel geom_text_repel
 #' @export
 #'
@@ -511,9 +512,12 @@ volcanoPlot <- function(sce_list,
                         assay_type = "tfmfeatures",
                         meta_vars = c("Patient", "Treatment", "Gender"),
                         target = "Treatment",
-                        p_cutoff = 0.01/100, fc_cutoff = 0.3) {
+                        p_cutoff = NULL, fc_cutoff = 1.0) {
 
   stats <- calculateStats(sce_list, assay_type, meta_vars, target)
+  if(is.null(p_cutoff)) {
+    p_cutoff <- 0.01/nrow(stats)
+  }
 
   stats |>
     mutate(Feature = ifelse(pvalue < p_cutoff & log2FoldChange > fc_cutoff,
