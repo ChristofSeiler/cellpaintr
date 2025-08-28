@@ -8,7 +8,7 @@ over a list of SingleCellExperiment objects}
 calculateStats(
   sce_list,
   assay_type = "tfmfeatures",
-  meta_vars = c("Patient", "Treatment", "Gender"),
+  meta_vars = c("Patient", "Treatment"),
   target = "Treatment"
 )
 }

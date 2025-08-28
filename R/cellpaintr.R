@@ -389,7 +389,7 @@ predictLOO <- function(sce, assay_type = "tfmfeatures", target = "Treatment",
 #'
 aggregateYhat <- function(sce,
                           assay_type = "tfmfeatures",
-                          meta_vars = c("Patient", "Treatment", "Gender")) {
+                          meta_vars = c("Patient", "Treatment")) {
 
   summed <- aggregateAcrossCells(
     sce, id = colData(sce)[, meta_vars],
@@ -418,7 +418,7 @@ aggregateYhat <- function(sce,
 #'
 plotLOO <- function(sce,
                     assay_type = "tfmfeatures",
-                    meta_vars = c("Patient", "Treatment", "Gender"),
+                    meta_vars = c("Patient", "Treatment"),
                     target = "Treatment") {
 
   y_hat <- aggregateYhat(sce, assay_type, meta_vars)
@@ -450,7 +450,7 @@ plotLOO <- function(sce,
 #'
 calculateStats <- function(sce_list,
                            assay_type = "tfmfeatures",
-                           meta_vars = c("Patient", "Treatment", "Gender"),
+                           meta_vars = c("Patient", "Treatment"),
                            target = "Treatment") {
 
   lapply(sce_list, function(sce) {
@@ -510,7 +510,7 @@ calculateStats <- function(sce_list,
 #'
 volcanoPlot <- function(sce_list,
                         assay_type = "tfmfeatures",
-                        meta_vars = c("Patient", "Treatment", "Gender"),
+                        meta_vars = c("Patient", "Treatment"),
                         target = "Treatment",
                         p_cutoff = NULL, fc_cutoff = 1.0) {
 
@@ -548,7 +548,7 @@ volcanoPlot <- function(sce_list,
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
 plotROC <- function(sce, assay_type = "tfmfeatures",
-                    meta_vars = c("Patient", "Treatment", "Gender"),
+                    meta_vars = c("Patient", "Treatment"),
                     target = "Treatment") {
 
   summed <- aggregateAcrossCells(
@@ -609,7 +609,7 @@ plotROC <- function(sce, assay_type = "tfmfeatures",
 #'
 plotAUC <- function(sce_list,
                      assay_type = "tfmfeatures",
-                     meta_vars = c("Patient", "Treatment", "Gender"),
+                     meta_vars = c("Patient", "Treatment"),
                      target = "Treatment") {
 
   aucs <- lapply(sce_list, function(sce) {

@@ -7,7 +7,7 @@
 aggregateYhat(
   sce,
   assay_type = "tfmfeatures",
-  meta_vars = c("Patient", "Treatment", "Gender")
+  meta_vars = c("Patient", "Treatment")
 )
 }
 \arguments{
