@@ -653,7 +653,7 @@ plotAUC <- function(sce,
   aucs |>
     mutate(features = factor(features, levels = fct_order)) |>
     ggplot(aes(.estimate, features, color = Target)) +
-    geom_jitter(height = 0.2) +
+    geom_jitter(height = 0.2, width = 0) +
     xlab("AUC") +
     ggtitle("Area under the ROC curves")
 
