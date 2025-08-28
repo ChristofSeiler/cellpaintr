@@ -5,16 +5,15 @@
 \title{Plot AUC comparison}
 \usage{
 plotAUC(
-  sce_list,
+  sce,
   assay_type = "tfmfeatures",
   meta_vars = c("Patient", "Treatment"),
   target = "Treatment"
 )
 }
 \arguments{
-\item{sce_list}{A list of
-\code{\link[SingleCellExperiment]{SingleCellExperiment}}
-objects}
+\item{sce}{A single or list of
+\code{\link[SingleCellExperiment]{SingleCellExperiment}} objects}
 
 \item{assay_type}{A string specifying the assay}
 

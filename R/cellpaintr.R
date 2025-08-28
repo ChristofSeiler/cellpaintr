@@ -473,14 +473,15 @@ calculateStats <- function(sce_list,
 
       x = pull(wide, all_of(reference_level))
       y = pull(wide, all_of(interest_level))
-      result <- t.test(x, y, paired = TRUE, var.equal = TRUE,
+      paired <- sum(is.na(c(x, y))) == 0
+      result <- t.test(x, y, paired = paired, var.equal = TRUE,
                        alternative = "less")
 
       data.frame(
         Target = interest_level,
         Feature = feature,
         pvalue = result$p.value,
-        log2FoldChange = log2(mean(y)/mean(x))
+        log2FoldChange = log2(mean(y, na.rm = TRUE)/mean(x, na.rm = TRUE))
       )
 
     }) |> bind_rows()
@@ -496,9 +497,8 @@ calculateStats <- function(sce_list,
 #' @importFrom ggrepel geom_text_repel
 #' @export
 #'
-#' @param sce_list A list of
-#'                 \code{\link[SingleCellExperiment]{SingleCellExperiment}}
-#'                 objects
+#' @param sce A single or list of
+#'            \code{\link[SingleCellExperiment]{SingleCellExperiment}} objects
 #' @param assay_type A string specifying the assay
 #' @param meta_vars a vector of variables from `colData`
 #' @param target Name of target variable for prediction
@@ -508,11 +508,17 @@ calculateStats <- function(sce_list,
 #'                  will be drawn at fc_cutoff.
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
-volcanoPlot <- function(sce_list,
+volcanoPlot <- function(sce,
                         assay_type = "tfmfeatures",
                         meta_vars = c("Patient", "Treatment"),
                         target = "Treatment",
                         p_cutoff = NULL, fc_cutoff = 1.0) {
+
+  if(class(sce) == "SingleCellExperiment") {
+    sce_list <- list(sce)
+  } else {
+    sce_list <- sce
+  }
 
   stats <- calculateStats(sce_list, assay_type, meta_vars, target)
   if(is.null(p_cutoff)) {
@@ -563,8 +569,8 @@ plotROC <- function(sce, assay_type = "tfmfeatures",
     droplevels()
 
   # title
-  reference_level <- levels(result$Treatment)[1]
-  interest_level <- levels(result$Treatment)[2]
+  reference_level <- levels(result[[target]])[1]
+  interest_level <- levels(result[[target]])[2]
   mean_auc <- result |>
     group_by(features) |>
     yardstick::roc_auc(all_of(target), "pred", event_level = "second") |>
@@ -599,18 +605,23 @@ plotROC <- function(sce, assay_type = "tfmfeatures",
 #' @importFrom stringr str_remove
 #' @export
 #'
-#' @param sce_list A list of
-#'                 \code{\link[SingleCellExperiment]{SingleCellExperiment}}
-#'                 objects
+#' @param sce A single or list of
+#'            \code{\link[SingleCellExperiment]{SingleCellExperiment}} objects
 #' @param assay_type A string specifying the assay
 #' @param meta_vars a vector of variables from `colData`
 #' @param target Name of target variable for prediction
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
-plotAUC <- function(sce_list,
-                     assay_type = "tfmfeatures",
-                     meta_vars = c("Patient", "Treatment"),
-                     target = "Treatment") {
+plotAUC <- function(sce,
+                    assay_type = "tfmfeatures",
+                    meta_vars = c("Patient", "Treatment"),
+                    target = "Treatment") {
+
+  if(class(sce) == "SingleCellExperiment") {
+    sce_list <- list(sce)
+  } else {
+    sce_list <- sce
+  }
 
   aucs <- lapply(sce_list, function(sce) {
 
@@ -625,7 +636,7 @@ plotAUC <- function(sce_list,
                    names_to = "features", values_to = "pred") |>
       droplevels()
 
-    interest_level <- levels(result$Treatment)[2]
+    interest_level <- levels(result[[target]])[2]
     result |>
       group_by(features) |>
       yardstick::roc_auc(all_of(target), "pred", event_level = "second") |>
