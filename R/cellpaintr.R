@@ -610,12 +610,14 @@ plotROC <- function(sce, assay_type = "tfmfeatures",
 #' @param assay_type A string specifying the assay
 #' @param meta_vars a vector of variables from `colData`
 #' @param target Name of target variable for prediction
+#' @param batch Name of batch variable
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
 plotAUC <- function(sce,
                     assay_type = "tfmfeatures",
                     meta_vars = c("Patient", "Treatment"),
-                    target = "Treatment") {
+                    target = "Treatment",
+                    batch = NULL) {
 
   if(class(sce) == "SingleCellExperiment") {
     sce_list <- list(sce)
@@ -637,8 +639,15 @@ plotAUC <- function(sce,
       droplevels()
 
     interest_level <- levels(result[[target]])[2]
+
+    if(!is.null(batch)) {
+      result <- result |>
+        group_by(features, .data[[batch]])
+    } else {
+      result <- result |>
+        group_by(features)
+    }
     result |>
-      group_by(features) |>
       yardstick::roc_auc(all_of(target), "pred", event_level = "second") |>
       mutate(Target = interest_level)
 
@@ -650,11 +659,18 @@ plotAUC <- function(sce,
     arrange(desc(median)) |>
     pull(features)
 
-  aucs |>
+  gp <- aucs |>
     mutate(features = factor(features, levels = fct_order)) |>
     ggplot(aes(.estimate, features, color = Target)) +
-    geom_jitter(height = 0.2, width = 0) +
     xlab("AUC") +
     ggtitle("Area under the ROC curves")
+
+  if(!is.null(batch)) {
+    gp +
+      geom_jitter(aes(shape = .data[[batch]]), height = 0.2, width = 0)
+  } else {
+    gp +
+      geom_jitter(height = 0.2, width = 0)
+  }
 
 }
