@@ -8,7 +8,8 @@ plotAUC(
   sce,
   assay_type = "tfmfeatures",
   meta_vars = c("Patient", "Treatment"),
-  target = "Treatment"
+  target = "Treatment",
+  batch = NULL
 )
 }
 \arguments{
@@ -20,6 +21,8 @@ plotAUC(
 \item{meta_vars}{a vector of variables from `colData`}
 
 \item{target}{Name of target variable for prediction}
+
+\item{batch}{Name of batch variable}
 }
 \value{
 \code{\link[ggplot2]{ggplot2}} object
