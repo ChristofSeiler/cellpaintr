@@ -4,10 +4,12 @@
 \alias{transformLogScale}
 \title{Filter low variance features}
 \usage{
-transformLogScale(sce)
+transformLogScale(sce, robust = FALSE)
 }
 \arguments{
 \item{sce}{\code{\link[SingleCellExperiment]{SingleCellExperiment}} object}
+
+\item{robust}{If true robust z-score, otherwise standard z-score}
 }
 \value{
 \code{\link[SingleCellExperiment]{SingleCellExperiment}} object

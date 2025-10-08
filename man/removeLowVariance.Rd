@@ -4,10 +4,12 @@
 \alias{removeLowVariance}
 \title{Filter low variance features}
 \usage{
-removeLowVariance(sce)
+removeLowVariance(sce, threshold = 0)
 }
 \arguments{
 \item{sce}{\code{\link[SingleCellExperiment]{SingleCellExperiment}} object}
+
+\item{threshold}{Keep features that have larger variance than this threshold}
 }
 \value{
 \code{\link[SingleCellExperiment]{SingleCellExperiment}} object

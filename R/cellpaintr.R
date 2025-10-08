@@ -174,16 +174,17 @@ removeMissingValues <- function(sce) {
 #' @export
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#' @param threshold Keep features that have larger variance than this threshold
 #' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #'
-removeLowVariance <- function(sce) {
+removeLowVariance <- function(sce, threshold = 0) {
 
   mat <- assay(sce, name = "features")
 
   var_features <- apply(mat, 1, var)
-  feature_ids <- which(var_features == 0)
+  feature_ids <- which(var_features > threshold)
 
-  sce[-feature_ids, ]
+  sce[feature_ids, ]
 
 }
 
@@ -193,71 +194,34 @@ removeLowVariance <- function(sce) {
 #' @export
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#' @param robust If true robust z-score, otherwise standard z-score
 #' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #'
-transformLogScale <- function(sce) {
+transformLogScale <- function(sce, robust = FALSE) {
 
   mat <- assay(sce, name = "features")
 
   # log(x+1) transform on non-negative valued features
   non_neg_features <- apply(mat, 1, function(x) sum(x >= 0) == length(x) )
-  mat[non_neg_features, ] <- log(1 + mat[non_neg_features, ])
+  mat[non_neg_features, ] <- log1p(mat[non_neg_features, ])
 
-  # center and standardize
-  mat <- mat |> t() |> scale() |> t()
+  if(!robust) {
+
+    # option: standard z-score
+    mat <- mat |> t() |> scale() |> t()
+
+  } else {
+
+    # option: robust z-score
+    median_features <- apply(mat, 1, function(x) median(x) )
+    mad_features <- apply(mat, 1, function(x) mad(x) )
+    mat <- (mat-median_features)/mad_features
+
+  }
 
   # add transformed features
   assays(sce)$tfmfeatures <- mat
   sce
-
-}
-
-#' Normalize by median absolute deviation and exclude zero features
-#'
-#' @import SingleCellExperiment
-#' @export
-#'
-#' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
-#' @param plate Name of the plate variable
-#' @param treatment Name of the treatment variable
-#' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
-#'
-normalizeExclude <- function(sce, plate = "Plate", treatment = "Treatment") {
-
-  plates <- unique(sce[[plate]])
-
-  plate_list <- lapply(plates, function(plate_id) {
-
-    # normalize per plate
-    sce_plate <- sce[, sce[[plate]] == plate_id]
-
-    # calculate median and mad on control cells
-    ref_level <- levels(sce_plate[[treatment]])[1]
-    sce_ref <- sce_plate[, sce_plate[[treatment]] == ref_level]
-    mat_ref <- assay(sce_ref, name = "features")
-    median_features <- apply(mat_ref, 1, function(x) median(x) )
-    mad_features <- apply(mat_ref, 1, function(x) mad(x) )
-
-    # normalize
-    mat <- assay(sce_plate, name = "features")
-    mat <- (mat-median_features)/mad_features
-
-    # add transformed features
-    assays(sce_plate)$tfmfeatures <- mat
-
-    # exclude
-    nonzero_features <- which(median_features != 0)
-    sce_plate[nonzero_features, ]
-
-  })
-
-  # exclude features that have zero median in at least one plate
-  feature_name_list <- lapply(plate_list,
-                              function(sce_plate) rownames(sce_plate))
-  include_features <- Reduce(intersect, feature_name_list)
-  plate_list <- lapply(plate_list,
-                       function(sce_plate) sce_plate[include_features, ])
-  do.call(cbind, plate_list)
 
 }
 
