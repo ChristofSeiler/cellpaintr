@@ -179,14 +179,14 @@ removeMissingValues <- function(sce) {
 #'
 removeNAs <- function(sce) {
 
-  mat <- assay(sce_plate, "features")
+  mat <- assay(sce, "features")
 
   miss_cells <- apply(mat, 2, function(x) sum(is.na(x)))
   cell_ids <- which(miss_cells > 0)
   if(length(cell_ids) > 0) {
-    sce_plate <- sce_plate[, -cell_ids]
+    sce <- sce[, -cell_ids]
     }
-  sce_plate
+  sce
 
 }
 
