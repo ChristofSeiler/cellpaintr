@@ -168,6 +168,28 @@ removeMissingValues <- function(sce) {
 
 }
 
+
+#' Remove cells with missing features
+#'
+#' @import SingleCellExperiment
+#' @export
+#'
+#' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#'
+removeNAs <- function(sce) {
+
+  mat <- assay(sce_plate, "features")
+
+  miss_cells <- apply(mat, 2, function(x) sum(is.na(x)))
+  cell_ids <- which(miss_cells > 0)
+  if(length(cell_ids) > 0) {
+    sce_plate <- sce_plate[, -cell_ids]
+    }
+  sce_plate
+
+}
+
 #' Filter low variance features
 #'
 #' @import SingleCellExperiment
