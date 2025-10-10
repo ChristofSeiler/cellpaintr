@@ -154,7 +154,7 @@ removeOutliers <- function(sce, min, max) {
 #'
 removeMissingValues <- function(sce) {
 
-  mat <- assay(sce, name = "features")
+  mat <- assay(sce, "features")
 
   # remove missing values in features
   miss_perc_features <- apply(mat, 1, function(x) mean(is.na(x)))
@@ -175,15 +175,19 @@ removeMissingValues <- function(sce) {
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #' @param threshold Keep features that have larger variance than this threshold
+#' @param robust If true use median absolute deviation, otherwise use variance
 #' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #'
-removeLowVariance <- function(sce, threshold = 0) {
+removeLowVariance <- function(sce, threshold = 0, robust = FALSE) {
 
-  mat <- assay(sce, name = "features")
+  mat <- assay(sce, "features")
 
-  var_features <- apply(mat, 1, var)
-  feature_ids <- which(var_features > threshold)
-
+  if(!robust) {
+    spread <- apply(mat, 1, var)
+  } else {
+    spread <- apply(mat, 1, mad)
+  }
+  feature_ids <- which(spread > threshold)
   sce[feature_ids, ]
 
 }
@@ -199,7 +203,7 @@ removeLowVariance <- function(sce, threshold = 0) {
 #'
 transformLogScale <- function(sce, robust = FALSE) {
 
-  mat <- assay(sce, name = "features")
+  mat <- assay(sce, "features")
 
   # log(x+1) transform on non-negative valued features
   non_neg_features <- apply(mat, 1, function(x) sum(x >= 0) == length(x) )
@@ -213,14 +217,14 @@ transformLogScale <- function(sce, robust = FALSE) {
   } else {
 
     # option: robust z-score
-    median_features <- apply(mat, 1, function(x) median(x) )
-    mad_features <- apply(mat, 1, function(x) mad(x) )
-    mat <- (mat-median_features)/mad_features
+    median_features <- apply(mat, 1, median)
+    mad_features <- apply(mat, 1, mad)
+    mat <- (mat - median_features)/mad_features
 
   }
 
   # add transformed features
-  assays(sce)$tfmfeatures <- mat
+  assay(sce, "tfmfeatures") <- mat
   sce
 
 }
@@ -275,7 +279,7 @@ predictLOO <- function(sce, assay_type = "tfmfeatures", target = "Treatment",
     sce_feature <- sce_feature[features,]
 
     # prepare data frame with target variable and predictor matrix
-    X <- assay(sce_feature, name = assay_type) |> t()
+    X <- assay(sce_feature, assay_type) |> t()
     cells <- colData(sce_feature) |> as_tibble()
     ml_data <- data.frame(Target = cells |> pull(target), X)
     ml_data$Target <- factor(ml_data$Target,

@@ -4,12 +4,14 @@
 \alias{removeLowVariance}
 \title{Filter low variance features}
 \usage{
-removeLowVariance(sce, threshold = 0)
+removeLowVariance(sce, threshold = 0, robust = FALSE)
 }
 \arguments{
 \item{sce}{\code{\link[SingleCellExperiment]{SingleCellExperiment}} object}
 
 \item{threshold}{Keep features that have larger variance than this threshold}
+
+\item{robust}{If true use median absolute deviation, otherwise use variance}
 }
 \value{
 \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
