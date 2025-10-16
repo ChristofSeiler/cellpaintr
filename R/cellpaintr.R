@@ -214,6 +214,23 @@ removeLowVariance <- function(sce, threshold = 0, robust = FALSE) {
 
 }
 
+#' Remove zero-inflated features
+#'
+#' @import SingleCellExperiment
+#' @export
+#'
+#' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#' @param proportion Remove features exceeding this zero-inflation proportion
+#' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#'
+removeZeroInflation <- function(sce, proportion = 0.2) {
+
+  mat <- assay(sce, "features")
+  prop_zeros <- apply(mat, 1, function(x) mean(x == 0))
+  sce[!(prop_zeros > proportion), ]
+
+}
+
 #' Filter low variance features
 #'
 #' @import SingleCellExperiment
