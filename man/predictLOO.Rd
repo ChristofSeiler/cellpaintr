@@ -8,13 +8,13 @@ predictLOO(
   sce,
   assay_type = "tfmfeatures",
   target = "Treatment",
-  interest_level = "RBPJ",
-  reference_level = "cont",
+  interest_level,
+  reference_level,
   types = NULL,
   channels = NULL,
   group = "Patient",
-  n_threads = 1,
-  n_sub = NULL
+  weights = NULL,
+  n_threads = 1
 )
 }
 \arguments{
@@ -33,6 +33,8 @@ predictLOO(
 \item{channels}{Vector of strings of feature channels}
 
 \item{group}{Grouping variable for cross-validation, e.g., patient}
+
+\item{weights}{Weights variable when features are aggregated}
 
 \item{n_threads}{Number of parallel threads for fitting of models}
 }

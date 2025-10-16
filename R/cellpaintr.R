@@ -267,19 +267,18 @@ transformLogScale <- function(sce, robust = FALSE) {
 #' @param types Vector of strings of feature types
 #' @param channels Vector of strings of feature channels
 #' @param group Grouping variable for cross-validation, e.g., patient
+#' @param weights Weights variable when features are aggregated
 #' @param n_threads Number of parallel threads for fitting of models
 #' @return \code{\link[tibble]{tibble}} data frame
 #'
-predictLOO <- function(sce, assay_type = "tfmfeatures", target = "Treatment",
-                       interest_level = "RBPJ", reference_level = "cont",
+predictLOO <- function(sce, assay_type = "tfmfeatures",
+                       target = "Treatment", interest_level, reference_level,
                        types = NULL, channels = NULL,
-                       group = "Patient", n_threads = 1, n_sub = NULL) {
+                       group = "Patient",
+                       weights = NULL, n_threads = 1) {
 
   # subset for binary classification
   sce_subset <- sce[, sce[[target]] %in% c(reference_level, interest_level)]
-  if(!is.null(n_sub)) {
-    sce_subset <- sce_subset[,sample(ncol(sce_subset), n_sub)]
-  }
 
   # function to compute y_hat on a subset of the features
   compute_y_hat <- function(feature_name, sce_feature, starts = TRUE) {
@@ -315,10 +314,16 @@ predictLOO <- function(sce, assay_type = "tfmfeatures", target = "Treatment",
       test_ids <- which(sce_feature[[group]] == patient)
 
       # train model
+      if(!is.null(weights)) {
+        case_weights <- sce_feature[[weights]][train_ids]
+      } else {
+        case_weights <- NULL
+      }
       rf_spec <-
         parsnip::rand_forest() |>
         parsnip::set_mode("classification") |>
-        parsnip::set_engine("ranger", num.threads = n_threads)
+        parsnip::set_engine("ranger", num.threads = n_threads,
+                            case.weights = case_weights)
       rf_fit <- rf_spec |>
         parsnip::fit(Target ~ ., data = ml_data[train_ids, ])
 
