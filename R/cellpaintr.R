@@ -452,51 +452,45 @@ plotLOO <- function(sce,
 #'
 #' @importFrom scater aggregateAcrossCells
 #'
-#' @param sce_list A list of
-#'                 \code{\link[SingleCellExperiment]{SingleCellExperiment}}
-#'                 objects
+#' @param sce A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #' @param assay_type A string specifying the assay
 #' @param meta_vars a vector of variables from `colData`
 #' @param target Name of target variable for prediction
 #' @return \code{\link[data.frame]{data.frame}}
 #'
-calculateStats <- function(sce_list,
+calculateStats <- function(sce,
                            assay_type = "tfmfeatures",
                            meta_vars = c("Patient", "Treatment"),
                            target = "Treatment") {
 
-  lapply(sce_list, function(sce) {
+  y_hat <- aggregateYhat(sce, assay_type, meta_vars)
+  interest_level <- y_hat |>
+    pull(all_of(target)) |>
+    droplevels() |>
+    levels() |>
+    setdiff(reference_level)
+  feature_vars <- setdiff(names(y_hat), meta_vars)
+  y_hat$Target <- interest_level
 
-    y_hat <- aggregateYhat(sce, assay_type, meta_vars)
-    interest_level <- y_hat |>
-      pull(all_of(target)) |>
-      droplevels() |>
-      levels() |>
-      setdiff(reference_level)
-    feature_vars <- setdiff(names(y_hat), meta_vars)
-    y_hat$Target <- interest_level
+  # test one feature at a time
+  lapply(feature_vars, function(feature) {
 
-    # test one feature at a time
-    lapply(feature_vars, function(feature) {
+    wide <- y_hat |>
+      select(all_of(c(meta_vars, feature))) |>
+      pivot_wider(names_from = all_of(target), values_from = all_of(feature))
 
-      wide <- y_hat |>
-        select(all_of(c(meta_vars, feature))) |>
-        pivot_wider(names_from = all_of(target), values_from = all_of(feature))
+    x = pull(wide, all_of(reference_level))
+    y = pull(wide, all_of(interest_level))
+    paired <- sum(is.na(c(x, y))) == 0
+    result <- t.test(x, y, paired = paired, var.equal = TRUE,
+                     alternative = "less")
 
-      x = pull(wide, all_of(reference_level))
-      y = pull(wide, all_of(interest_level))
-      paired <- sum(is.na(c(x, y))) == 0
-      result <- t.test(x, y, paired = paired, var.equal = TRUE,
-                       alternative = "less")
-
-      data.frame(
-        Target = interest_level,
-        Feature = feature,
-        pvalue = result$p.value,
-        log2FoldChange = log2(mean(y, na.rm = TRUE)/mean(x, na.rm = TRUE))
-      )
-
-    }) |> bind_rows()
+    data.frame(
+      Target = interest_level,
+      Feature = feature,
+      pvalue = result$p.value,
+      log2FoldChange = log2(mean(y, na.rm = TRUE)/mean(x, na.rm = TRUE))
+    )
 
   }) |> bind_rows()
 
@@ -509,7 +503,7 @@ calculateStats <- function(sce_list,
 #' @importFrom ggrepel geom_text_repel
 #' @export
 #'
-#' @param sce A single or list of
+#' @param sce A single or namded list of
 #'            \code{\link[SingleCellExperiment]{SingleCellExperiment}} objects
 #' @param assay_type A string specifying the assay
 #' @param meta_vars a vector of variables from `colData`
@@ -526,29 +520,48 @@ volcanoPlot <- function(sce,
                         target = "Treatment",
                         p_cutoff = NULL, fc_cutoff = 1.0) {
 
-  if(class(sce) == "SingleCellExperiment") {
-    sce_list <- list(sce)
+  if(is.list(sce)) {
+
+    exp_names <- names(sce)
+    stats <- lapply(exp_names, function(exp_name) {
+      df <- calculateStats(sce[[exp_name]], assay_type, meta_vars, target)
+      df$Experiment <- exp_name
+      df
+    }) |> bind_rows()
+
   } else {
-    sce_list <- sce
+
+    stats <- calculateStats(sce, assay_type, meta_vars, target)
+
   }
 
-  stats <- calculateStats(sce_list, assay_type, meta_vars, target)
   if(is.null(p_cutoff)) {
     p_cutoff <- 0.01/nrow(stats)
   }
 
-  stats |>
+  gg <- stats |>
     mutate(Feature = ifelse(pvalue < p_cutoff & log2FoldChange > fc_cutoff,
                             Feature, "")) |>
-    ggplot(aes(log2FoldChange, -log10(pvalue),
-               color = Target, label = Feature)) +
+    ggplot(aes(log2FoldChange, -log10(pvalue), label = Feature)) +
     geom_vline(xintercept = c(0, fc_cutoff), alpha = 0.5, linetype = "dashed") +
     geom_hline(yintercept = c(0, -log10(p_cutoff)), alpha = 0.5,
                linetype = "dashed") +
-    geom_point() +
-    geom_text_repel(max.overlaps = Inf) +
     xlab("log2 fold change") +
     ylab("-log10 p-value")
+
+  if(is.list(sce)) {
+
+    gg +
+      geom_point(aes(color = Experiment)) +
+      geom_text_repel(aes(color = Experiment), max.overlaps = Inf)
+
+  } else {
+
+    gg +
+      geom_point() +
+      geom_text_repel()
+
+  }
 
 }
 
