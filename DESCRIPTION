@@ -28,7 +28,8 @@ Imports:
     parsnip,
     ranger,
     yardstick,
-    rsample
+    rsample,
+    purrr
 Depends:
     R (>= 4.3.0),
     SingleCellExperiment

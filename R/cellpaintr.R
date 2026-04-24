@@ -274,6 +274,7 @@ transformLogScale <- function(sce, robust = FALSE) {
 #' @import dplyr
 #' @importFrom parsnip rand_forest set_mode set_engine
 #' @importFrom rsample group_initial_split training testing
+#' @importFrom purrr map
 #' @export
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
@@ -368,14 +369,14 @@ predictLOO <- function(sce, assay_type = "tfmfeatures",
   if(length(types) > 0) {
     y_hat <- bind_cols(
       y_hat,
-      lapply(types, compute_y_hat, sce_subset, starts = TRUE) |>
+      purrr::map(types, compute_y_hat, sce_subset, starts = TRUE, .progress = TRUE) |>
         bind_cols()
     )
   }
   if(length(channels) > 0) {
     y_hat <- bind_cols(
       y_hat,
-      lapply(channels, compute_y_hat, sce_subset, starts = FALSE) |>
+      purrr::map(channels, compute_y_hat, sce_subset, starts = FALSE, .progress = TRUE) |>
         bind_cols()
     )
   }
@@ -463,12 +464,11 @@ calculateStats <- function(sce,
                            meta_vars = c("Patient", "Treatment"),
                            target = "Treatment") {
 
+  # standard convention in base R to store reference level as first
+  reference_level <- levels(sce[[target]])[1]
+  interest_level <- levels(sce[[target]])[2]
+
   y_hat <- aggregateYhat(sce, assay_type, meta_vars)
-  interest_level <- y_hat |>
-    pull(all_of(target)) |>
-    droplevels() |>
-    levels() |>
-    setdiff(reference_level)
   feature_vars <- setdiff(names(y_hat), meta_vars)
   y_hat$Target <- interest_level
 
