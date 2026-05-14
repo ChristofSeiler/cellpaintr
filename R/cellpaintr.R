@@ -452,6 +452,7 @@ plotLOO <- function(sce,
 #' over a list of SingleCellExperiment objects
 #'
 #' @importFrom scater aggregateAcrossCells
+#' @export
 #'
 #' @param sce A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #' @param assay_type A string specifying the assay
