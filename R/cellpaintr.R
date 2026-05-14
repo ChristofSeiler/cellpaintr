@@ -298,6 +298,9 @@ predictLOO <- function(sce, assay_type = "tfmfeatures",
   # subset for binary classification
   sce_subset <- sce[, sce[[target]] %in% c(reference_level, interest_level)]
 
+  # remove unused levels
+  sce_subset[[target]] <- droplevels(sce_subset[[target]])
+
   # function to compute y_hat on a subset of the features
   compute_y_hat <- function(feature_name, sce_feature, starts = TRUE) {
 
