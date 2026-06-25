@@ -1,7 +1,6 @@
 #' Load cell painting data from file and convert to a SingleCellExperiment
 #'
-#' @import SingleCellExperiment
-#' @import dplyr
+#' @importFrom SingleCellExperiment SingleCellExperiment
 #' @importFrom readr read_csv
 #' @importFrom stringr str_detect str_remove
 #' @export
@@ -52,9 +51,9 @@ loadData <- function(cell_file) {
 
 #' Plot number of cells per image
 #'
-#' @import SingleCellExperiment
-#' @import ggplot2
-#' @import dplyr
+#' @importFrom SingleCellExperiment colData
+#' @importFrom ggplot2 ggplot geom_histogram scale_x_log10 ggtitle
+#' @importFrom dplyr group_by tally
 #' @importFrom tibble as_tibble
 #' @export
 #'
@@ -77,9 +76,10 @@ plotCellsPerImage <- function(sce, bins = 100) {
 
 #' Plot number of cells per image
 #'
-#' @import SingleCellExperiment
-#' @import ggplot2
-#' @import dplyr
+#' @importFrom SummarizedExperiment assay
+#' @importFrom SingleCellExperiment reducedDim
+#' @importFrom ggplot2 ggplot geom_tile aes scale_fill_gradient2 theme_minimal coord_fixed ylab
+#' @importFrom dplyr mutate top_n
 #' @importFrom tibble as_tibble
 #' @importFrom tidyr pivot_longer
 #' @export
@@ -121,8 +121,8 @@ plotPCACor <- function(sce, filter_by = 1, top = 20, pcs = 1:5) {
 
 #' Remove cells if not enough or too many in one image
 #'
-#' @import SingleCellExperiment
-#' @import dplyr
+#' @importFrom SingleCellExperiment colData
+#' @importFrom dplyr group_by tally filter pull
 #' @importFrom tibble as_tibble
 #' @export
 #'
@@ -146,7 +146,7 @@ removeOutliers <- function(sce, min, max) {
 
 #' Remove missing values
 #'
-#' @import SingleCellExperiment
+#' @importFrom SummarizedExperiment assay
 #' @export
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
@@ -171,7 +171,7 @@ removeMissingValues <- function(sce) {
 
 #' Remove cells with missing features
 #'
-#' @import SingleCellExperiment
+#' @importFrom SummarizedExperiment assay
 #' @export
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
@@ -192,7 +192,7 @@ removeNAs <- function(sce) {
 
 #' Filter low variance features
 #'
-#' @import SingleCellExperiment
+#' @importFrom SummarizedExperiment assay
 #' @export
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
@@ -216,7 +216,7 @@ removeLowVariance <- function(sce, threshold = 0, robust = FALSE) {
 
 #' Remove zero-inflated features
 #'
-#' @import SingleCellExperiment
+#' @importFrom SummarizedExperiment assay
 #' @export
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
@@ -233,7 +233,7 @@ removeZeroInflation <- function(sce, proportion = 0.2) {
 
 #' Filter low variance features
 #'
-#' @import SingleCellExperiment
+#' @importFrom SummarizedExperiment assay assay<-
 #' @export
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
@@ -270,11 +270,13 @@ transformLogScale <- function(sce, robust = FALSE) {
 
 #' Predict target from features
 #'
-#' @import SingleCellExperiment
-#' @import dplyr
+#' @importFrom SummarizedExperiment assay
+#' @importFrom SingleCellExperiment colData reducedDim reducedDim<-
+#' @importFrom dplyr bind_cols bind_rows arrange select
 #' @importFrom parsnip rand_forest set_mode set_engine
 #' @importFrom rsample group_initial_split training testing
 #' @importFrom purrr map
+#' @importFrom ranger ranger
 #' @export
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
@@ -421,8 +423,7 @@ aggregateYhat <- function(sce,
 
 #' Plot predicted leave-one-out probabilities
 #'
-#' @import ggplot2
-#' @import dplyr
+#' @importFrom ggplot2 ggplot aes geom_boxplot geom_jitter ylab facet_wrap geom_hline
 #' @importFrom tidyr pivot_longer
 #' @export
 #'
@@ -454,7 +455,10 @@ plotLOO <- function(sce,
 #' Aggregate predicted leave-one-out probabilities over meta variables
 #' over a list of SingleCellExperiment objects
 #'
+#' @importFrom dplyr pull bind_rows all_of
 #' @importFrom scater aggregateAcrossCells
+#' @importFrom tidyr pivot_wider
+#' @importFrom stats t.test
 #' @export
 #'
 #' @param sce A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
@@ -502,8 +506,8 @@ calculateStats <- function(sce,
 
 #' Plot predicted leave-one-out probabilities
 #'
-#' @import ggplot2
-#' @import dplyr
+#' @importFrom ggplot2 ggplot aes geom_vline geom_hline xlab ylab geom_point
+#' @importFrom dplyr bind_rows mutate
 #' @importFrom ggrepel geom_text_repel
 #' @export
 #'
@@ -571,9 +575,13 @@ volcanoPlot <- function(sce,
 
 #' Plot ROC curves
 #'
-#' @import ggplot2
-#' @import dplyr
+#' @importFrom ggplot2 ggplot geom_path geom_abline coord_equal
+#' @importFrom ggplot2 scale_x_continuous scale_y_continuous xlab ylab ggtitle
+#' @importFrom ggplot2 facet_wrap
+#' @importFrom dplyr group_by mutate pull
 #' @importFrom yardstick roc_auc roc_curve
+#' @importFrom SingleCellExperiment reducedDim
+#' @importFrom tidyr pivot_longer
 #' @export
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
@@ -628,10 +636,14 @@ plotROC <- function(sce, assay_type = "tfmfeatures",
 
 #' Plot AUC comparison
 #'
-#' @import ggplot2
-#' @import dplyr
+#' @importFrom SingleCellExperiment colData
+#' @importFrom ggplot2 ggplot xlab ggtitle geom_jitter aes
+#' @importFrom dplyr group_by bind_rows summarize arrange pull
 #' @importFrom yardstick roc_auc
 #' @importFrom stringr str_remove
+#' @importFrom tidyr pivot_longer
+#' @importFrom scater aggregateAcrossCells
+#' @importFrom methods is
 #' @export
 #'
 #' @param sce A single or list of
@@ -648,7 +660,7 @@ plotAUC <- function(sce,
                     target = "Treatment",
                     batch = NULL) {
 
-  if(class(sce) == "SingleCellExperiment") {
+  if(is(sce, "SingleCellExperiment")) {
     sce_list <- list(sce)
   } else {
     sce_list <- sce

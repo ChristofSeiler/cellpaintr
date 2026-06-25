@@ -28,7 +28,6 @@ Imports:
     readr,
     stringr,
     dplyr,
-    tidymodels,
     parsnip,
     ranger,
     yardstick,
@@ -37,9 +36,11 @@ Imports:
     scater,
     tibble,
     tidyr,
-    ggrepel
+    ggrepel,
+    methods
 Depends:
     R (>= 4.3.0),
+    SummarizedExperiment,
     SingleCellExperiment
 Suggests: 
     knitr,
