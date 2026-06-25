@@ -1,19 +1,24 @@
 Package: cellpaintr
 Type: Package
-Title: Perturbation analysis for cell painting
-Version: 0.2.0
+Title: Perturbation Analysis for Cell Painting Data
+Version: 0.3.0
 Authors@R: c(
     person("Christof", "Seiler", 
-    email = "christof.seiler@maastrichtuniversity.nl", 
+    email = "christof.seiler@usz.ch", 
     role = c("aut", "cre"), comment = c(ORCID = "0000-0001-8802-3642"))
     )
-Description: We a random forest model to predict CRISPR or 
-    drug interventations from CellProfiler features. Load 
-    cell painting data into R and preprocess feature to make 
-    them ready for machine learning. 
+Description: This package load cell painting data into R and 
+    preprocess feature to make them ready for machine learning. 
+    We use random forest to predict cell perturbations from 
+    CellProfiler features. We summarize the results in a volcano plot.
 biocViews: 
-    SingleCell, 
-    Software  
+    SingleCell,
+    Software,
+    Classification,
+    FeatureExtraction,
+    Preprocessing,
+    Visualization,
+    MachineLearning
 License: LGPL-3
 Encoding: UTF-8
 LazyData: false
@@ -28,7 +33,11 @@ Imports:
     ranger,
     yardstick,
     rsample,
-    purrr
+    purrr,
+    scater,
+    tibble,
+    tidyr,
+    ggrepel
 Depends:
     R (>= 4.3.0),
     SingleCellExperiment
@@ -39,3 +48,5 @@ Suggests:
     BiocStyle
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.0.0
+URL: https://github.com/ChristofSeiler/cellpaintr
+BugReports: https://github.com/ChristofSeiler/cellpaintr/issues

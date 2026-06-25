@@ -1,0 +1,177 @@
+---
+title: "cellpaintr Vignette"
+author: 
+- name: Christof Seiler
+  affiliation: 
+  - Center of Experimental Rheumatology, Department of Rheumatology, University Hospital Zurich, University of Zurich, Switzerland
+date: "`r Sys.Date()`"
+output: 
+  BiocStyle::html_document
+vignette: >
+  %\VignetteIndexEntry{cellpaintr Vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+    echo = TRUE, warning = FALSE, message = FALSE,
+    fig.retina = 2, dpi = 96,
+    fig.width = 7.2916667, fig.asp = 0.6178571
+)
+```
+
+# Introduction
+
+High-content imaging can capture detailed morphological and functional features on a single-cell level. It has been widely used in drug screen assays and for generating large-scale image datasets for machine learning models. Software such as CellProfiler extract features from high-content images for downstream analysis. CellProfiler implements a suite of traditional image processing algorithms to segment cells and extract about 1,000 morphological and texture features.
+
+To simplify data analysis of CellProfiler features in R—many options exist in Python, such as PyCytominer—we developed an R/Bioconductor package. Our package leverages Bioconductor objects for batch correction and dimension reduction, lowering the learning curve for users familiar with single-cell RNA sequencing workflows.
+
+# Installation
+
+Install this package.
+
+```{r install-package, eval=FALSE}
+# if (!require("BiocManager", quietly = TRUE)) {
+#     install.packages("BiocManager")
+# }
+# 
+# BiocManager::install("cellpaintr")
+```
+
+# Workflow
+
+## Preparation
+
+Load packages.
+
+```{r}
+library(cellpaintr)
+```
+
+# Load Data
+
+Load `CellProfiler` output and create a `SingleCellExperiment` object.
+
+```{r}
+# cell_file <- paste0("MyExpt_Cells.csv")
+# sce <- loadData(cell_file)
+```
+
+## Data Cleaning and Transformation
+
+Prepare the data for machine learning.
+
+```{r}
+# # remove cells with missing features
+# sce <- removeNAs(sce)
+# 
+# # number of cells
+# plotCellsPerImage(sce)
+# 
+# # remove outlier images
+# sce <- removeOutliers(sce, min = 10, max = 300)
+# 
+# # remove outlier cells
+# stats <- perCellQCMetrics(sce, assay.type = "features")
+# sce <- sce[, !isOutlier(stats$sum)]
+# 
+# # remove features with zero spread
+# sce <- removeLowVariance(sce, robust = TRUE)
+# 
+# # remove zero-inflated features
+# sce <- removeZeroInflation(sce)
+```
+
+Median polish to remove row and columns effects.
+
+```{r}
+# assay(sce, "features") <- medpolish(assay(sce, "features"))$residuals
+```
+
+Transform non-negatives features and scale all features.
+
+```{r}
+# sce <- transformLogScale(sce, robust = TRUE)
+# sce
+```
+
+## Unsupervised Analysis
+
+Pseudo-bulk over images.
+
+```{r}
+# sce_aggr <- aggregateAcrossCells(
+#   sce,
+#   id = colData(sce)[, c("ImageNumber", "Well", "Patient")],
+#   use.assay.type = "tfmfeatures",
+#   statistics = "mean"
+#   )
+```
+
+Use `scater` for exploratory data analysis. PCA on pseudo-bulk features.
+
+```{r}
+# sce_aggr <- runPCA(sce_aggr, exprs_values = "tfmfeatures")
+# plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Patient")
+# plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Drug")
+```
+
+What is driving PC1?
+
+```{r}
+# plotPCACor(sce_aggr, filter_by = 1, top = 20)
+# plotPCACor(sce_aggr, filter_by = 2, top = 20)
+```
+
+UMAP.
+
+```{r}
+# sce_aggr <- runUMAP(sce_aggr, exprs_values = "tfmfeatures")
+# plotUMAP(sce_aggr, colour_by = "Patient")
+# plotUMAP(sce_aggr, colour_by = "Drug")
+```
+
+## Supervised Analysis
+
+Predict treatment.
+
+```{r}
+# set.seed(23)
+# 
+# sce$Drug <- as.factor(sce$Drug)
+# reference_level <- "DMSO"
+# interest_level <- "MG132"
+# sce$Drug <- relevel(sce$Drug, ref = reference_level)
+# 
+# types <- c("AreaShape", "Intensity", "Texture", "Granularity",
+#            "RadialDistribution")
+# 
+# sce <- predictLOO(
+#   sce, target = "Drug", group = "Patient",
+#   interest_level = interest_level, reference_level = reference_level,
+#   types = types,
+#   n_threads = 1
+# )
+# sce
+```
+
+## Plot Results
+
+Individual scores.
+
+```{r}
+# TODO
+```
+
+Volcano plot to summarize.
+
+```{r plotting, warning=FALSE}
+# volcanoPlot(sce, meta_vars = c("Patient", "Drug"), target = "Drug")
+```
+
+# Session Info {-}
+
+```{r session_info}
+sessionInfo()
+```
