@@ -41,7 +41,7 @@ Install this package.
 # if (!require("BiocManager", quietly = TRUE)) {
 #     install.packages("BiocManager")
 # }
-# 
+#
 # BiocManager::install("cellpaintr")
 ```
 
@@ -71,20 +71,20 @@ Prepare the data for machine learning.
 ```{r data-preprocessing}
 # # remove cells with missing features
 # sce <- removeNAs(sce)
-# 
+#
 # # number of cells
 # plotCellsPerImage(sce)
-# 
+#
 # # remove outlier images
 # sce <- removeOutliers(sce, min = 10, max = 300)
-# 
+#
 # # remove outlier cells
 # stats <- perCellQCMetrics(sce, assay.type = "features")
 # sce <- sce[, !isOutlier(stats$sum)]
-# 
+#
 # # remove features with zero spread
 # sce <- removeLowVariance(sce, robust = TRUE)
-# 
+#
 # # remove zero-inflated features
 # sce <- removeZeroInflation(sce)
 ```
@@ -144,15 +144,15 @@ Predict treatment.
 
 ```{r predict-loo}
 # set.seed(23)
-# 
+#
 # sce$Drug <- as.factor(sce$Drug)
 # reference_level <- "DMSO"
 # interest_level <- "MG132"
 # sce$Drug <- relevel(sce$Drug, ref = reference_level)
-# 
+#
 # types <- c("AreaShape", "Intensity", "Texture", "Granularity",
 #            "RadialDistribution")
-# 
+#
 # sce <- predictLOO(
 #   sce, target = "Drug", group = "Patient",
 #   interest_level = interest_level, reference_level = reference_level,

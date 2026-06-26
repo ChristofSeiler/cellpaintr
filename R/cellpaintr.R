@@ -9,43 +9,44 @@
 #' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #'
 loadData <- function(cell_file) {
+    # read file with cell data
+    data <- read_csv(cell_file, show_col_types = FALSE)
 
-  # read file with cell data
-  data <- read_csv(cell_file, show_col_types = FALSE)
+    # remove features if they exist
+    rmv_vars <- c("Number_Object_Number", "Parent_FilteredCell")
+    keep_vars <- names(data)[!names(data) %in% rmv_vars]
+    data <- data[, keep_vars]
 
-  # remove features if they exist
-  rmv_vars <- c("Number_Object_Number", "Parent_FilteredCell")
-  keep_vars <- names(data)[!names(data) %in% rmv_vars]
-  data <- data[, keep_vars]
-
-  # split into meta data and features
-  meta_cols <- str_detect(names(data), "Metadata_")
-  meta_vars <- c(
-    "ImageNumber", "ObjectNumber", names(data)[meta_cols],
-    "Location_Center_X", "Location_Center_Y", "Location_Center_Z"
+    # split into meta data and features
+    meta_cols <- str_detect(names(data), "Metadata_")
+    meta_vars <- c(
+        "ImageNumber", "ObjectNumber", names(data)[meta_cols],
+        "Location_Center_X", "Location_Center_Y", "Location_Center_Z"
     )
-  feature_vars <- names(data)[!names(data) %in% meta_vars]
-  meta_cell <- data[,intersect(names(data), meta_vars)]
-  features  <- data[,feature_vars] |> t() # columns represent cells
+    feature_vars <- names(data)[!names(data) %in% meta_vars]
+    meta_cell <- data[, intersect(names(data), meta_vars)]
+    features <- data[, feature_vars] |> t() # columns represent cells
 
-  # add NAs to location if it doesn't exist
-  if(sum(names(meta_cell) == "Location_Center_X") == 0)
-    meta_cell$Location_Center_X <- NA
-  if(sum(names(meta_cell) == "Location_Center_Y") == 0)
-    meta_cell$Location_Center_Y <- NA
-  if(sum(names(meta_cell) == "Location_Center_Z") == 0)
-    meta_cell$Location_Center_Z <- NA
+    # add NAs to location if it doesn't exist
+    if (sum(names(meta_cell) == "Location_Center_X") == 0) {
+        meta_cell$Location_Center_X <- NA
+    }
+    if (sum(names(meta_cell) == "Location_Center_Y") == 0) {
+        meta_cell$Location_Center_Y <- NA
+    }
+    if (sum(names(meta_cell) == "Location_Center_Z") == 0) {
+        meta_cell$Location_Center_Z <- NA
+    }
 
-  # remove meta label from names
-  names(meta_cell) <- str_remove(names(meta_cell), "Metadata_")
+    # remove meta label from names
+    names(meta_cell) <- str_remove(names(meta_cell), "Metadata_")
 
-  # store meta and features in bioconductor object
-  sce <- SingleCellExperiment(
-    list(features = features),
-    colData = meta_cell
-  )
-  sce
-
+    # store meta and features in bioconductor object
+    sce <- SingleCellExperiment(
+        list(features = features),
+        colData = meta_cell
+    )
+    sce
 }
 
 #' Plot number of cells per image
@@ -61,16 +62,14 @@ loadData <- function(cell_file) {
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
 plotCellsPerImage <- function(sce, bins = 100) {
-
-  colData(sce) |>
-    as_tibble() |>
-    group_by(ImageNumber) |>
-    tally() |>
-    ggplot(aes(n)) +
-    geom_histogram(bins = bins) +
-    scale_x_log10() +
-    ggtitle("Number of Cells Per Image")
-
+    colData(sce) |>
+        as_tibble() |>
+        group_by(ImageNumber) |>
+        tally() |>
+        ggplot(aes(n)) +
+        geom_histogram(bins = bins) +
+        scale_x_log10() +
+        ggtitle("Number of Cells Per Image")
 }
 
 #' Plot number of cells per image
@@ -91,32 +90,32 @@ plotCellsPerImage <- function(sce, bins = 100) {
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
 plotPCACor <- function(sce, filter_by = 1, top = 20, pcs = seq(5)) {
+    features <- assay(sce, "tfmfeatures")
+    scores <- reducedDim(sce, "PCA")[, pcs]
+    features_pcs <- cor(t(as.matrix(features)), scores)
 
-  features <- assay(sce, "tfmfeatures")
-  scores <- reducedDim(sce, "PCA")[,pcs]
-  features_pcs <- cor(t(as.matrix(features)), scores)
+    keep <- rownames(features_pcs)
+    importance <- abs(features_pcs[, filter_by])
 
-  keep <- rownames(features_pcs)
-  importance <- abs(features_pcs[,filter_by])
+    features_pcs <- features_pcs |>
+        as_tibble() |>
+        mutate(name = keep, importance = importance) |>
+        top_n(top, importance)
 
-  features_pcs <- features_pcs |>
-    as_tibble() |>
-    mutate(name = keep, importance = importance) |>
-    top_n(top, importance)
+    features_pcs <- features_pcs |>
+        pivot_longer(!c(name, importance), names_to = "PC", values_to = "cor") |>
+        mutate(PC = str_remove(PC, "PC"))
 
-  features_pcs <- features_pcs |>
-    pivot_longer(!c(name, importance), names_to = "PC", values_to = "cor") |>
-    mutate(PC = str_remove(PC, "PC"))
-
-  ggplot(features_pcs, aes(PC, name, fill = cor)) +
-    geom_tile(color = "white") +
-    scale_fill_gradient2(low = "blue", high = "red", mid = "white",
-                         midpoint = 0, limit = c(-1,1), space = "Lab",
-                         name = "Pearson\nCorrelation") +
-    theme_minimal() +
-    coord_fixed() +
-    ylab("feature name")
-
+    ggplot(features_pcs, aes(PC, name, fill = cor)) +
+        geom_tile(color = "white") +
+        scale_fill_gradient2(
+            low = "blue", high = "red", mid = "white",
+            midpoint = 0, limit = c(-1, 1), space = "Lab",
+            name = "Pearson\nCorrelation"
+        ) +
+        theme_minimal() +
+        coord_fixed() +
+        ylab("feature name")
 }
 
 #' Remove cells if not enough or too many in one image
@@ -132,16 +131,14 @@ plotPCACor <- function(sce, filter_by = 1, top = 20, pcs = seq(5)) {
 #' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #'
 removeOutliers <- function(sce, min, max) {
-
-  cell_ids <-
-    colData(sce) |>
-    as_tibble() |>
-    group_by(ImageNumber) |>
-    tally() |>
-    filter(n >= min & n <= max) |>
-    pull(ImageNumber)
-  sce[, sce$ImageNumber %in% cell_ids]
-
+    cell_ids <-
+        colData(sce) |>
+        as_tibble() |>
+        group_by(ImageNumber) |>
+        tally() |>
+        filter(n >= min & n <= max) |>
+        pull(ImageNumber)
+    sce[, sce$ImageNumber %in% cell_ids]
 }
 
 #' Remove missing values
@@ -153,19 +150,17 @@ removeOutliers <- function(sce, min, max) {
 #' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #'
 removeMissingValues <- function(sce) {
+    mat <- assay(sce, "features")
 
-  mat <- assay(sce, "features")
+    # remove missing values in features
+    miss_perc_features <- apply(mat, 1, function(x) mean(is.na(x)))
+    feature_ids <- which(miss_perc_features > 0)
 
-  # remove missing values in features
-  miss_perc_features <- apply(mat, 1, function(x) mean(is.na(x)))
-  feature_ids <- which(miss_perc_features > 0)
+    # remove missing values in cells
+    miss_perc_cells <- apply(mat, 2, function(x) mean(is.na(x)))
+    cell_ids <- which(miss_perc_cells > 0)
 
-  # remove missing values in cells
-  miss_perc_cells <- apply(mat, 2, function(x) mean(is.na(x)))
-  cell_ids <- which(miss_perc_cells > 0)
-
-  sce[-feature_ids, -cell_ids]
-
+    sce[-feature_ids, -cell_ids]
 }
 
 
@@ -178,16 +173,14 @@ removeMissingValues <- function(sce) {
 #' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #'
 removeNAs <- function(sce) {
+    mat <- assay(sce, "features")
 
-  mat <- assay(sce, "features")
-
-  miss_cells <- apply(mat, 2, function(x) sum(is.na(x)))
-  cell_ids <- which(miss_cells > 0)
-  if(length(cell_ids) > 0) {
-    sce <- sce[, -cell_ids]
+    miss_cells <- apply(mat, 2, function(x) sum(is.na(x)))
+    cell_ids <- which(miss_cells > 0)
+    if (length(cell_ids) > 0) {
+        sce <- sce[, -cell_ids]
     }
-  sce
-
+    sce
 }
 
 #' Filter low variance features
@@ -201,17 +194,15 @@ removeNAs <- function(sce) {
 #' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #'
 removeLowVariance <- function(sce, threshold = 0, robust = FALSE) {
+    mat <- assay(sce, "features")
 
-  mat <- assay(sce, "features")
-
-  if(!robust) {
-    spread <- apply(mat, 1, var)
-  } else {
-    spread <- apply(mat, 1, mad)
-  }
-  feature_ids <- which(spread > threshold)
-  sce[feature_ids, ]
-
+    if (!robust) {
+        spread <- apply(mat, 1, var)
+    } else {
+        spread <- apply(mat, 1, mad)
+    }
+    feature_ids <- which(spread > threshold)
+    sce[feature_ids, ]
 }
 
 #' Remove zero-inflated features
@@ -224,11 +215,9 @@ removeLowVariance <- function(sce, threshold = 0, robust = FALSE) {
 #' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #'
 removeZeroInflation <- function(sce, proportion = 0.2) {
-
-  mat <- assay(sce, "features")
-  prop_zeros <- apply(mat, 1, function(x) mean(x == 0))
-  sce[!(prop_zeros > proportion), ]
-
+    mat <- assay(sce, "features")
+    prop_zeros <- apply(mat, 1, function(x) mean(x == 0))
+    sce[!(prop_zeros > proportion), ]
 }
 
 #' Filter low variance features
@@ -241,31 +230,28 @@ removeZeroInflation <- function(sce, proportion = 0.2) {
 #' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #'
 transformLogScale <- function(sce, robust = FALSE) {
+    mat <- assay(sce, "features")
 
-  mat <- assay(sce, "features")
+    # log(x+1) transform on non-negative valued features
+    non_neg_features <- apply(mat, 1, function(x) sum(x >= 0) == length(x))
+    mat[non_neg_features, ] <- log1p(mat[non_neg_features, ])
 
-  # log(x+1) transform on non-negative valued features
-  non_neg_features <- apply(mat, 1, function(x) sum(x >= 0) == length(x) )
-  mat[non_neg_features, ] <- log1p(mat[non_neg_features, ])
+    if (!robust) {
+        # option: standard z-score
+        mat <- mat |>
+            t() |>
+            scale() |>
+            t()
+    } else {
+        # option: robust z-score
+        median_features <- apply(mat, 1, median)
+        mad_features <- apply(mat, 1, mad)
+        mat <- (mat - median_features) / mad_features
+    }
 
-  if(!robust) {
-
-    # option: standard z-score
-    mat <- mat |> t() |> scale() |> t()
-
-  } else {
-
-    # option: robust z-score
-    median_features <- apply(mat, 1, median)
-    mad_features <- apply(mat, 1, mad)
-    mat <- (mat - median_features)/mad_features
-
-  }
-
-  # add transformed features
-  assay(sce, "tfmfeatures") <- mat
-  sce
-
+    # add transformed features
+    assay(sce, "tfmfeatures") <- mat
+    sce
 }
 
 #' Predict target from features
@@ -296,106 +282,107 @@ predictLOO <- function(sce, assay_type = "tfmfeatures",
                        types = NULL, channels = NULL,
                        group = "Patient",
                        weights = NULL, n_threads = 1) {
+    # subset for binary classification
+    sce_subset <- sce[, sce[[target]] %in% c(reference_level, interest_level)]
 
-  # subset for binary classification
-  sce_subset <- sce[, sce[[target]] %in% c(reference_level, interest_level)]
+    # remove unused levels
+    sce_subset[[target]] <- droplevels(sce_subset[[target]])
 
-  # remove unused levels
-  sce_subset[[target]] <- droplevels(sce_subset[[target]])
+    # function to compute y_hat on a subset of the features
+    compute_y_hat <- function(feature_name, sce_feature, starts = TRUE) {
+        # convert to regular expression
+        if (feature_name == "all") {
+            pattern <- ".*"
+        } else {
+            pattern <- feature_name
+        }
 
-  # function to compute y_hat on a subset of the features
-  compute_y_hat <- function(feature_name, sce_feature, starts = TRUE) {
+        # subset features
+        features <- names(sce_feature)
+        if (starts) {
+            features <- features[str_starts(features, pattern)]
+        } else {
+            features <- features[str_detect(features, pattern)]
+        }
+        sce_feature <- sce_feature[features, ]
 
-    # convert to regular expression
-    if(feature_name == "all") {
-      pattern <- ".*"
-    } else {
-      pattern <- feature_name
+        # prepare data frame with target variable and predictor matrix
+        X <- assay(sce_feature, assay_type) |> t()
+        cells <- colData(sce_feature) |> as_tibble()
+        ml_data <- data.frame(Target = cells |> pull(target), X)
+        ml_data$Target <- factor(ml_data$Target,
+            levels = c(interest_level, reference_level)
+        )
+
+        # compute y hats
+        patients <- unique(sce_feature[[group]])
+        result_list <- lapply(patients, function(patient) {
+            train_ids <- which(sce_feature[[group]] != patient)
+            test_ids <- which(sce_feature[[group]] == patient)
+
+            # train model
+            if (!is.null(weights)) {
+                case_weights <- sce_feature[[weights]][train_ids]
+            } else {
+                case_weights <- NULL
+            }
+            rf_spec <-
+                parsnip::rand_forest() |>
+                parsnip::set_mode("classification") |>
+                parsnip::set_engine("ranger",
+                    num.threads = n_threads,
+                    case.weights = case_weights
+                )
+            rf_fit <- rf_spec |>
+                parsnip::fit(Target ~ ., data = ml_data[train_ids, ])
+
+            # evaluate model
+            dplyr::bind_cols(
+                cell = test_ids,
+                predict(rf_fit, ml_data[test_ids, ], type = "prob")
+            )
+        })
+
+        # combine folds
+        result <- result_list |>
+            bind_rows() |>
+            arrange(cell)
+
+        # rename to feature type / channel
+        names(result)[2] <- feature_name
+        result |> select(all_of(feature_name))
     }
 
-    # subset features
-    features <- names(sce_feature)
-    if(starts) {
-      features <- features[str_starts(features, pattern)]
-    } else {
-      features <- features[str_detect(features, pattern)]
+    # combine and add to reducedDim slot
+    y_hat <- compute_y_hat("all", sce_subset)
+    if (length(types) > 0) {
+        y_hat <- bind_cols(
+            y_hat,
+            purrr::map(types, compute_y_hat, sce_subset,
+                starts = TRUE,
+                .progress = TRUE
+            ) |>
+                bind_cols()
+        )
     }
-    sce_feature <- sce_feature[features,]
+    if (length(channels) > 0) {
+        y_hat <- bind_cols(
+            y_hat,
+            purrr::map(channels, compute_y_hat, sce_subset,
+                starts = FALSE,
+                .progress = TRUE
+            ) |>
+                bind_cols()
+        )
+    }
+    y_hat <- y_hat |> as.matrix()
 
-    # prepare data frame with target variable and predictor matrix
-    X <- assay(sce_feature, assay_type) |> t()
-    cells <- colData(sce_feature) |> as_tibble()
-    ml_data <- data.frame(Target = cells |> pull(target), X)
-    ml_data$Target <- factor(ml_data$Target,
-                             levels = c(interest_level, reference_level))
-
-    # compute y hats
-    patients <- unique(sce_feature[[group]])
-    result_list <- lapply(patients, function(patient) {
-
-      train_ids <- which(sce_feature[[group]] != patient)
-      test_ids <- which(sce_feature[[group]] == patient)
-
-      # train model
-      if(!is.null(weights)) {
-        case_weights <- sce_feature[[weights]][train_ids]
-      } else {
-        case_weights <- NULL
-      }
-      rf_spec <-
-        parsnip::rand_forest() |>
-        parsnip::set_mode("classification") |>
-        parsnip::set_engine("ranger", num.threads = n_threads,
-                            case.weights = case_weights)
-      rf_fit <- rf_spec |>
-        parsnip::fit(Target ~ ., data = ml_data[train_ids, ])
-
-      # evaluate model
-      dplyr::bind_cols(
-        cell = test_ids,
-        predict(rf_fit, ml_data[test_ids, ], type = "prob")
-      )
-
-    })
-
-    # combine folds
-    result <- result_list |>
-      bind_rows() |>
-      arrange(cell)
-
-    # rename to feature type / channel
-    names(result)[2] <- feature_name
-    result |> select(all_of(feature_name))
-
-  }
-
-  # combine and add to reducedDim slot
-  y_hat <- compute_y_hat("all", sce_subset)
-  if(length(types) > 0) {
-    y_hat <- bind_cols(
-      y_hat,
-      purrr::map(types, compute_y_hat, sce_subset, starts = TRUE,
-                 .progress = TRUE) |>
-        bind_cols()
-    )
-  }
-  if(length(channels) > 0) {
-    y_hat <- bind_cols(
-      y_hat,
-      purrr::map(channels, compute_y_hat, sce_subset, starts = FALSE,
-                 .progress = TRUE) |>
-        bind_cols()
-    )
-  }
-  y_hat <- y_hat |> as.matrix()
-
-  # add y_hat to sce object
-  cell_id <- seq(ncol(sce_subset))
-  rownames(y_hat) <- cell_id
-  colnames(sce_subset) <- cell_id
-  reducedDim(sce_subset, "prevalidated") <- y_hat
-  sce_subset
-
+    # add y_hat to sce object
+    cell_id <- seq(ncol(sce_subset))
+    rownames(y_hat) <- cell_id
+    colnames(sce_subset) <- cell_id
+    reducedDim(sce_subset, "prevalidated") <- y_hat
+    sce_subset
 }
 
 #' Aggregate predicted leave-one-out probabilities over meta variables
@@ -410,17 +397,16 @@ predictLOO <- function(sce, assay_type = "tfmfeatures",
 aggregateYhat <- function(sce,
                           assay_type = "tfmfeatures",
                           meta_vars = c("Patient", "Treatment")) {
+    summed <- aggregateAcrossCells(
+        sce,
+        id = colData(sce)[, meta_vars],
+        use.assay.type = assay_type, statistics = "mean"
+    )
 
-  summed <- aggregateAcrossCells(
-    sce, id = colData(sce)[, meta_vars],
-    use.assay.type = assay_type, statistics = "mean"
-  )
-
-  cbind(
-    colData(summed)[, meta_vars] |> as.data.frame(),
-    reducedDim(summed, type = "prevalidated")
-  )
-
+    cbind(
+        colData(summed)[, meta_vars] |> as.data.frame(),
+        reducedDim(summed, type = "prevalidated")
+    )
 }
 
 #' Plot predicted leave-one-out probabilities
@@ -440,19 +426,19 @@ plotLOO <- function(sce,
                     assay_type = "tfmfeatures",
                     meta_vars = c("Patient", "Treatment"),
                     target = "Treatment") {
+    y_hat <- aggregateYhat(sce, assay_type, meta_vars)
 
-  y_hat <- aggregateYhat(sce, assay_type, meta_vars)
-
-  y_hat |>
-    pivot_longer(cols = -c(all_of(meta_vars)),
-                 names_to = "features", values_to = "value") |>
-    ggplot(aes(.data[[target]], value, color = .data[[target]])) +
-    geom_boxplot(width = 0.2, outliers = FALSE) +
-    geom_jitter(width = 0.1) +
-    ylab("predicted leave-one-out probability") +
-    facet_wrap(~features) +
-    geom_hline(yintercept = 0.5, alpha = 0.5, linetype = "dashed")
-
+    y_hat |>
+        pivot_longer(
+            cols = -c(all_of(meta_vars)),
+            names_to = "features", values_to = "value"
+        ) |>
+        ggplot(aes(.data[[target]], value, color = .data[[target]])) +
+        geom_boxplot(width = 0.2, outliers = FALSE) +
+        geom_jitter(width = 0.1) +
+        ylab("predicted leave-one-out probability") +
+        facet_wrap(~features) +
+        geom_hline(yintercept = 0.5, alpha = 0.5, linetype = "dashed")
 }
 
 #' Aggregate predicted leave-one-out probabilities over meta variables
@@ -474,37 +460,35 @@ calculateStats <- function(sce,
                            assay_type = "tfmfeatures",
                            meta_vars = c("Patient", "Treatment"),
                            target = "Treatment") {
+    # standard convention in base R to store reference level as first
+    reference_level <- levels(sce[[target]])[1]
+    interest_level <- levels(sce[[target]])[2]
 
-  # standard convention in base R to store reference level as first
-  reference_level <- levels(sce[[target]])[1]
-  interest_level <- levels(sce[[target]])[2]
+    y_hat <- aggregateYhat(sce, assay_type, meta_vars)
+    feature_vars <- setdiff(names(y_hat), meta_vars)
+    y_hat$Target <- interest_level
 
-  y_hat <- aggregateYhat(sce, assay_type, meta_vars)
-  feature_vars <- setdiff(names(y_hat), meta_vars)
-  y_hat$Target <- interest_level
+    # test one feature at a time
+    lapply(feature_vars, function(feature) {
+        wide <- y_hat |>
+            select(all_of(c(meta_vars, feature))) |>
+            pivot_wider(names_from = all_of(target), values_from = all_of(feature))
 
-  # test one feature at a time
-  lapply(feature_vars, function(feature) {
+        x <- pull(wide, all_of(reference_level))
+        y <- pull(wide, all_of(interest_level))
+        paired <- sum(is.na(c(x, y))) == 0
+        result <- t.test(x, y,
+            paired = paired, var.equal = TRUE,
+            alternative = "less"
+        )
 
-    wide <- y_hat |>
-      select(all_of(c(meta_vars, feature))) |>
-      pivot_wider(names_from = all_of(target), values_from = all_of(feature))
-
-    x <- pull(wide, all_of(reference_level))
-    y <- pull(wide, all_of(interest_level))
-    paired <- sum(is.na(c(x, y))) == 0
-    result <- t.test(x, y, paired = paired, var.equal = TRUE,
-                     alternative = "less")
-
-    data.frame(
-      Target = interest_level,
-      Feature = feature,
-      pvalue = result$p.value,
-      log2FoldChange = log2(mean(y, na.rm = TRUE)/mean(x, na.rm = TRUE))
-    )
-
-  }) |> bind_rows()
-
+        data.frame(
+            Target = interest_level,
+            Feature = feature,
+            pvalue = result$p.value,
+            log2FoldChange = log2(mean(y, na.rm = TRUE) / mean(x, na.rm = TRUE))
+        )
+    }) |> bind_rows()
 }
 
 #' Plot predicted leave-one-out probabilities
@@ -530,50 +514,43 @@ volcanoPlot <- function(sce,
                         meta_vars = c("Patient", "Treatment"),
                         target = "Treatment",
                         p_cutoff = NULL, fc_cutoff = 1.0) {
+    if (is.list(sce)) {
+        exp_names <- names(sce)
+        stats <- lapply(exp_names, function(exp_name) {
+            df <- calculateStats(sce[[exp_name]], assay_type, meta_vars, target)
+            df$Experiment <- exp_name
+            df
+        }) |> bind_rows()
+    } else {
+        stats <- calculateStats(sce, assay_type, meta_vars, target)
+    }
 
-  if(is.list(sce)) {
+    if (is.null(p_cutoff)) {
+        p_cutoff <- 0.01 / nrow(stats)
+    }
 
-    exp_names <- names(sce)
-    stats <- lapply(exp_names, function(exp_name) {
-      df <- calculateStats(sce[[exp_name]], assay_type, meta_vars, target)
-      df$Experiment <- exp_name
-      df
-    }) |> bind_rows()
+    gg <- stats |>
+        mutate(Feature = ifelse(pvalue < p_cutoff & log2FoldChange > fc_cutoff,
+            Feature, ""
+        )) |>
+        ggplot(aes(log2FoldChange, -log10(pvalue), label = Feature)) +
+        geom_vline(xintercept = c(0, fc_cutoff), alpha = 0.5, linetype = "dashed") +
+        geom_hline(
+            yintercept = c(0, -log10(p_cutoff)), alpha = 0.5,
+            linetype = "dashed"
+        ) +
+        xlab("log2 fold change") +
+        ylab("-log10 p-value")
 
-  } else {
-
-    stats <- calculateStats(sce, assay_type, meta_vars, target)
-
-  }
-
-  if(is.null(p_cutoff)) {
-    p_cutoff <- 0.01/nrow(stats)
-  }
-
-  gg <- stats |>
-    mutate(Feature = ifelse(pvalue < p_cutoff & log2FoldChange > fc_cutoff,
-                            Feature, "")) |>
-    ggplot(aes(log2FoldChange, -log10(pvalue), label = Feature)) +
-    geom_vline(xintercept = c(0, fc_cutoff), alpha = 0.5, linetype = "dashed") +
-    geom_hline(yintercept = c(0, -log10(p_cutoff)), alpha = 0.5,
-               linetype = "dashed") +
-    xlab("log2 fold change") +
-    ylab("-log10 p-value")
-
-  if(is.list(sce)) {
-
-    gg +
-      geom_point(aes(color = Experiment)) +
-      geom_text_repel(aes(color = Experiment), max.overlaps = Inf)
-
-  } else {
-
-    gg +
-      geom_point() +
-      geom_text_repel()
-
-  }
-
+    if (is.list(sce)) {
+        gg +
+            geom_point(aes(color = Experiment)) +
+            geom_text_repel(aes(color = Experiment), max.overlaps = Inf)
+    } else {
+        gg +
+            geom_point() +
+            geom_text_repel()
+    }
 }
 
 #' Plot ROC curves
@@ -596,45 +573,50 @@ volcanoPlot <- function(sce,
 plotROC <- function(sce, assay_type = "tfmfeatures",
                     meta_vars = c("Patient", "Treatment"),
                     target = "Treatment") {
+    summed <- aggregateAcrossCells(
+        sce,
+        id = colData(sce)[, meta_vars],
+        use.assay.type = assay_type, statistics = "mean"
+    )
 
-  summed <- aggregateAcrossCells(
-    sce, id = colData(sce)[, meta_vars],
-    use.assay.type = assay_type, statistics = "mean"
-  )
+    result <- cbind(
+        colData(summed)[, meta_vars] |> as.data.frame(),
+        reducedDim(summed, type = "prevalidated")
+    ) |>
+        pivot_longer(
+            cols = -c(all_of(meta_vars)),
+            names_to = "features", values_to = "pred"
+        ) |>
+        droplevels()
 
-  result <- cbind(colData(summed)[, meta_vars] |> as.data.frame(),
-                  reducedDim(summed, type = "prevalidated")) |>
-    pivot_longer(cols = -c(all_of(meta_vars)),
-                 names_to = "features", values_to = "pred") |>
-    droplevels()
+    # title
+    reference_level <- levels(result[[target]])[1]
+    interest_level <- levels(result[[target]])[2]
+    mean_auc <- result |>
+        group_by(features) |>
+        yardstick::roc_auc(all_of(target), "pred", event_level = "second") |>
+        mutate(.estimate = round(.estimate, digits = 3)) |>
+        pull(.estimate) |>
+        mean() |>
+        round(digits = 3)
+    title_str <- paste0(
+        "Predict ", interest_level, " vs ", reference_level,
+        " (mean AUC = ", mean_auc, ")"
+    )
 
-  # title
-  reference_level <- levels(result[[target]])[1]
-  interest_level <- levels(result[[target]])[2]
-  mean_auc <- result |>
-    group_by(features) |>
-    yardstick::roc_auc(all_of(target), "pred", event_level = "second") |>
-    mutate(.estimate = round(.estimate, digits = 3)) |>
-    pull(.estimate) |>
-    mean() |>
-    round(digits = 3)
-  title_str <- paste0("Predict ", interest_level, " vs ", reference_level,
-                      " (mean AUC = ", mean_auc, ")")
-
-  result |>
-    group_by(features) |>
-    yardstick::roc_curve(all_of(target), "pred", event_level = "second") |>
-    ggplot(aes(x = 1 - specificity, y = sensitivity)) +
-    geom_path() +
-    geom_abline(lty = 3) +
-    coord_equal() +
-    scale_x_continuous(breaks = c(0, 0.5, 1)) +
-    scale_y_continuous(breaks = c(0, 0.5, 1)) +
-    xlab("false positive rate (1 - specificity)") +
-    ylab("true positive rate (sensitivity)") +
-    ggtitle(title_str) +
-    facet_wrap(~features)
-
+    result |>
+        group_by(features) |>
+        yardstick::roc_curve(all_of(target), "pred", event_level = "second") |>
+        ggplot(aes(x = 1 - specificity, y = sensitivity)) +
+        geom_path() +
+        geom_abline(lty = 3) +
+        coord_equal() +
+        scale_x_continuous(breaks = c(0, 0.5, 1)) +
+        scale_y_continuous(breaks = c(0, 0.5, 1)) +
+        xlab("false positive rate (1 - specificity)") +
+        ylab("true positive rate (sensitivity)") +
+        ggtitle(title_str) +
+        facet_wrap(~features)
 }
 
 #' Plot AUC comparison
@@ -662,59 +644,60 @@ plotAUC <- function(sce,
                     meta_vars = c("Patient", "Treatment"),
                     target = "Treatment",
                     batch = NULL) {
-
-  if(is(sce, "SingleCellExperiment")) {
-    sce_list <- list(sce)
-  } else {
-    sce_list <- sce
-  }
-
-  aucs <- lapply(sce_list, function(sce) {
-
-    summed <- aggregateAcrossCells(
-      sce, id = colData(sce)[, meta_vars],
-      use.assay.type = assay_type, statistics = "mean"
-    )
-
-    result <- cbind(colData(summed)[, meta_vars] |> as.data.frame(),
-                    reducedDim(summed, type = "prevalidated")) |>
-      pivot_longer(cols = -c(all_of(meta_vars)),
-                   names_to = "features", values_to = "pred") |>
-      droplevels()
-
-    interest_level <- levels(result[[target]])[2]
-
-    if(!is.null(batch)) {
-      result <- result |>
-        group_by(features, .data[[batch]])
+    if (is(sce, "SingleCellExperiment")) {
+        sce_list <- list(sce)
     } else {
-      result <- result |>
-        group_by(features)
+        sce_list <- sce
     }
-    result |>
-      yardstick::roc_auc(all_of(target), "pred", event_level = "second") |>
-      mutate(Target = interest_level)
 
-  }) |> dplyr::bind_rows()
+    aucs <- lapply(sce_list, function(sce) {
+        summed <- aggregateAcrossCells(
+            sce,
+            id = colData(sce)[, meta_vars],
+            use.assay.type = assay_type, statistics = "mean"
+        )
 
-  fct_order <- aucs |>
-    group_by(features) |>
-    summarize(median = median(.estimate)) |>
-    arrange(desc(median)) |>
-    pull(features)
+        result <- cbind(
+            colData(summed)[, meta_vars] |> as.data.frame(),
+            reducedDim(summed, type = "prevalidated")
+        ) |>
+            pivot_longer(
+                cols = -c(all_of(meta_vars)),
+                names_to = "features", values_to = "pred"
+            ) |>
+            droplevels()
 
-  gp <- aucs |>
-    mutate(features = factor(features, levels = fct_order)) |>
-    ggplot(aes(.estimate, features, color = Target)) +
-    xlab("AUC") +
-    ggtitle("Area under the ROC curves")
+        interest_level <- levels(result[[target]])[2]
 
-  if(!is.null(batch)) {
-    gp +
-      geom_jitter(aes(shape = .data[[batch]]), height = 0.2, width = 0)
-  } else {
-    gp +
-      geom_jitter(height = 0.2, width = 0)
-  }
+        if (!is.null(batch)) {
+            result <- result |>
+                group_by(features, .data[[batch]])
+        } else {
+            result <- result |>
+                group_by(features)
+        }
+        result |>
+            yardstick::roc_auc(all_of(target), "pred", event_level = "second") |>
+            mutate(Target = interest_level)
+    }) |> dplyr::bind_rows()
 
+    fct_order <- aucs |>
+        group_by(features) |>
+        summarize(median = median(.estimate)) |>
+        arrange(desc(median)) |>
+        pull(features)
+
+    gp <- aucs |>
+        mutate(features = factor(features, levels = fct_order)) |>
+        ggplot(aes(.estimate, features, color = Target)) +
+        xlab("AUC") +
+        ggtitle("Area under the ROC curves")
+
+    if (!is.null(batch)) {
+        gp +
+            geom_jitter(aes(shape = .data[[batch]]), height = 0.2, width = 0)
+    } else {
+        gp +
+            geom_jitter(height = 0.2, width = 0)
+    }
 }
