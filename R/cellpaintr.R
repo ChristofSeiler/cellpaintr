@@ -263,6 +263,7 @@ transformLogScale <- function(sce, robust = FALSE) {
 #' @importFrom rsample group_initial_split training testing
 #' @importFrom purrr map
 #' @importFrom ranger ranger
+#' @importFrom stringr str_starts
 #' @export
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object

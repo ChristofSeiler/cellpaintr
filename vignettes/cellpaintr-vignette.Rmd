@@ -53,15 +53,21 @@ Load packages.
 
 ```{r load-libs}
 library(cellpaintr)
+library(scater)
+library(purrr)
+library(dplyr)
+library(ggrepel)
 ```
 
-# Load Data
+## Load Data
 
 Load `CellProfiler` output and create a `SingleCellExperiment` object.
 
 ```{r read-data}
-# cell_file <- paste0("MyExpt_Cells.csv")
-# sce <- loadData(cell_file)
+cell_file <- system.file(
+  "extdata", "MyExpt_Cells.csv", package = "cellpaintr", mustWork = TRUE
+  )
+sce <- loadData(cell_file)
 ```
 
 ## Data Cleaning and Transformation
@@ -69,37 +75,37 @@ Load `CellProfiler` output and create a `SingleCellExperiment` object.
 Prepare the data for machine learning.
 
 ```{r data-preprocessing}
-# # remove cells with missing features
-# sce <- removeNAs(sce)
-#
-# # number of cells
-# plotCellsPerImage(sce)
-#
-# # remove outlier images
-# sce <- removeOutliers(sce, min = 10, max = 300)
-#
-# # remove outlier cells
-# stats <- perCellQCMetrics(sce, assay.type = "features")
-# sce <- sce[, !isOutlier(stats$sum)]
-#
-# # remove features with zero spread
-# sce <- removeLowVariance(sce, robust = TRUE)
-#
-# # remove zero-inflated features
-# sce <- removeZeroInflation(sce)
+# remove cells with missing features
+sce <- removeNAs(sce)
+
+# number of cells
+plotCellsPerImage(sce)
+
+# remove outlier images
+sce <- removeOutliers(sce, min = 0, max = 300)
+
+# remove outlier cells
+stats <- perCellQCMetrics(sce, assay.type = "features")
+sce <- sce[, !isOutlier(stats$sum)]
+
+# remove features with zero spread
+sce <- removeLowVariance(sce, robust = TRUE)
+
+# remove zero-inflated features
+sce <- removeZeroInflation(sce)
 ```
 
 Median polish to remove row and columns effects.
 
 ```{r remove-row-col-effects}
-# assay(sce, "features") <- medpolish(assay(sce, "features"))$residuals
+assay(sce, "features") <- medpolish(assay(sce, "features"))$residuals
 ```
 
 Transform non-negatives features and scale all features.
 
 ```{r transform-data}
-# sce <- transformLogScale(sce, robust = TRUE)
-# sce
+sce <- transformLogScale(sce, robust = TRUE)
+sce
 ```
 
 ## Unsupervised Analysis
@@ -107,59 +113,111 @@ Transform non-negatives features and scale all features.
 Pseudo-bulk over images.
 
 ```{r aggreate}
-# sce_aggr <- aggregateAcrossCells(
-#   sce,
-#   id = colData(sce)[, c("ImageNumber", "Well", "Patient")],
-#   use.assay.type = "tfmfeatures",
-#   statistics = "mean"
-#   )
+sce_aggr <- aggregateAcrossCells(
+  sce,
+  id = colData(sce)[, c("ImageNumber", "Well", "Patient")],
+  use.assay.type = "tfmfeatures",
+  statistics = "mean"
+  )
 ```
 
 Use `scater` for exploratory data analysis. PCA on pseudo-bulk features.
 
 ```{r compute-pca}
-# sce_aggr <- runPCA(sce_aggr, exprs_values = "tfmfeatures")
-# plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Patient")
-# plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Drug")
+sce_aggr <- runPCA(sce_aggr, exprs_values = "tfmfeatures")
+plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Patient")
+plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Drug")
 ```
 
 What is driving PC1?
 
 ```{r plot-pca}
-# plotPCACor(sce_aggr, filter_by = 1, top = 20)
-# plotPCACor(sce_aggr, filter_by = 2, top = 20)
+plotPCACor(sce_aggr, filter_by = 1)
+plotPCACor(sce_aggr, filter_by = 2)
 ```
 
 UMAP.
 
 ```{r umap}
-# sce_aggr <- runUMAP(sce_aggr, exprs_values = "tfmfeatures")
-# plotUMAP(sce_aggr, colour_by = "Patient")
-# plotUMAP(sce_aggr, colour_by = "Drug")
+sce_aggr <- runUMAP(sce_aggr, exprs_values = "tfmfeatures")
+plotUMAP(sce_aggr, colour_by = "Patient")
+plotUMAP(sce_aggr, colour_by = "Drug")
 ```
 
 ## Supervised Analysis
 
-Predict treatment.
+Compare positive control to negative control.
 
-```{r predict-loo}
-# set.seed(23)
-#
-# sce$Drug <- as.factor(sce$Drug)
-# reference_level <- "DMSO"
-# interest_level <- "MG132"
-# sce$Drug <- relevel(sce$Drug, ref = reference_level)
-#
-# types <- c("AreaShape", "Intensity", "Texture", "Granularity",
-#            "RadialDistribution")
-#
-# sce <- predictLOO(
-#   sce, target = "Drug", group = "Patient",
-#   interest_level = interest_level, reference_level = reference_level,
-#   types = types,
-#   n_threads = 1
-# )
-# sce
+```{r predict-single-drug}
+set.seed(23)
+
+sce$Drug <- as.factor(sce$Drug)
+sce$Drug <- relevel(sce$Drug, ref = "DMSO")
+
+types <- c("AreaShape", "Intensity", "Texture")
+
+sce_single <- predictLOO(
+  sce, target = "Drug", group = "Patient",
+  interest_level = "MG132", reference_level = "DMSO",
+  types = types,
+  n_threads = 1
+)
+```
+
+Summarize feature subgroups in a volcano plot.
+
+```{r plot-volcano}
+volcanoPlot(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug", 
+            p_cutoff = 0.05, fc_cutoff = 0.5)
+```
+
+Compare a list of drugs to negative control.
+
+```{r predict-multiple-drugs}
+set.seed(23)
+
+reference_level <- "DMSO"
+interest_levels <- setdiff(levels(sce$Drug), reference_level)
+
+sce_list <- map(interest_levels, function(interest_level) {
+  
+  predictLOO(
+    sce, target = "Drug", group = "Patient",
+    interest_level = interest_level, reference_level = reference_level,
+    types = types,
+    n_threads = 1
+    )
+  
+}, .progress = "drug screening")
+```
+
+Custom volcano plot for summarizing drugs faceted by features.
+
+```{r plot-volcano-custom}
+# prepare stats table
+p_adj_cutoff <- 0.1
+fc_cutoff <- 0.5
+tb_stats <- lapply(sce_list, calculateStats, 
+                   meta_vars = c("Patient", "Drug"), target = "Drug") |>
+  bind_rows() |>
+  mutate(pvalue_adj = p.adjust(pvalue, method = "BH")) |>
+  mutate(Selection = ifelse(
+    pvalue_adj < p_adj_cutoff & log2FoldChange > fc_cutoff,
+    Target, "")
+    )
+
+# volcano plot
+tb_stats |>
+  ggplot(aes(log2FoldChange, -log10(pvalue_adj), label = Selection)) +
+  geom_vline(xintercept = c(0, fc_cutoff), alpha = 0.5, linetype = "dashed") +
+  geom_hline(yintercept = c(0, -log10(p_adj_cutoff)), alpha = 0.5, 
+             linetype = "dashed") +
+  geom_point(aes(color = Target)) +
+  geom_text_repel(aes(color = Target), max.overlaps = Inf) +
+  xlab("log2 fold change") +
+  ylab("-log10 p-value (BH adjusted)") +
+  facet_wrap(~Feature) + 
+  ggtitle(paste0("False Discovery Rate: ", 100*p_adj_cutoff, "%"))
 ```
 
 ## Plot Results
@@ -167,13 +225,9 @@ Predict treatment.
 Individual scores.
 
 ```{r plot-scores}
-# TODO
-```
-
-Volcano plot to summarize.
-
-```{r plot-volcano}
-# volcanoPlot(sce, meta_vars = c("Patient", "Drug"), target = "Drug")
+# TODO: plotAUC
+# TODO: plotROC
+# TODO: plotLOO
 ```
 
 # Session Info {-}
