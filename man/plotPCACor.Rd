@@ -4,7 +4,7 @@
 \alias{plotPCACor}
 \title{Plot number of cells per image}
 \usage{
-plotPCACor(sce, filter_by = 1, top = 20, pcs = 1:5)
+plotPCACor(sce, filter_by = 1, top = 20, pcs = seq(5))
 }
 \arguments{
 \item{sce}{\code{\link[SingleCellExperiment]{SingleCellExperiment}} object}

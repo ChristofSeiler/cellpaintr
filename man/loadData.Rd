@@ -7,7 +7,7 @@
 loadData(cell_file)
 }
 \arguments{
-\item{path}{features_file}
+\item{cell_file}{path to csv file from CellProfiler, e.g., MyExpt_Cells.csv}
 }
 \value{
 \code{\link[SingleCellExperiment]{SingleCellExperiment}} object

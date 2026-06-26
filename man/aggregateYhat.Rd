@@ -18,7 +18,7 @@ aggregateYhat(
 \item{meta_vars}{a vector of variables from `colData`}
 }
 \value{
-\code{\link[data.frame]{data.frame}}
+\code{data.frame}
 }
 \description{
 Aggregate predicted leave-one-out probabilities over meta variables

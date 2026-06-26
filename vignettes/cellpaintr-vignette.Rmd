@@ -4,6 +4,12 @@ author:
 - name: Christof Seiler
   affiliation: 
   - Center of Experimental Rheumatology, Department of Rheumatology, University Hospital Zurich, University of Zurich, Switzerland
+- name: Phatthamon Laphanuwat
+  affiliation: 
+  - Center of Experimental Rheumatology, Department of Rheumatology, University Hospital Zurich, University of Zurich, Switzerland
+- name: Caroline Ospelt
+  affiliation: 
+  - Center of Experimental Rheumatology, Department of Rheumatology, University Hospital Zurich, University of Zurich, Switzerland
 date: "`r Sys.Date()`"
 output: 
   BiocStyle::html_document
@@ -45,7 +51,7 @@ Install this package.
 
 Load packages.
 
-```{r}
+```{r load-libs}
 library(cellpaintr)
 ```
 
@@ -53,7 +59,7 @@ library(cellpaintr)
 
 Load `CellProfiler` output and create a `SingleCellExperiment` object.
 
-```{r}
+```{r read-data}
 # cell_file <- paste0("MyExpt_Cells.csv")
 # sce <- loadData(cell_file)
 ```
@@ -62,7 +68,7 @@ Load `CellProfiler` output and create a `SingleCellExperiment` object.
 
 Prepare the data for machine learning.
 
-```{r}
+```{r data-preprocessing}
 # # remove cells with missing features
 # sce <- removeNAs(sce)
 # 
@@ -85,13 +91,13 @@ Prepare the data for machine learning.
 
 Median polish to remove row and columns effects.
 
-```{r}
+```{r remove-row-col-effects}
 # assay(sce, "features") <- medpolish(assay(sce, "features"))$residuals
 ```
 
 Transform non-negatives features and scale all features.
 
-```{r}
+```{r transform-data}
 # sce <- transformLogScale(sce, robust = TRUE)
 # sce
 ```
@@ -100,7 +106,7 @@ Transform non-negatives features and scale all features.
 
 Pseudo-bulk over images.
 
-```{r}
+```{r aggreate}
 # sce_aggr <- aggregateAcrossCells(
 #   sce,
 #   id = colData(sce)[, c("ImageNumber", "Well", "Patient")],
@@ -111,7 +117,7 @@ Pseudo-bulk over images.
 
 Use `scater` for exploratory data analysis. PCA on pseudo-bulk features.
 
-```{r}
+```{r compute-pca}
 # sce_aggr <- runPCA(sce_aggr, exprs_values = "tfmfeatures")
 # plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Patient")
 # plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Drug")
@@ -119,14 +125,14 @@ Use `scater` for exploratory data analysis. PCA on pseudo-bulk features.
 
 What is driving PC1?
 
-```{r}
+```{r plot-pca}
 # plotPCACor(sce_aggr, filter_by = 1, top = 20)
 # plotPCACor(sce_aggr, filter_by = 2, top = 20)
 ```
 
 UMAP.
 
-```{r}
+```{r umap}
 # sce_aggr <- runUMAP(sce_aggr, exprs_values = "tfmfeatures")
 # plotUMAP(sce_aggr, colour_by = "Patient")
 # plotUMAP(sce_aggr, colour_by = "Drug")
@@ -136,7 +142,7 @@ UMAP.
 
 Predict treatment.
 
-```{r}
+```{r predict-loo}
 # set.seed(23)
 # 
 # sce$Drug <- as.factor(sce$Drug)
@@ -160,13 +166,13 @@ Predict treatment.
 
 Individual scores.
 
-```{r}
+```{r plot-scores}
 # TODO
 ```
 
 Volcano plot to summarize.
 
-```{r plotting, warning=FALSE}
+```{r plot-volcano}
 # volcanoPlot(sce, meta_vars = c("Patient", "Drug"), target = "Drug")
 ```
 

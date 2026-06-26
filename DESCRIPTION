@@ -5,7 +5,15 @@ Version: 0.3.0
 Authors@R: c(
     person("Christof", "Seiler", 
     email = "christof.seiler@usz.ch", 
-    role = c("aut", "cre"), comment = c(ORCID = "0000-0001-8802-3642"))
+    role = c("aut", "cre"), comment = c(ORCID = "0000-0001-8802-3642")),
+    person("Phatthamon", "Laphanuwat" , 
+    email = "phatthamon.laphanuwat@usz.ch", 
+    role = "ctb"),
+    person("Caroline", "Ospelt" , 
+    email = "caroline.ospelt@usz.ch", 
+    role = "ctb"),
+    person("European League Against Rheumatism", role = "fnd"),
+    person("Swiss National Science Foundation", role = "fnd")
     )
 Description: This package load cell painting data into R and 
     preprocess feature to make them ready for machine learning. 
@@ -17,8 +25,7 @@ biocViews:
     Classification,
     FeatureExtraction,
     Preprocessing,
-    Visualization,
-    MachineLearning
+    Visualization
 License: LGPL-3
 Encoding: UTF-8
 LazyData: false
@@ -39,7 +46,7 @@ Imports:
     ggrepel,
     methods
 Depends:
-    R (>= 4.3.0),
+    R (>= 4.5.0),
     SummarizedExperiment,
     SingleCellExperiment
 Suggests: 

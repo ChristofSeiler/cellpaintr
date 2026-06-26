@@ -22,7 +22,7 @@ calculateStats(
 \item{target}{Name of target variable for prediction}
 }
 \value{
-\code{\link[data.frame]{data.frame}}
+\code{data.frame}
 }
 \description{
 Aggregate predicted leave-one-out probabilities over meta variables

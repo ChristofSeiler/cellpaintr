@@ -5,14 +5,13 @@
 #' @importFrom stringr str_detect str_remove
 #' @export
 #'
-#' @param path meta_file
-#' @param path features_file
+#' @param cell_file path to csv file from CellProfiler, e.g., MyExpt_Cells.csv
 #' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #'
 loadData <- function(cell_file) {
 
   # read file with cell data
-  data      <- read_csv(cell_file, show_col_types = FALSE)
+  data <- read_csv(cell_file, show_col_types = FALSE)
 
   # remove features if they exist
   rmv_vars <- c("Number_Object_Number", "Parent_FilteredCell")
@@ -78,7 +77,8 @@ plotCellsPerImage <- function(sce, bins = 100) {
 #'
 #' @importFrom SummarizedExperiment assay
 #' @importFrom SingleCellExperiment reducedDim
-#' @importFrom ggplot2 ggplot geom_tile aes scale_fill_gradient2 theme_minimal coord_fixed ylab
+#' @importFrom ggplot2 ggplot geom_tile aes scale_fill_gradient2 theme_minimal
+#' @importFrom ggplot2 coord_fixed ylab
 #' @importFrom dplyr mutate top_n
 #' @importFrom tibble as_tibble
 #' @importFrom tidyr pivot_longer
@@ -90,7 +90,7 @@ plotCellsPerImage <- function(sce, bins = 100) {
 #' @param pcs Number of PCs to plot
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
-plotPCACor <- function(sce, filter_by = 1, top = 20, pcs = 1:5) {
+plotPCACor <- function(sce, filter_by = 1, top = 20, pcs = seq(5)) {
 
   features <- assay(sce, "tfmfeatures")
   scores <- reducedDim(sce, "PCA")[,pcs]
@@ -374,21 +374,23 @@ predictLOO <- function(sce, assay_type = "tfmfeatures",
   if(length(types) > 0) {
     y_hat <- bind_cols(
       y_hat,
-      purrr::map(types, compute_y_hat, sce_subset, starts = TRUE, .progress = TRUE) |>
+      purrr::map(types, compute_y_hat, sce_subset, starts = TRUE,
+                 .progress = TRUE) |>
         bind_cols()
     )
   }
   if(length(channels) > 0) {
     y_hat <- bind_cols(
       y_hat,
-      purrr::map(channels, compute_y_hat, sce_subset, starts = FALSE, .progress = TRUE) |>
+      purrr::map(channels, compute_y_hat, sce_subset, starts = FALSE,
+                 .progress = TRUE) |>
         bind_cols()
     )
   }
   y_hat <- y_hat |> as.matrix()
 
   # add y_hat to sce object
-  cell_id <- 1:ncol(sce_subset)
+  cell_id <- seq(ncol(sce_subset))
   rownames(y_hat) <- cell_id
   colnames(sce_subset) <- cell_id
   reducedDim(sce_subset, "prevalidated") <- y_hat
@@ -403,7 +405,7 @@ predictLOO <- function(sce, assay_type = "tfmfeatures",
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #' @param assay_type A string specifying the assay
 #' @param meta_vars a vector of variables from `colData`
-#' @return \code{\link[data.frame]{data.frame}}
+#' @return \code{data.frame}
 #'
 aggregateYhat <- function(sce,
                           assay_type = "tfmfeatures",
@@ -423,7 +425,8 @@ aggregateYhat <- function(sce,
 
 #' Plot predicted leave-one-out probabilities
 #'
-#' @importFrom ggplot2 ggplot aes geom_boxplot geom_jitter ylab facet_wrap geom_hline
+#' @importFrom ggplot2 ggplot aes geom_boxplot geom_jitter ylab facet_wrap
+#' @importFrom ggplot2 geom_hline
 #' @importFrom tidyr pivot_longer
 #' @export
 #'
@@ -465,7 +468,7 @@ plotLOO <- function(sce,
 #' @param assay_type A string specifying the assay
 #' @param meta_vars a vector of variables from `colData`
 #' @param target Name of target variable for prediction
-#' @return \code{\link[data.frame]{data.frame}}
+#' @return \code{data.frame}
 #'
 calculateStats <- function(sce,
                            assay_type = "tfmfeatures",
@@ -487,8 +490,8 @@ calculateStats <- function(sce,
       select(all_of(c(meta_vars, feature))) |>
       pivot_wider(names_from = all_of(target), values_from = all_of(feature))
 
-    x = pull(wide, all_of(reference_level))
-    y = pull(wide, all_of(interest_level))
+    x <- pull(wide, all_of(reference_level))
+    y <- pull(wide, all_of(interest_level))
     paired <- sum(is.na(c(x, y))) == 0
     result <- t.test(x, y, paired = paired, var.equal = TRUE,
                      alternative = "less")
