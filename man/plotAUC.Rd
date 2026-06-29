@@ -8,21 +8,17 @@ plotAUC(
   sce,
   assay_type = "tfmfeatures",
   meta_vars = c("Patient", "Treatment"),
-  target = "Treatment",
-  batch = NULL
+  target = "Treatment"
 )
 }
 \arguments{
-\item{sce}{A single or list of
-\code{\link[SingleCellExperiment]{SingleCellExperiment}} objects}
+\item{sce}{A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object}
 
 \item{assay_type}{A string specifying the assay}
 
 \item{meta_vars}{a vector of variables from `colData`}
 
 \item{target}{Name of target variable for prediction}
-
-\item{batch}{Name of batch variable}
 }
 \value{
 \code{\link[ggplot2]{ggplot2}} object

@@ -14,8 +14,7 @@ volcanoPlot(
 )
 }
 \arguments{
-\item{sce}{A single or namded list of
-\code{\link[SingleCellExperiment]{SingleCellExperiment}} objects}
+\item{sce}{A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object}
 
 \item{assay_type}{A string specifying the assay}
 

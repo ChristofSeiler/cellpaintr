@@ -43,8 +43,7 @@ Imports:
     scater,
     tibble,
     tidyr,
-    ggrepel,
-    methods
+    ggrepel
 Depends:
     R (>= 4.5.0),
     SummarizedExperiment,

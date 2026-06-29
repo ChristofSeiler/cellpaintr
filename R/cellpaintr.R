@@ -438,8 +438,7 @@ plotLOO <- function(sce,
         geom_boxplot(width = 0.2, outliers = FALSE) +
         geom_jitter(width = 0.1) +
         ylab("predicted leave-one-out probability") +
-        facet_wrap(~features) +
-        geom_hline(yintercept = 0.5, alpha = 0.5, linetype = "dashed")
+        facet_wrap(~features)
 }
 
 #' Aggregate predicted leave-one-out probabilities over meta variables
@@ -495,12 +494,11 @@ calculateStats <- function(sce,
 #' Plot predicted leave-one-out probabilities
 #'
 #' @importFrom ggplot2 ggplot aes geom_vline geom_hline xlab ylab geom_point
-#' @importFrom dplyr bind_rows mutate
+#' @importFrom dplyr mutate
 #' @importFrom ggrepel geom_text_repel
 #' @export
 #'
-#' @param sce A single or namded list of
-#'            \code{\link[SingleCellExperiment]{SingleCellExperiment}} objects
+#' @param sce A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #' @param assay_type A string specifying the assay
 #' @param meta_vars a vector of variables from `colData`
 #' @param target Name of target variable for prediction
@@ -515,16 +513,7 @@ volcanoPlot <- function(sce,
                         meta_vars = c("Patient", "Treatment"),
                         target = "Treatment",
                         p_cutoff = NULL, fc_cutoff = 1.0) {
-    if (is.list(sce)) {
-        exp_names <- names(sce)
-        stats <- lapply(exp_names, function(exp_name) {
-            df <- calculateStats(sce[[exp_name]], assay_type, meta_vars, target)
-            df$Experiment <- exp_name
-            df
-        }) |> bind_rows()
-    } else {
-        stats <- calculateStats(sce, assay_type, meta_vars, target)
-    }
+    stats <- calculateStats(sce, assay_type, meta_vars, target)
 
     if (is.null(p_cutoff)) {
         p_cutoff <- 0.01 / nrow(stats)
@@ -629,58 +618,41 @@ plotROC <- function(sce, assay_type = "tfmfeatures",
 #' @importFrom stringr str_remove
 #' @importFrom tidyr pivot_longer
 #' @importFrom scater aggregateAcrossCells
-#' @importFrom methods is
 #' @export
 #'
-#' @param sce A single or list of
-#'            \code{\link[SingleCellExperiment]{SingleCellExperiment}} objects
+#' @param sce A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #' @param assay_type A string specifying the assay
 #' @param meta_vars a vector of variables from `colData`
 #' @param target Name of target variable for prediction
-#' @param batch Name of batch variable
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
 plotAUC <- function(sce,
                     assay_type = "tfmfeatures",
                     meta_vars = c("Patient", "Treatment"),
-                    target = "Treatment",
-                    batch = NULL) {
-    if (is(sce, "SingleCellExperiment")) {
-        sce_list <- list(sce)
-    } else {
-        sce_list <- sce
-    }
+                    target = "Treatment") {
+    summed <- aggregateAcrossCells(
+      sce,
+      id = colData(sce)[, meta_vars],
+      use.assay.type = assay_type, statistics = "mean"
+    )
 
-    aucs <- lapply(sce_list, function(sce) {
-        summed <- aggregateAcrossCells(
-            sce,
-            id = colData(sce)[, meta_vars],
-            use.assay.type = assay_type, statistics = "mean"
-        )
-
-        result <- cbind(
-            colData(summed)[, meta_vars] |> as.data.frame(),
-            reducedDim(summed, type = "prevalidated")
+    result <- cbind(
+        colData(summed)[, meta_vars] |> as.data.frame(),
+        reducedDim(summed, type = "prevalidated")
+    ) |>
+        pivot_longer(
+            cols = -c(all_of(meta_vars)),
+            names_to = "features", values_to = "pred"
         ) |>
-            pivot_longer(
-                cols = -c(all_of(meta_vars)),
-                names_to = "features", values_to = "pred"
-            ) |>
-            droplevels()
+        droplevels()
 
-        interest_level <- levels(result[[target]])[2]
+    reference_level <- levels(result[[target]])[1]
+    interest_level <- levels(result[[target]])[2]
+    title_str <- paste0("Predict ", interest_level, " vs ", reference_level)
 
-        if (!is.null(batch)) {
-            result <- result |>
-                group_by(features, .data[[batch]])
-        } else {
-            result <- result |>
-                group_by(features)
-        }
-        result |>
-            yardstick::roc_auc(all_of(target), "pred", event_level = "second") |>
-            mutate(Target = interest_level)
-    }) |> dplyr::bind_rows()
+    aucs <- result |>
+      group_by(features) |>
+      yardstick::roc_auc(all_of(target), "pred", event_level = "second")
 
     fct_order <- aucs |>
         group_by(features) |>
@@ -688,17 +660,10 @@ plotAUC <- function(sce,
         arrange(desc(median)) |>
         pull(features)
 
-    gp <- aucs |>
+    aucs |>
         mutate(features = factor(features, levels = fct_order)) |>
-        ggplot(aes(.estimate, features, color = Target)) +
+        ggplot(aes(.estimate, features)) +
+        geom_point() +
         xlab("AUC") +
-        ggtitle("Area under the ROC curves")
-
-    if (!is.null(batch)) {
-        gp +
-            geom_jitter(aes(shape = .data[[batch]]), height = 0.2, width = 0)
-    } else {
-        gp +
-            geom_jitter(height = 0.2, width = 0)
-    }
+        ggtitle(title_str)
 }

@@ -171,6 +171,14 @@ volcanoPlot(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug",
             p_cutoff = 0.05, fc_cutoff = 0.5)
 ```
 
+Individual scores.
+
+```{r plot-scores}
+plotLOO(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
+plotAUC(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
+plotROC(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
+```
+
 Compare a list of drugs to negative control.
 
 ```{r predict-multiple-drugs}
@@ -218,16 +226,6 @@ tb_stats |>
   ylab("-log10 p-value (BH adjusted)") +
   facet_wrap(~Feature) + 
   ggtitle(paste0("False Discovery Rate: ", 100*p_adj_cutoff, "%"))
-```
-
-## Plot Results
-
-Individual scores.
-
-```{r plot-scores}
-# TODO: plotAUC
-# TODO: plotROC
-# TODO: plotLOO
 ```
 
 # Session Info {-}
