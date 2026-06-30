@@ -59,6 +59,46 @@ library(dplyr)
 library(ggrepel)
 ```
 
+## Generate Data
+
+Use column names from CellProfiler and simulate data.
+
+```{r}
+library(readr)
+library(stringr)
+
+header_file <- system.file(
+  "extdata", "header.csv", package = "cellpaintr", mustWork = TRUE
+  )
+df <- read_csv(header_file)
+
+row <- LETTERS[seq(16)]
+col <- sprintf("%02d", seq(24))
+grid <- expand.grid(col = col, row = row)
+wells <- paste0(grid$row, grid$col)
+
+n_patients <- 6
+n_images <- 1000
+n_cells <- 10000
+
+ObjectNumber <- seq(n_cells)
+ImageNumber <- sample(n_images, n_cells, replace = TRUE)
+Metadata_Well <- sample(wells, n_cells, replace = TRUE)
+Metadata_Patient <- sample(paste0("P", seq(6)), n_cells, replace = TRUE)
+
+shape <- str_detect(names(df), "AreaShape_")
+intensity <- str_detect(names(df), "Intensity_")
+texture <- str_detect(names(df), "Texture_")
+
+shape_mat <- rpois(n = n_cells*sum(shape), lambda = 10)
+shape_mat <- matrix(shape_mat, nrow = n_cells, ncol = sum(shape))
+shape_mat <- shape_mat |> as.data.frame()
+colnames(shape_mat) <- names(df[, shape])
+
+df[, intensity]
+df[, texture]
+```
+
 ## Load Data
 
 Load `CellProfiler` output and create a `SingleCellExperiment` object.
@@ -93,12 +133,6 @@ sce <- removeLowVariance(sce, robust = TRUE)
 
 # remove zero-inflated features
 sce <- removeZeroInflation(sce)
-```
-
-Median polish to remove row and columns effects.
-
-```{r remove-row-col-effects}
-assay(sce, "features") <- medpolish(assay(sce, "features"))$residuals
 ```
 
 Transform non-negatives features and scale all features.
