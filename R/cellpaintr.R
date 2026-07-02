@@ -31,7 +31,7 @@ generate_data <- function() {
     # parameters of distributions
     pois_lambda <- 10
     gamma_shape <- 1
-    rnorm_mean <- 1
+    norm_mean <- 1
 
     # effect size of drug perturbation
     d7_shift <- 0.4

@@ -38,11 +38,10 @@ To simplify data analysis of CellProfiler features in R—many options exist in 
 Install this package.
 
 ```{r install-package, eval=FALSE}
-# if (!require("BiocManager", quietly = TRUE)) {
-#     install.packages("BiocManager")
-# }
-#
-# BiocManager::install("cellpaintr")
+if (!require("BiocManager", quietly = TRUE)) {
+    install.packages("BiocManager")
+}
+BiocManager::install("cellpaintr")
 ```
 
 # Workflow
@@ -64,6 +63,7 @@ library(ggrepel)
 Load `CellProfiler` output and create a `SingleCellExperiment` object.
 
 ```{r read-data}
+set.seed(23)
 cell_file <- generate_data()
 sce <- loadData(cell_file)
 ```
@@ -105,11 +105,11 @@ Pseudo-bulk over images.
 
 ```{r aggreate}
 sce_aggr <- aggregateAcrossCells(
-  sce,
-  id = colData(sce)[, c("ImageNumber", "Drug", "Patient")],
-  use.assay.type = "tfmfeatures",
-  statistics = "mean"
-  )
+    sce,
+    id = colData(sce)[, c("ImageNumber", "Drug", "Patient")],
+    use.assay.type = "tfmfeatures",
+    statistics = "mean"
+    )
 ```
 
 Use `scater` for exploratory data analysis. PCA on pseudo-bulk features.
@@ -147,10 +147,10 @@ sce$Drug <- relevel(sce$Drug, ref = "D1")
 types <- c("AreaShape", "Intensity", "Texture")
 
 sce_single <- predictLOO(
-  sce, target = "Drug", group = "Patient",
-  interest_level = "D7", reference_level = "D1",
-  types = types,
-  n_threads = 1
+    sce, target = "Drug", group = "Patient",
+    interest_level = "D7", reference_level = "D1",
+    types = types,
+    n_threads = 1
 )
 ```
 
@@ -178,14 +178,12 @@ reference_level <- "D1"
 interest_levels <- setdiff(levels(sce$Drug), reference_level)
 
 sce_list <- map(interest_levels, function(interest_level) {
-  
-  predictLOO(
-    sce, target = "Drug", group = "Patient",
-    interest_level = interest_level, reference_level = reference_level,
-    types = types,
-    n_threads = 1
-    )
-  
+    predictLOO(
+      sce, target = "Drug", group = "Patient",
+      interest_level = interest_level, reference_level = reference_level,
+      types = types,
+      n_threads = 1
+      )
 }, .progress = "drug screening")
 ```
 
@@ -193,29 +191,29 @@ Custom volcano plot for summarizing drugs faceted by features.
 
 ```{r plot-volcano-custom}
 # prepare stats table
-p_adj_cutoff <- 0.1
+p_adj_cutoff <- 0.05
 fc_cutoff <- 0.5
 tb_stats <- lapply(sce_list, calculateStats, 
                    meta_vars = c("Patient", "Drug"), target = "Drug") |>
-  bind_rows() |>
-  mutate(pvalue_adj = p.adjust(pvalue, method = "BH")) |>
-  mutate(Selection = ifelse(
-    pvalue_adj < p_adj_cutoff & log2FoldChange > fc_cutoff,
-    Target, "")
-    )
+    bind_rows() |>
+    mutate(pvalue_adj = p.adjust(pvalue, method = "BH")) |>
+    mutate(Selection = ifelse(
+      pvalue_adj < p_adj_cutoff & log2FoldChange > fc_cutoff,
+      Target, "")
+      )
 
 # volcano plot
 tb_stats |>
-  ggplot(aes(log2FoldChange, -log10(pvalue_adj), label = Selection)) +
-  geom_vline(xintercept = c(0, fc_cutoff), alpha = 0.5, linetype = "dashed") +
-  geom_hline(yintercept = c(0, -log10(p_adj_cutoff)), alpha = 0.5, 
-             linetype = "dashed") +
-  geom_point(aes(color = Target)) +
-  geom_text_repel(aes(color = Target), max.overlaps = Inf) +
-  xlab("log2 fold change") +
-  ylab("-log10 p-value (BH adjusted)") +
-  facet_wrap(~Feature) + 
-  ggtitle(paste0("False Discovery Rate: ", 100*p_adj_cutoff, "%"))
+    ggplot(aes(log2FoldChange, -log10(pvalue_adj), label = Selection)) +
+    geom_vline(xintercept = c(0, fc_cutoff), alpha = 0.5, linetype = "dashed") +
+    geom_hline(yintercept = c(0, -log10(p_adj_cutoff)), alpha = 0.5, 
+               linetype = "dashed") +
+    geom_point(aes(color = Target)) +
+    geom_text_repel(aes(color = Target), max.overlaps = Inf) +
+    xlab("log2 fold change") +
+    ylab("-log10 p-value (BH adjusted)") +
+    facet_wrap(~Feature) + 
+    ggtitle(paste0("False Discovery Rate: ", 100*p_adj_cutoff, "%"))
 ```
 
 # Session Info {-}
