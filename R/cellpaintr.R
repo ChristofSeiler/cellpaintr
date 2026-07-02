@@ -1,3 +1,98 @@
+#' Simulate CellProfiler data and write to a temporary file
+#'
+#' @importFrom readr read_csv write_csv
+#' @importFrom stringr str_detect
+#' @export
+#'
+#' @return path to csv file
+#'
+generate_data <- function() {
+    # use column names from CellProfiler and simulate data
+    header_file <- system.file(
+        "extdata", "header.csv", package = "cellpaintr", mustWork = TRUE
+    )
+    df <- read_csv(header_file)
+
+    # create a 384-well plate
+    row <- LETTERS[seq(16)]
+    col <- sprintf("%02d", seq(24))
+    grid <- expand.grid(col = col, row = row)
+    wells <- paste0(grid$row, grid$col)
+
+    # set sample sizes
+    n_patients <- 6
+    n_images <- 100
+    n_cells <- 1000
+    n_drugs <- 8
+
+    # only keep p features for each type
+    p <- 10
+
+    # parameters of distributions
+    pois_lambda <- 10
+    gamma_shape <- 1
+    rnorm_mean <- 1
+
+    # effect size of drug perturbation
+    d7_shift <- 0.4
+    d8_shift <- 0.8
+
+    # simulate meta data
+    ObjectNumber <- seq(n_cells)
+    ImageNumber <- sample(n_images, n_cells, replace = TRUE)
+    Metadata_Well <- sample(wells, n_cells, replace = TRUE)
+    Metadata_Patient <- sample(paste0("P", seq(n_patients)), n_cells,
+                               replace = TRUE)
+    Metadata_Drug <- sample(paste0("D", seq(n_drugs)), n_cells, replace = TRUE)
+
+    # simulate non-negative shape features
+    shape <- names(df)[str_detect(names(df), "AreaShape_")]
+    shape <- sample(shape, p)
+    shape_mat <-
+        rpois(n = n_cells*length(shape), lambda = pois_lambda) |>
+        matrix(nrow = n_cells, ncol = length(shape)) |>
+        as.data.frame()
+    colnames(shape_mat) <- shape
+
+    # simulate non-negative intensity features
+    intensity <- names(df)[str_detect(names(df), "Intensity_")]
+    intensity <- sample(intensity, p)
+    intensity_mat <-
+        rgamma(n = n_cells*length(intensity), shape = gamma_shape) |>
+        matrix(nrow = n_cells, ncol = length(intensity)) |>
+        as.data.frame()
+    colnames(intensity_mat) <- intensity
+
+    # simulate real-valued texture features
+    texture <- names(df)[str_detect(names(df), "Texture_")]
+    texture <- sample(texture, p)
+    texture_mat <-
+        rnorm(n = n_cells*length(texture), mean = norm_mean) |>
+        matrix(nrow = n_cells, ncol = length(texture)) |>
+        as.data.frame()
+    colnames(texture_mat) <- texture
+
+    # combine into one data frame
+    df <- data.frame(
+        ObjectNumber, ImageNumber,
+        Metadata_Well, Metadata_Patient, Metadata_Drug,
+        shape_mat, intensity_mat, texture_mat
+    )
+
+    # shift texture features of D7
+    cells_d07 <- which(df$Metadata_Drug == "D7")
+    df[cells_d07, texture] <- df[cells_d07, texture] + d7_shift
+
+    # shift texture features of D8
+    cells_d08 <- which(df$Metadata_Drug == "D8")
+    df[cells_d08, texture] <- df[cells_d08, texture] + d8_shift
+
+    # write the simulated data frame to a temporary file
+    cell_file <- tempfile(fileext = ".csv")
+    write_csv(df, cell_file)
+    cell_file
+}
+
 #' Load cell painting data from file and convert to a SingleCellExperiment
 #'
 #' @importFrom SingleCellExperiment SingleCellExperiment

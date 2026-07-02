@@ -59,54 +59,12 @@ library(dplyr)
 library(ggrepel)
 ```
 
-## Generate Data
-
-Use column names from CellProfiler and simulate data.
-
-```{r}
-library(readr)
-library(stringr)
-
-header_file <- system.file(
-  "extdata", "header.csv", package = "cellpaintr", mustWork = TRUE
-  )
-df <- read_csv(header_file)
-
-row <- LETTERS[seq(16)]
-col <- sprintf("%02d", seq(24))
-grid <- expand.grid(col = col, row = row)
-wells <- paste0(grid$row, grid$col)
-
-n_patients <- 6
-n_images <- 1000
-n_cells <- 10000
-
-ObjectNumber <- seq(n_cells)
-ImageNumber <- sample(n_images, n_cells, replace = TRUE)
-Metadata_Well <- sample(wells, n_cells, replace = TRUE)
-Metadata_Patient <- sample(paste0("P", seq(6)), n_cells, replace = TRUE)
-
-shape <- str_detect(names(df), "AreaShape_")
-intensity <- str_detect(names(df), "Intensity_")
-texture <- str_detect(names(df), "Texture_")
-
-shape_mat <- rpois(n = n_cells*sum(shape), lambda = 10)
-shape_mat <- matrix(shape_mat, nrow = n_cells, ncol = sum(shape))
-shape_mat <- shape_mat |> as.data.frame()
-colnames(shape_mat) <- names(df[, shape])
-
-df[, intensity]
-df[, texture]
-```
-
 ## Load Data
 
 Load `CellProfiler` output and create a `SingleCellExperiment` object.
 
 ```{r read-data}
-cell_file <- system.file(
-  "extdata", "MyExpt_Cells.csv", package = "cellpaintr", mustWork = TRUE
-  )
+cell_file <- generate_data()
 sce <- loadData(cell_file)
 ```
 
@@ -139,7 +97,6 @@ Transform non-negatives features and scale all features.
 
 ```{r transform-data}
 sce <- transformLogScale(sce, robust = TRUE)
-sce
 ```
 
 ## Unsupervised Analysis
@@ -149,7 +106,7 @@ Pseudo-bulk over images.
 ```{r aggreate}
 sce_aggr <- aggregateAcrossCells(
   sce,
-  id = colData(sce)[, c("ImageNumber", "Well", "Patient")],
+  id = colData(sce)[, c("ImageNumber", "Drug", "Patient")],
   use.assay.type = "tfmfeatures",
   statistics = "mean"
   )
@@ -158,7 +115,7 @@ sce_aggr <- aggregateAcrossCells(
 Use `scater` for exploratory data analysis. PCA on pseudo-bulk features.
 
 ```{r compute-pca}
-sce_aggr <- runPCA(sce_aggr, exprs_values = "tfmfeatures")
+sce_aggr <- runPCA(sce_aggr, exprs_values = "tfmfeatures", ncomponents = 10)
 plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Patient")
 plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Drug")
 ```
@@ -167,7 +124,6 @@ What is driving PC1?
 
 ```{r plot-pca}
 plotPCACor(sce_aggr, filter_by = 1)
-plotPCACor(sce_aggr, filter_by = 2)
 ```
 
 UMAP.
@@ -186,13 +142,13 @@ Compare positive control to negative control.
 set.seed(23)
 
 sce$Drug <- as.factor(sce$Drug)
-sce$Drug <- relevel(sce$Drug, ref = "DMSO")
+sce$Drug <- relevel(sce$Drug, ref = "D1")
 
 types <- c("AreaShape", "Intensity", "Texture")
 
 sce_single <- predictLOO(
   sce, target = "Drug", group = "Patient",
-  interest_level = "MG132", reference_level = "DMSO",
+  interest_level = "D7", reference_level = "D1",
   types = types,
   n_threads = 1
 )
@@ -218,7 +174,7 @@ Compare a list of drugs to negative control.
 ```{r predict-multiple-drugs}
 set.seed(23)
 
-reference_level <- "DMSO"
+reference_level <- "D1"
 interest_levels <- setdiff(levels(sce$Drug), reference_level)
 
 sce_list <- map(interest_levels, function(interest_level) {
