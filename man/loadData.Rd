@@ -15,3 +15,9 @@ loadData(cell_file)
 \description{
 Load cell painting data from file and convert to a SingleCellExperiment
 }
+\examples{
+set.seed(23)
+cell_file <- generate_data()
+loadData(cell_file)
+
+}

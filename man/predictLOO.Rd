@@ -44,3 +44,22 @@ predictLOO(
 \description{
 Predict target from features
 }
+\examples{
+set.seed(23)
+cell_file <- generate_data()
+sce <- loadData(cell_file)
+sce <- transformLogScale(sce)
+
+sce$Drug <- as.factor(sce$Drug)
+sce$Drug <- relevel(sce$Drug, ref = "D1")
+types <- c("AreaShape", "Intensity", "Texture")
+
+sce_single <- predictLOO(
+ sce,
+ target = "Drug", group = "Patient",
+ interest_level = "D7", reference_level = "D1",
+ types = types,
+ n_threads = 1
+ )
+
+}

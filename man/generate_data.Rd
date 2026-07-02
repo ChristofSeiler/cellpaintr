@@ -12,3 +12,8 @@ path to csv file
 \description{
 Simulate CellProfiler data and write to a temporary file
 }
+\examples{
+set.seed(23)
+generate_bead()
+
+}

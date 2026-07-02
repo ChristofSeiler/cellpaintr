@@ -21,3 +21,12 @@ plotPCACor(sce, filter_by = 1, top = 20, pcs = seq(5))
 \description{
 Plot number of cells per image
 }
+\examples{
+set.seed(23)
+cell_file <- generate_data()
+sce <- loadData(cell_file)
+sce <- transformLogScale(sce, robust = TRUE)
+sce <- runPCA(sce, exprs_values = "tfmfeatures", ncomponents = 10)
+plotPCACor(sce_aggr, filter_by = 1)
+
+}

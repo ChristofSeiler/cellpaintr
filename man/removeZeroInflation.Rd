@@ -17,3 +17,10 @@ removeZeroInflation(sce, proportion = 0.2)
 \description{
 Remove zero-inflated features
 }
+\examples{
+set.seed(23)
+cell_file <- generate_data()
+sce <- loadData(cell_file)
+sce <- removeZeroInflation(sce)
+
+}

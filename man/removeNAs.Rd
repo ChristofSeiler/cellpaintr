@@ -15,3 +15,10 @@ removeNAs(sce)
 \description{
 Remove cells with missing features
 }
+\examples{
+set.seed(23)
+cell_file <- generate_data()
+sce <- loadData(cell_file)
+sce <- removeNAs(sce)
+
+}

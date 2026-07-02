@@ -19,3 +19,10 @@ removeLowVariance(sce, threshold = 0, robust = FALSE)
 \description{
 Filter low variance features
 }
+\examples{
+set.seed(23)
+cell_file <- generate_data()
+sce <- loadData(cell_file)
+sce <- removeLowVariance(sce)
+
+}

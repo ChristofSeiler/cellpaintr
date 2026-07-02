@@ -6,6 +6,10 @@
 #'
 #' @return path to csv file
 #'
+#' @examples
+#' set.seed(23)
+#' generate_bead()
+#'
 generate_data <- function() {
     # use column names from CellProfiler and simulate data
     header_file <- system.file(
@@ -105,6 +109,11 @@ generate_data <- function() {
 #' @param cell_file path to csv file from CellProfiler, e.g., MyExpt_Cells.csv
 #' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #'
+#' @examples
+#' set.seed(23)
+#' cell_file <- generate_data()
+#' loadData(cell_file)
+#'
 loadData <- function(cell_file) {
     # read file with cell data
     data <- read_csv(cell_file, show_col_types = FALSE)
@@ -158,6 +167,12 @@ loadData <- function(cell_file) {
 #' @param bins Number of histogram bins
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
+#' @examples
+#' set.seed(23)
+#' cell_file <- generate_data()
+#' sce <- loadData(cell_file)
+#' plotCellsPerImage(sce)
+#'
 plotCellsPerImage <- function(sce, bins = 100) {
     colData(sce) |>
         as_tibble() |>
@@ -185,6 +200,14 @@ plotCellsPerImage <- function(sce, bins = 100) {
 #' @param top Number of top features to select
 #' @param pcs Number of PCs to plot
 #' @return \code{\link[ggplot2]{ggplot2}} object
+#'
+#' @examples
+#' set.seed(23)
+#' cell_file <- generate_data()
+#' sce <- loadData(cell_file)
+#' sce <- transformLogScale(sce, robust = TRUE)
+#' sce <- runPCA(sce, exprs_values = "tfmfeatures", ncomponents = 10)
+#' plotPCACor(sce_aggr, filter_by = 1)
 #'
 plotPCACor <- function(sce, filter_by = 1, top = 20, pcs = seq(5)) {
     features <- assay(sce, "tfmfeatures")
@@ -227,6 +250,12 @@ plotPCACor <- function(sce, filter_by = 1, top = 20, pcs = seq(5)) {
 #' @param max Remove cells above that number
 #' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #'
+#' @examples
+#' set.seed(23)
+#' cell_file <- generate_data()
+#' sce <- loadData(cell_file)
+#' sce <- removeOutliers(sce, min = 0, max = 300)
+#'
 removeOutliers <- function(sce, min, max) {
     cell_ids <-
         colData(sce) |>
@@ -238,29 +267,6 @@ removeOutliers <- function(sce, min, max) {
     sce[, sce$ImageNumber %in% cell_ids]
 }
 
-#' Remove missing values
-#'
-#' @importFrom SummarizedExperiment assay
-#' @export
-#'
-#' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
-#' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
-#'
-removeMissingValues <- function(sce) {
-    mat <- assay(sce, "features")
-
-    # remove missing values in features
-    miss_perc_features <- apply(mat, 1, function(x) mean(is.na(x)))
-    feature_ids <- which(miss_perc_features > 0)
-
-    # remove missing values in cells
-    miss_perc_cells <- apply(mat, 2, function(x) mean(is.na(x)))
-    cell_ids <- which(miss_perc_cells > 0)
-
-    sce[-feature_ids, -cell_ids]
-}
-
-
 #' Remove cells with missing features
 #'
 #' @importFrom SummarizedExperiment assay
@@ -268,6 +274,12 @@ removeMissingValues <- function(sce) {
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#'
+#' @examples
+#' set.seed(23)
+#' cell_file <- generate_data()
+#' sce <- loadData(cell_file)
+#' sce <- removeNAs(sce)
 #'
 removeNAs <- function(sce) {
     mat <- assay(sce, "features")
@@ -290,6 +302,12 @@ removeNAs <- function(sce) {
 #' @param robust If true use median absolute deviation, otherwise use variance
 #' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #'
+#' @examples
+#' set.seed(23)
+#' cell_file <- generate_data()
+#' sce <- loadData(cell_file)
+#' sce <- removeLowVariance(sce)
+#'
 removeLowVariance <- function(sce, threshold = 0, robust = FALSE) {
     mat <- assay(sce, "features")
 
@@ -311,6 +329,12 @@ removeLowVariance <- function(sce, threshold = 0, robust = FALSE) {
 #' @param proportion Remove features exceeding this zero-inflation proportion
 #' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #'
+#' @examples
+#' set.seed(23)
+#' cell_file <- generate_data()
+#' sce <- loadData(cell_file)
+#' sce <- removeZeroInflation(sce)
+#'
 removeZeroInflation <- function(sce, proportion = 0.2) {
     mat <- assay(sce, "features")
     prop_zeros <- apply(mat, 1, function(x) mean(x == 0))
@@ -325,6 +349,12 @@ removeZeroInflation <- function(sce, proportion = 0.2) {
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #' @param robust If true robust z-score, otherwise standard z-score
 #' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#'
+#' @examples
+#' set.seed(23)
+#' cell_file <- generate_data()
+#' sce <- loadData(cell_file)
+#' sce <- transformLogScale(sce)
 #'
 transformLogScale <- function(sce, robust = FALSE) {
     mat <- assay(sce, "features")
@@ -374,6 +404,24 @@ transformLogScale <- function(sce, robust = FALSE) {
 #' @param weights Weights variable when features are aggregated
 #' @param n_threads Number of parallel threads for fitting of models
 #' @return \code{\link[tibble]{tibble}} data frame
+#'
+#' @examples
+#' set.seed(23)
+#' cell_file <- generate_data()
+#' sce <- loadData(cell_file)
+#' sce <- transformLogScale(sce)
+#'
+#' sce$Drug <- as.factor(sce$Drug)
+#' sce$Drug <- relevel(sce$Drug, ref = "D1")
+#' types <- c("AreaShape", "Intensity", "Texture")
+#'
+#' sce_single <- predictLOO(
+#'  sce,
+#'  target = "Drug", group = "Patient",
+#'  interest_level = "D7", reference_level = "D1",
+#'  types = types,
+#'  n_threads = 1
+#'  )
 #'
 predictLOO <- function(sce, assay_type = "tfmfeatures",
                        target = "Treatment", interest_level, reference_level,
@@ -492,6 +540,26 @@ predictLOO <- function(sce, assay_type = "tfmfeatures",
 #' @param meta_vars a vector of variables from `colData`
 #' @return \code{data.frame}
 #'
+#' @examples
+#' set.seed(23)
+#' cell_file <- generate_data()
+#' sce <- loadData(cell_file)
+#' sce <- transformLogScale(sce)
+#'
+#' sce$Drug <- as.factor(sce$Drug)
+#' sce$Drug <- relevel(sce$Drug, ref = "D1")
+#' types <- c("AreaShape", "Intensity", "Texture")
+#'
+#' sce_single <- predictLOO(
+#'  sce,
+#'  target = "Drug", group = "Patient",
+#'  interest_level = "D7", reference_level = "D1",
+#'  types = types,
+#'  n_threads = 1
+#'  )
+#'
+#' aggregateYhat(sce_single, meta_vars = c("Patient", "Drug"))
+#'
 aggregateYhat <- function(sce,
                           assay_type = "tfmfeatures",
                           meta_vars = c("Patient", "Treatment")) {
@@ -519,6 +587,26 @@ aggregateYhat <- function(sce,
 #' @param meta_vars a vector of variables from `colData`
 #' @param target Name of target variable for prediction
 #' @return \code{\link[ggplot2]{ggplot2}} object
+#'
+#' @examples
+#' set.seed(23)
+#' cell_file <- generate_data()
+#' sce <- loadData(cell_file)
+#' sce <- transformLogScale(sce)
+#'
+#' sce$Drug <- as.factor(sce$Drug)
+#' sce$Drug <- relevel(sce$Drug, ref = "D1")
+#' types <- c("AreaShape", "Intensity", "Texture")
+#'
+#' sce_single <- predictLOO(
+#'  sce,
+#'  target = "Drug", group = "Patient",
+#'  interest_level = "D7", reference_level = "D1",
+#'  types = types,
+#'  n_threads = 1
+#'  )
+#'
+#' plotLOO(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
 #'
 plotLOO <- function(sce,
                     assay_type = "tfmfeatures",
@@ -552,6 +640,26 @@ plotLOO <- function(sce,
 #' @param meta_vars a vector of variables from `colData`
 #' @param target Name of target variable for prediction
 #' @return \code{data.frame}
+#'
+#' @examples
+#' set.seed(23)
+#' cell_file <- generate_data()
+#' sce <- loadData(cell_file)
+#' sce <- transformLogScale(sce)
+#'
+#' sce$Drug <- as.factor(sce$Drug)
+#' sce$Drug <- relevel(sce$Drug, ref = "D1")
+#' types <- c("AreaShape", "Intensity", "Texture")
+#'
+#' sce_single <- predictLOO(
+#'  sce,
+#'  target = "Drug", group = "Patient",
+#'  interest_level = "D7", reference_level = "D1",
+#'  types = types,
+#'  n_threads = 1
+#'  )
+#'
+#' calculateStats(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
 #'
 calculateStats <- function(sce,
                            assay_type = "tfmfeatures",
@@ -605,6 +713,29 @@ calculateStats <- function(sce,
 #'                  will be drawn at fc_cutoff.
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
+#' @examples
+#' set.seed(23)
+#' cell_file <- generate_data()
+#' sce <- loadData(cell_file)
+#' sce <- transformLogScale(sce)
+#'
+#' sce$Drug <- as.factor(sce$Drug)
+#' sce$Drug <- relevel(sce$Drug, ref = "D1")
+#' types <- c("AreaShape", "Intensity", "Texture")
+#'
+#' sce_single <- predictLOO(
+#'   sce,
+#'   target = "Drug", group = "Patient",
+#'   interest_level = "D7", reference_level = "D1",
+#'   types = types,
+#'   n_threads = 1
+#'   )
+#'
+#' volcanoPlot(sce_single,
+#'   meta_vars = c("Patient", "Drug"), target = "Drug",
+#'   p_cutoff = 0.05, fc_cutoff = 0.5
+#' )
+#'
 volcanoPlot <- function(sce,
                         assay_type = "tfmfeatures",
                         meta_vars = c("Patient", "Treatment"),
@@ -656,6 +787,26 @@ volcanoPlot <- function(sce,
 #' @param meta_vars a vector of variables from `colData`
 #' @param target Name of target variable for prediction
 #' @return \code{\link[ggplot2]{ggplot2}} object
+#'
+#' @examples
+#' set.seed(23)
+#' cell_file <- generate_data()
+#' sce <- loadData(cell_file)
+#' sce <- transformLogScale(sce)
+#'
+#' sce$Drug <- as.factor(sce$Drug)
+#' sce$Drug <- relevel(sce$Drug, ref = "D1")
+#' types <- c("AreaShape", "Intensity", "Texture")
+#'
+#' sce_single <- predictLOO(
+#'  sce,
+#'  target = "Drug", group = "Patient",
+#'  interest_level = "D7", reference_level = "D1",
+#'  types = types,
+#'  n_threads = 1
+#'  )
+#'
+#' plotROC(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
 #'
 plotROC <- function(sce, assay_type = "tfmfeatures",
                     meta_vars = c("Patient", "Treatment"),
@@ -722,6 +873,26 @@ plotROC <- function(sce, assay_type = "tfmfeatures",
 #' @param meta_vars a vector of variables from `colData`
 #' @param target Name of target variable for prediction
 #' @return \code{\link[ggplot2]{ggplot2}} object
+#'
+#' @examples
+#' set.seed(23)
+#' cell_file <- generate_data()
+#' sce <- loadData(cell_file)
+#' sce <- transformLogScale(sce)
+#'
+#' sce$Drug <- as.factor(sce$Drug)
+#' sce$Drug <- relevel(sce$Drug, ref = "D1")
+#' types <- c("AreaShape", "Intensity", "Texture")
+#'
+#' sce_single <- predictLOO(
+#'  sce,
+#'  target = "Drug", group = "Patient",
+#'  interest_level = "D7", reference_level = "D1",
+#'  types = types,
+#'  n_threads = 1
+#'  )
+#'
+#' plotAUC(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
 #'
 plotAUC <- function(sce,
                     assay_type = "tfmfeatures",

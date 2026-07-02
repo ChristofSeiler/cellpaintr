@@ -19,3 +19,10 @@ removeOutliers(sce, min, max)
 \description{
 Remove cells if not enough or too many in one image
 }
+\examples{
+set.seed(23)
+cell_file <- generate_data()
+sce <- loadData(cell_file)
+sce <- removeOutliers(sce, min = 0, max = 300)
+
+}
