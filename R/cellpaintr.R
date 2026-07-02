@@ -416,12 +416,12 @@ transformLogScale <- function(sce, robust = FALSE) {
 #' types <- c("AreaShape", "Intensity", "Texture")
 #'
 #' sce_single <- predictLOO(
-#'  sce,
-#'  target = "Drug", group = "Patient",
-#'  interest_level = "D7", reference_level = "D1",
-#'  types = types,
-#'  n_threads = 1
-#'  )
+#'     sce,
+#'     target = "Drug", group = "Patient",
+#'     interest_level = "D7", reference_level = "D1",
+#'     types = types,
+#'     n_threads = 1
+#' )
 #'
 predictLOO <- function(sce, assay_type = "tfmfeatures",
                        target = "Treatment", interest_level, reference_level,
@@ -551,12 +551,12 @@ predictLOO <- function(sce, assay_type = "tfmfeatures",
 #' types <- c("AreaShape", "Intensity", "Texture")
 #'
 #' sce_single <- predictLOO(
-#'  sce,
-#'  target = "Drug", group = "Patient",
-#'  interest_level = "D7", reference_level = "D1",
-#'  types = types,
-#'  n_threads = 1
-#'  )
+#'     sce,
+#'     target = "Drug", group = "Patient",
+#'     interest_level = "D7", reference_level = "D1",
+#'     types = types,
+#'     n_threads = 1
+#' )
 #'
 #' aggregateYhat(sce_single, meta_vars = c("Patient", "Drug"))
 #'
@@ -599,12 +599,12 @@ aggregateYhat <- function(sce,
 #' types <- c("AreaShape", "Intensity", "Texture")
 #'
 #' sce_single <- predictLOO(
-#'  sce,
-#'  target = "Drug", group = "Patient",
-#'  interest_level = "D7", reference_level = "D1",
-#'  types = types,
-#'  n_threads = 1
-#'  )
+#'     sce,
+#'     target = "Drug", group = "Patient",
+#'     interest_level = "D7", reference_level = "D1",
+#'     types = types,
+#'     n_threads = 1
+#' )
 #'
 #' plotLOO(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
 #'
@@ -652,12 +652,12 @@ plotLOO <- function(sce,
 #' types <- c("AreaShape", "Intensity", "Texture")
 #'
 #' sce_single <- predictLOO(
-#'  sce,
-#'  target = "Drug", group = "Patient",
-#'  interest_level = "D7", reference_level = "D1",
-#'  types = types,
-#'  n_threads = 1
-#'  )
+#'     sce,
+#'     target = "Drug", group = "Patient",
+#'     interest_level = "D7", reference_level = "D1",
+#'     types = types,
+#'     n_threads = 1
+#' )
 #'
 #' calculateStats(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
 #'
@@ -724,16 +724,16 @@ calculateStats <- function(sce,
 #' types <- c("AreaShape", "Intensity", "Texture")
 #'
 #' sce_single <- predictLOO(
-#'   sce,
-#'   target = "Drug", group = "Patient",
-#'   interest_level = "D7", reference_level = "D1",
-#'   types = types,
-#'   n_threads = 1
-#'   )
+#'     sce,
+#'     target = "Drug", group = "Patient",
+#'     interest_level = "D7", reference_level = "D1",
+#'     types = types,
+#'     n_threads = 1
+#' )
 #'
 #' volcanoPlot(sce_single,
-#'   meta_vars = c("Patient", "Drug"), target = "Drug",
-#'   p_cutoff = 0.05, fc_cutoff = 0.5
+#'     meta_vars = c("Patient", "Drug"), target = "Drug",
+#'     p_cutoff = 0.05, fc_cutoff = 0.5
 #' )
 #'
 volcanoPlot <- function(sce,
@@ -799,12 +799,12 @@ volcanoPlot <- function(sce,
 #' types <- c("AreaShape", "Intensity", "Texture")
 #'
 #' sce_single <- predictLOO(
-#'  sce,
-#'  target = "Drug", group = "Patient",
-#'  interest_level = "D7", reference_level = "D1",
-#'  types = types,
-#'  n_threads = 1
-#'  )
+#'     sce,
+#'     target = "Drug", group = "Patient",
+#'     interest_level = "D7", reference_level = "D1",
+#'     types = types,
+#'     n_threads = 1
+#' )
 #'
 #' plotROC(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
 #'
@@ -885,12 +885,12 @@ plotROC <- function(sce, assay_type = "tfmfeatures",
 #' types <- c("AreaShape", "Intensity", "Texture")
 #'
 #' sce_single <- predictLOO(
-#'  sce,
-#'  target = "Drug", group = "Patient",
-#'  interest_level = "D7", reference_level = "D1",
-#'  types = types,
-#'  n_threads = 1
-#'  )
+#'     sce,
+#'     target = "Drug", group = "Patient",
+#'     interest_level = "D7", reference_level = "D1",
+#'     types = types,
+#'     n_threads = 1
+#' )
 #'
 #' plotAUC(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
 #'
