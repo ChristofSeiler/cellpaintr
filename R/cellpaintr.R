@@ -16,7 +16,7 @@ generate_data <- function() {
         "extdata", "header.csv",
         package = "cellpaintr", mustWork = TRUE
     )
-    df <- read_csv(header_file)
+    df <- read_csv(header_file, show_col_types = FALSE)
 
     # create a 384-well plate
     row <- LETTERS[seq(16)]
