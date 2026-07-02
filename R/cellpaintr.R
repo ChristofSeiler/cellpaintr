@@ -9,7 +9,8 @@
 generate_data <- function() {
     # use column names from CellProfiler and simulate data
     header_file <- system.file(
-        "extdata", "header.csv", package = "cellpaintr", mustWork = TRUE
+        "extdata", "header.csv",
+        package = "cellpaintr", mustWork = TRUE
     )
     df <- read_csv(header_file)
 
@@ -42,14 +43,15 @@ generate_data <- function() {
     ImageNumber <- sample(n_images, n_cells, replace = TRUE)
     Metadata_Well <- sample(wells, n_cells, replace = TRUE)
     Metadata_Patient <- sample(paste0("P", seq(n_patients)), n_cells,
-                               replace = TRUE)
+        replace = TRUE
+    )
     Metadata_Drug <- sample(paste0("D", seq(n_drugs)), n_cells, replace = TRUE)
 
     # simulate non-negative shape features
     shape <- names(df)[str_detect(names(df), "AreaShape_")]
     shape <- sample(shape, p)
     shape_mat <-
-        rpois(n = n_cells*length(shape), lambda = pois_lambda) |>
+        rpois(n = n_cells * length(shape), lambda = pois_lambda) |>
         matrix(nrow = n_cells, ncol = length(shape)) |>
         as.data.frame()
     colnames(shape_mat) <- shape
@@ -58,7 +60,7 @@ generate_data <- function() {
     intensity <- names(df)[str_detect(names(df), "Intensity_")]
     intensity <- sample(intensity, p)
     intensity_mat <-
-        rgamma(n = n_cells*length(intensity), shape = gamma_shape) |>
+        rgamma(n = n_cells * length(intensity), shape = gamma_shape) |>
         matrix(nrow = n_cells, ncol = length(intensity)) |>
         as.data.frame()
     colnames(intensity_mat) <- intensity
@@ -67,7 +69,7 @@ generate_data <- function() {
     texture <- names(df)[str_detect(names(df), "Texture_")]
     texture <- sample(texture, p)
     texture_mat <-
-        rnorm(n = n_cells*length(texture), mean = norm_mean) |>
+        rnorm(n = n_cells * length(texture), mean = norm_mean) |>
         matrix(nrow = n_cells, ncol = length(texture)) |>
         as.data.frame()
     colnames(texture_mat) <- texture
@@ -726,9 +728,9 @@ plotAUC <- function(sce,
                     meta_vars = c("Patient", "Treatment"),
                     target = "Treatment") {
     summed <- aggregateAcrossCells(
-      sce,
-      id = colData(sce)[, meta_vars],
-      use.assay.type = assay_type, statistics = "mean"
+        sce,
+        id = colData(sce)[, meta_vars],
+        use.assay.type = assay_type, statistics = "mean"
     )
 
     result <- cbind(
@@ -746,8 +748,8 @@ plotAUC <- function(sce,
     title_str <- paste0("Predict ", interest_level, " vs ", reference_level)
 
     aucs <- result |>
-      group_by(features) |>
-      yardstick::roc_auc(all_of(target), "pred", event_level = "second")
+        group_by(features) |>
+        yardstick::roc_auc(all_of(target), "pred", event_level = "second")
 
     fct_order <- aucs |>
         group_by(features) |>
