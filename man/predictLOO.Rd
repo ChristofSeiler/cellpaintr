@@ -55,11 +55,11 @@ sce$Drug <- relevel(sce$Drug, ref = "D1")
 types <- c("AreaShape", "Intensity", "Texture")
 
 sce_single <- predictLOO(
- sce,
- target = "Drug", group = "Patient",
- interest_level = "D7", reference_level = "D1",
- types = types,
- n_threads = 1
- )
+    sce,
+    target = "Drug", group = "Patient",
+    interest_level = "D7", reference_level = "D1",
+    types = types,
+    n_threads = 1
+)
 
 }
