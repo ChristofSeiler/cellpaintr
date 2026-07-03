@@ -9,3 +9,15 @@ test_that("remove missing values", {
 
     expect_equal(n_nas, 0)
 })
+
+test_that("remove outliers", {
+    # TODO: removeOutliers
+})
+
+test_that("remove low variance features", {
+    # TODO: removeLowVariance
+})
+
+test_that("remove zero inflation features", {
+    # TODO: removeZeroInflation
+})
