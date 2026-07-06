@@ -1,5 +1,3 @@
-citHeader("To cite the spillR package in publications, use:")
-
 bibentry(
   bibtype = "Article",
   author = c(
