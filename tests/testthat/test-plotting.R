@@ -59,4 +59,11 @@ test_that("plot prediction scores", {
     p <- plotAUC(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
     expect_s3_class(p, "ggplot")
     expect_equal(rlang::as_name(p$mapping$x), ".estimate")
+
+    # no p_cutoff defined
+    p <- volcanoPlot(sce_single,
+        meta_vars = c("Patient", "Drug"), target = "Drug",
+        fc_cutoff = 0.5
+    )
+    expect_s3_class(p, "ggplot")
 })
