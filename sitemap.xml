@@ -1,0 +1,27 @@
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https://christofseiler.github.io/cellpaintr/404.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/articles/cellpaintr-vignette.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/articles/index.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/authors.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/index.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/news/index.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/reference/aggregateYhat.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/reference/calculateStats.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/reference/compute_y_hat.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/reference/generate_data.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/reference/index.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/reference/loadData.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/reference/plotAUC.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/reference/plotCellsPerImage.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/reference/plotLOO.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/reference/plotPCACor.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/reference/plotROC.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/reference/predictLOO.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/reference/removeLowVariance.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/reference/removeNAs.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/reference/removeOutliers.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/reference/removeZeroInflation.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/reference/transformLogScale.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/reference/volcanoPlot.html</loc></url>
+</urlset>
+
