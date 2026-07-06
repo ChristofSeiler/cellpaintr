@@ -224,7 +224,8 @@ plotPCACor <- function(sce, filter_by = 1, top = 20, pcs = seq(5)) {
 
     features_pcs <- features_pcs |>
         pivot_longer(!c(name, importance),
-                     names_to = "PC", values_to = "cor") |>
+            names_to = "PC", values_to = "cor"
+        ) |>
         mutate(PC = str_remove(PC, "PC"))
 
     ggplot(features_pcs, aes(PC, name, fill = cor)) +
@@ -382,6 +383,102 @@ transformLogScale <- function(sce, robust = FALSE) {
     sce
 }
 
+#' Internal function to compute y_hat on a subset of the features
+#'
+#' @importFrom SummarizedExperiment assay
+#' @importFrom SingleCellExperiment colData reducedDim reducedDim<-
+#' @importFrom dplyr bind_cols bind_rows arrange select
+#' @importFrom parsnip rand_forest set_mode set_engine
+#' @importFrom rsample group_initial_split training testing
+#' @importFrom purrr map
+#' @importFrom ranger ranger
+#' @importFrom stringr str_starts
+#'
+#' @param feature_name String with feature name
+#' @param sce_feature \code{\link[SingleCellExperiment]{SingleCellExperiment}}
+#' @param starts Starting string
+#' @param assay_type A string specifying the assay
+#' @param target Name of target variable for prediction
+#' @param interest_level Factor interest level in `target` variable
+#' @param reference_level Factor reference level in `target` variable
+#' @param group Grouping variable for cross-validation, e.g., patient
+#' @param weights Weights variable when features are aggregated
+#' @param n_threads Number of parallel threads for fitting of models
+#' @return \code{\link[tibble]{tibble}} data frame
+#'
+compute_y_hat <- function(feature_name,
+                          sce_feature,
+                          starts,
+                          assay_type,
+                          target,
+                          interest_level,
+                          reference_level,
+                          group,
+                          weights,
+                          n_threads) {
+    # convert to regular expression
+    if (feature_name == "all") {
+        pattern <- ".*"
+    } else {
+        pattern <- feature_name
+    }
+
+    # subset features
+    features <- names(sce_feature)
+    if (starts) {
+        features <- features[str_starts(features, pattern)]
+    } else {
+        features <- features[str_detect(features, pattern)]
+    }
+    sce_feature <- sce_feature[features, ]
+
+    # prepare data frame with target variable and predictor matrix
+    X <- assay(sce_feature, assay_type) |> t()
+    cells <- colData(sce_feature) |> as_tibble()
+    ml_data <- data.frame(Target = cells |> pull(target), X)
+    ml_data$Target <- factor(ml_data$Target,
+        levels = c(interest_level, reference_level)
+    )
+
+    # compute y hats
+    patients <- unique(sce_feature[[group]])
+    result_list <- lapply(patients, function(patient) {
+        train_ids <- which(sce_feature[[group]] != patient)
+        test_ids <- which(sce_feature[[group]] == patient)
+
+        # train model
+        if (!is.null(weights)) {
+            case_weights <- sce_feature[[weights]][train_ids]
+        } else {
+            case_weights <- NULL
+        }
+        rf_spec <-
+            parsnip::rand_forest() |>
+            parsnip::set_mode("classification") |>
+            parsnip::set_engine("ranger",
+                num.threads = n_threads,
+                case.weights = case_weights
+            )
+        rf_fit <- rf_spec |>
+            parsnip::fit(Target ~ ., data = ml_data[train_ids, ])
+
+        # evaluate model
+        dplyr::bind_cols(
+            cell = test_ids,
+            predict(rf_fit, ml_data[test_ids, ], type = "prob")
+        )
+    })
+
+    # combine folds
+    result <- result_list |>
+        bind_rows() |>
+        arrange(cell)
+
+    # rename to feature type / channel
+    names(result)[2] <- feature_name
+    result |> select(all_of(feature_name))
+}
+
 #' Predict target from features
 #'
 #' @importFrom SummarizedExperiment assay
@@ -440,89 +537,18 @@ predictLOO <- function(sce,
     # remove unused levels
     sce_subset[[target]] <- droplevels(sce_subset[[target]])
 
-    # function to compute y_hat on a subset of the features
-    compute_y_hat <- function(feature_name,
-                              sce_feature,
-                              starts,
-                              assay_type,
-                              target,
-                              interest_level,
-                              reference_level,
-                              weights,
-                              n_threads) {
-        # convert to regular expression
-        if (feature_name == "all") {
-            pattern <- ".*"
-        } else {
-            pattern <- feature_name
-        }
-
-        # subset features
-        features <- names(sce_feature)
-        if (starts) {
-            features <- features[str_starts(features, pattern)]
-        } else {
-            features <- features[str_detect(features, pattern)]
-        }
-        sce_feature <- sce_feature[features, ]
-
-        # prepare data frame with target variable and predictor matrix
-        X <- assay(sce_feature, assay_type) |> t()
-        cells <- colData(sce_feature) |> as_tibble()
-        ml_data <- data.frame(Target = cells |> pull(target), X)
-        ml_data$Target <- factor(ml_data$Target,
-            levels = c(interest_level, reference_level)
-        )
-
-        # compute y hats
-        patients <- unique(sce_feature[[group]])
-        result_list <- lapply(patients, function(patient) {
-            train_ids <- which(sce_feature[[group]] != patient)
-            test_ids <- which(sce_feature[[group]] == patient)
-
-            # train model
-            if (!is.null(weights)) {
-                case_weights <- sce_feature[[weights]][train_ids]
-            } else {
-                case_weights <- NULL
-            }
-            rf_spec <-
-                parsnip::rand_forest() |>
-                parsnip::set_mode("classification") |>
-                parsnip::set_engine("ranger",
-                    num.threads = n_threads,
-                    case.weights = case_weights
-                )
-            rf_fit <- rf_spec |>
-                parsnip::fit(Target ~ ., data = ml_data[train_ids, ])
-
-            # evaluate model
-            dplyr::bind_cols(
-                cell = test_ids,
-                predict(rf_fit, ml_data[test_ids, ], type = "prob")
-            )
-        })
-
-        # combine folds
-        result <- result_list |>
-            bind_rows() |>
-            arrange(cell)
-
-        # rename to feature type / channel
-        names(result)[2] <- feature_name
-        result |> select(all_of(feature_name))
-    }
-
     # combine and add to reducedDim slot
-    y_hat <- compute_y_hat("all", sce_subset, starts = TRUE, assay_type,
-                           target, interest_level, reference_level, weights,
-                           n_threads)
+    y_hat <- compute_y_hat("all", sce_subset,
+        starts = TRUE, assay_type,
+        target, interest_level, reference_level, group,
+        weights, n_threads
+    )
     if (length(types) > 0) {
         y_hat <- bind_cols(
             y_hat,
             purrr::map(types, compute_y_hat, sce_subset,
                 starts = TRUE, assay_type, target, interest_level,
-                reference_level, weights, n_threads,
+                reference_level, group, weights, n_threads,
                 .progress = TRUE
             ) |>
                 bind_cols()
@@ -533,7 +559,7 @@ predictLOO <- function(sce,
             y_hat,
             purrr::map(channels, compute_y_hat, sce_subset,
                 starts = FALSE, assay_type, target, interest_level,
-                reference_level, weights, n_threads,
+                reference_level, group, weights, n_threads,
                 .progress = TRUE
             ) |>
                 bind_cols()
