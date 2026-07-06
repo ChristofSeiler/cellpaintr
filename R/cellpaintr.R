@@ -441,7 +441,15 @@ predictLOO <- function(sce,
     sce_subset[[target]] <- droplevels(sce_subset[[target]])
 
     # function to compute y_hat on a subset of the features
-    compute_y_hat <- function(feature_name, sce_feature, starts = TRUE) {
+    compute_y_hat <- function(feature_name,
+                              sce_feature,
+                              starts,
+                              assay_type,
+                              target,
+                              interest_level,
+                              reference_level,
+                              weights,
+                              n_threads) {
         # convert to regular expression
         if (feature_name == "all") {
             pattern <- ".*"
@@ -506,12 +514,15 @@ predictLOO <- function(sce,
     }
 
     # combine and add to reducedDim slot
-    y_hat <- compute_y_hat("all", sce_subset)
+    y_hat <- compute_y_hat("all", sce_subset, starts = TRUE, assay_type,
+                           target, interest_level, reference_level, weights,
+                           n_threads)
     if (length(types) > 0) {
         y_hat <- bind_cols(
             y_hat,
             purrr::map(types, compute_y_hat, sce_subset,
-                starts = TRUE,
+                starts = TRUE, assay_type, target, interest_level,
+                reference_level, weights, n_threads,
                 .progress = TRUE
             ) |>
                 bind_cols()
@@ -521,7 +532,8 @@ predictLOO <- function(sce,
         y_hat <- bind_cols(
             y_hat,
             purrr::map(channels, compute_y_hat, sce_subset,
-                starts = FALSE,
+                starts = FALSE, assay_type, target, interest_level,
+                reference_level, weights, n_threads,
                 .progress = TRUE
             ) |>
                 bind_cols()
