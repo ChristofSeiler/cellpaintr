@@ -1,18 +1,21 @@
 citHeader("To cite the spillR package in publications, use:")
 
-citEntry(
-  entry = "article",
-  author = personList(person(given = "Phatthamon", family = "Laphanuwat"),
-    person(given = "Ege", family = "Ezen"),
-    person(given = "Christof", family = "Seiler"),
-    person(given = "Caroline", family = "Ospelt")),
-  title = "spillR: Spillover Compensation in Mass Cytometry Data",
-  journal = "bioRxiv 2026.06.23.733987",
+bibentry(
+  bibtype = "Article",
+  author = c(
+    person("Phatthamon", "Laphanuwat"),
+    person("Ege", "Ezen"),
+    person("Christof", "Seiler"),
+    person("Caroline", "Ospelt")
+  ),
+  title = "Developing High Content Imaging Functional Panels to Characterize Synovial Fibroblasts in Rheumatoid Arthritis",
+  journal = "bioRxiv",
   year = "2026",
+  doi = "10.64898/2026.06.23.733987",
   textVersion = paste(
-    "Phatthamon Laphanuwat, Ege Ezen, Christof Seiler, Caroline Ospelt,",
-    "Developing High Content Imaging Functional Panels to Characterize Synovial",
-    "Fibroblasts in Rheumatoid Arthritis,",
-    "bioRxiv 2026.06.23.733987"
+    "Laphanuwat P, Ezen E, Seiler C, Ospelt C (2026).",
+    "Developing High Content Imaging Functional Panels to Characterize",
+    "Synovial Fibroblasts in Rheumatoid Arthritis.",
+    "bioRxiv. doi:10.64898/2026.06.23.733987"
   )
 )
