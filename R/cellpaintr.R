@@ -8,7 +8,7 @@
 #'
 #' @examples
 #' set.seed(23)
-#' generate_bead()
+#' generate_data()
 #'
 generate_data <- function() {
     # use column names from CellProfiler and simulate data
@@ -206,8 +206,8 @@ plotCellsPerImage <- function(sce, bins = 100) {
 #' cell_file <- generate_data()
 #' sce <- loadData(cell_file)
 #' sce <- transformLogScale(sce, robust = TRUE)
-#' sce <- runPCA(sce, exprs_values = "tfmfeatures", ncomponents = 10)
-#' plotPCACor(sce_aggr, filter_by = 1)
+#' sce <- scater::runPCA(sce, exprs_values = "tfmfeatures", ncomponents = 10)
+#' plotPCACor(sce, filter_by = 1)
 #'
 plotPCACor <- function(sce, filter_by = 1, top = 20, pcs = seq(5)) {
     features <- assay(sce, "tfmfeatures")
@@ -583,26 +583,6 @@ predictLOO <- function(sce,
 #' @param assay_type A string specifying the assay
 #' @param meta_vars a vector of variables from `colData`
 #' @return \code{data.frame}
-#'
-#' @examples
-#' set.seed(23)
-#' cell_file <- generate_data()
-#' sce <- loadData(cell_file)
-#' sce <- transformLogScale(sce)
-#'
-#' sce$Drug <- as.factor(sce$Drug)
-#' sce$Drug <- relevel(sce$Drug, ref = "D1")
-#' types <- c("AreaShape", "Intensity", "Texture")
-#'
-#' sce_single <- predictLOO(
-#'     sce,
-#'     target = "Drug", group = "Patient",
-#'     interest_level = "D7", reference_level = "D1",
-#'     types = types,
-#'     n_threads = 1
-#' )
-#'
-#' aggregateYhat(sce_single, meta_vars = c("Patient", "Drug"))
 #'
 aggregateYhat <- function(sce,
                           assay_type = "tfmfeatures",

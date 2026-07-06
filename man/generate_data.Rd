@@ -14,6 +14,6 @@ Simulate CellProfiler data and write to a temporary file
 }
 \examples{
 set.seed(23)
-generate_bead()
+generate_data()
 
 }
