@@ -31,7 +31,7 @@ knitr::opts_chunk$set(
 
 High-content imaging can capture detailed morphological and functional features on a single-cell level. It has been widely used in drug screen assays and for generating large-scale image datasets for machine learning models. Software such as CellProfiler extract features from high-content images for downstream analysis. CellProfiler implements a suite of traditional image processing algorithms to segment cells and extract about 1,000 morphological and texture features.
 
-To simplify data analysis of CellProfiler features in R—many options exist in Python, such as PyCytominer—we developed an R/Bioconductor package. Our package leverages Bioconductor objects for batch correction and dimension reduction, lowering the learning curve for users familiar with single-cell RNA sequencing workflows.
+To simplify data analysis of CellProfiler features in R---many options exist in Python, such as PyCytominer---we developed an R/Bioconductor package. Our package leverages Bioconductor objects for batch correction and dimension reduction, lowering the learning curve for users familiar with single-cell RNA sequencing workflows.
 
 # Installation
 

@@ -721,7 +721,10 @@ calculateStats <- function(sce,
     lapply(feature_vars, function(feature) {
         wide <- y_hat |>
             select(all_of(c(meta_vars, feature))) |>
-            pivot_wider(names_from = all_of(target), values_from = all_of(feature))
+            pivot_wider(
+                names_from = all_of(target),
+                values_from = all_of(feature)
+            )
 
         x <- pull(wide, all_of(reference_level))
         y <- pull(wide, all_of(interest_level))
