@@ -747,7 +747,7 @@ volcanoPlot <- function(sce,
         p_cutoff <- 0.01 / nrow(stats)
     }
 
-    gg <- stats |>
+    stats |>
         mutate(Feature = ifelse(pvalue < p_cutoff & log2FoldChange > fc_cutoff,
             Feature, ""
         )) |>
@@ -758,17 +758,9 @@ volcanoPlot <- function(sce,
             linetype = "dashed"
         ) +
         xlab("log2 fold change") +
-        ylab("-log10 p-value")
-
-    if (is.list(sce)) {
-        gg +
-            geom_point(aes(color = Experiment)) +
-            geom_text_repel(aes(color = Experiment), max.overlaps = Inf)
-    } else {
-        gg +
-            geom_point() +
-            geom_text_repel()
-    }
+        ylab("-log10 p-value") +
+        geom_point() +
+        geom_text_repel()
 }
 
 #' Plot ROC curves
