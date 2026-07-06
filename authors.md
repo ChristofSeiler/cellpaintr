@@ -18,13 +18,14 @@
 Source:
 [`inst/CITATION`](https://github.com/ChristofSeiler/cellpaintr/blob/main/inst/CITATION)
 
-Phatthamon Laphanuwat, Ege Ezen, Christof Seiler, Caroline Ospelt,
-Developing High Content Imaging Functional Panels to Characterize
-Synovial Fibroblasts in Rheumatoid Arthritis, bioRxiv 2026.06.23.733987
+Laphanuwat P, Ezen E, Seiler C, Ospelt C (2026). Developing High Content
+Imaging Functional Panels to Characterize Synovial Fibroblasts in
+Rheumatoid Arthritis. bioRxiv. doi:10.64898/2026.06.23.733987
 
     @Article{,
       author = {Phatthamon Laphanuwat and Ege Ezen and Christof Seiler and Caroline Ospelt},
-      title = {spillR: Spillover Compensation in Mass Cytometry Data},
-      journal = {bioRxiv 2026.06.23.733987},
+      title = {Developing High Content Imaging Functional Panels to Characterize Synovial Fibroblasts in Rheumatoid Arthritis},
+      journal = {bioRxiv},
       year = {2026},
+      doi = {10.64898/2026.06.23.733987},
     }
