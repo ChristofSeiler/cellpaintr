@@ -223,7 +223,8 @@ plotPCACor <- function(sce, filter_by = 1, top = 20, pcs = seq(5)) {
         top_n(top, importance)
 
     features_pcs <- features_pcs |>
-        pivot_longer(!c(name, importance), names_to = "PC", values_to = "cor") |>
+        pivot_longer(!c(name, importance),
+                     names_to = "PC", values_to = "cor") |>
         mutate(PC = str_remove(PC, "PC"))
 
     ggplot(features_pcs, aes(PC, name, fill = cor)) +
@@ -423,11 +424,16 @@ transformLogScale <- function(sce, robust = FALSE) {
 #'     n_threads = 1
 #' )
 #'
-predictLOO <- function(sce, assay_type = "tfmfeatures",
-                       target = "Treatment", interest_level, reference_level,
-                       types = NULL, channels = NULL,
+predictLOO <- function(sce,
+                       assay_type = "tfmfeatures",
+                       target = "Treatment",
+                       interest_level,
+                       reference_level,
+                       types = NULL,
+                       channels = NULL,
                        group = "Patient",
-                       weights = NULL, n_threads = 1) {
+                       weights = NULL,
+                       n_threads = 1) {
     # subset for binary classification
     sce_subset <- sce[, sce[[target]] %in% c(reference_level, interest_level)]
 
@@ -707,8 +713,8 @@ calculateStats <- function(sce,
 #' @param assay_type A string specifying the assay
 #' @param meta_vars a vector of variables from `colData`
 #' @param target Name of target variable for prediction
-#' @param p_cutoff Cut-off for statistical significance. A horizontal line will
-#'                 be drawn at -log10(p_cutoff).
+#' @param p_cutoff Cut-off for statistical significance. A horizontal line
+#'                 will be drawn at -log10(p_cutoff).
 #' @param fc_cutoff Cut-off for absolute log2 fold-change. A vertical lines
 #'                  will be drawn at fc_cutoff.
 #' @return \code{\link[ggplot2]{ggplot2}} object
@@ -740,7 +746,8 @@ volcanoPlot <- function(sce,
                         assay_type = "tfmfeatures",
                         meta_vars = c("Patient", "Treatment"),
                         target = "Treatment",
-                        p_cutoff = NULL, fc_cutoff = 1.0) {
+                        p_cutoff = NULL,
+                        fc_cutoff = 1.0) {
     stats <- calculateStats(sce, assay_type, meta_vars, target)
 
     if (is.null(p_cutoff)) {

@@ -22,8 +22,8 @@ volcanoPlot(
 
 \item{target}{Name of target variable for prediction}
 
-\item{p_cutoff}{Cut-off for statistical significance. A horizontal line will
-be drawn at -log10(p_cutoff).}
+\item{p_cutoff}{Cut-off for statistical significance. A horizontal line
+will be drawn at -log10(p_cutoff).}
 
 \item{fc_cutoff}{Cut-off for absolute log2 fold-change. A vertical lines
 will be drawn at fc_cutoff.}
