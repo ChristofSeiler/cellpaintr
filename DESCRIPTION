@@ -55,5 +55,5 @@ Suggests:
     BiocStyle
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.0.0
-URL: https://github.com/ChristofSeiler/cellpaintr
+URL: https://github.com/ChristofSeiler/cellpaintr, https://christofseiler.github.io/cellpaintr/
 BugReports: https://github.com/ChristofSeiler/cellpaintr/issues
