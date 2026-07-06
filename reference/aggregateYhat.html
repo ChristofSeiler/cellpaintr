@@ -71,30 +71,6 @@
     <p><code>data.frame</code></p>
     </div>
 
-    <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">23</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">cell_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="generate_data.html">generate_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="loadData.html">loadData</a></span><span class="op">(</span><span class="va">cell_file</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="transformLogScale.html">transformLogScale</a></span><span class="op">(</span><span class="va">sce</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">sce</span><span class="op">$</span><span class="va">Drug</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">as.factor</a></span><span class="op">(</span><span class="va">sce</span><span class="op">$</span><span class="va">Drug</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">sce</span><span class="op">$</span><span class="va">Drug</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/relevel.html" class="external-link">relevel</a></span><span class="op">(</span><span class="va">sce</span><span class="op">$</span><span class="va">Drug</span>, ref <span class="op">=</span> <span class="st">"D1"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">types</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AreaShape"</span>, <span class="st">"Intensity"</span>, <span class="st">"Texture"</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">sce_single</span> <span class="op">&lt;-</span> <span class="fu"><a href="predictLOO.html">predictLOO</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>    <span class="va">sce</span>,</span></span>
-<span class="r-in"><span>    target <span class="op">=</span> <span class="st">"Drug"</span>, group <span class="op">=</span> <span class="st">"Patient"</span>,</span></span>
-<span class="r-in"><span>    interest_level <span class="op">=</span> <span class="st">"D7"</span>, reference_level <span class="op">=</span> <span class="st">"D1"</span>,</span></span>
-<span class="r-in"><span>    types <span class="op">=</span> <span class="va">types</span>,</span></span>
-<span class="r-in"><span>    n_threads <span class="op">=</span> <span class="fl">1</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu">aggregateYhat</span><span class="op">(</span><span class="va">sce_single</span>, meta_vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Patient"</span>, <span class="st">"Drug"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in aggregateYhat(sce_single, meta_vars = c("Patient", "Drug")):</span> could not find function "aggregateYhat"</span>
-<span class="r-in"><span></span></span>
-</code></pre></div>
-    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

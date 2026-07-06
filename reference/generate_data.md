@@ -16,6 +16,6 @@ path to csv file
 
 ``` r
 set.seed(23)
-generate_bead()
-#> Error in generate_bead(): could not find function "generate_bead"
+generate_data()
+#> [1] "/tmp/Rtmpbfo9Yr/file27df5b066bd4.csv"
 ```
