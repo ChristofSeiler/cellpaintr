@@ -4,18 +4,16 @@
 \alias{aggregateYhat}
 \title{Aggregate predicted leave-one-out probabilities over meta variables}
 \usage{
-aggregateYhat(
-  sce,
-  assay_type = "tfmfeatures",
-  meta_vars = c("Patient", "Treatment")
-)
+aggregateYhat(sce, target, group, assay_type = "tfmfeatures")
 }
 \arguments{
 \item{sce}{\code{\link[SingleCellExperiment]{SingleCellExperiment}} object}
 
-\item{assay_type}{A string specifying the assay}
+\item{target}{Name of target variable for prediction}
 
-\item{meta_vars}{a vector of variables from `colData`}
+\item{group}{Grouping variable for cross-validation, e.g., patient}
+
+\item{assay_type}{A string specifying the assay}
 }
 \value{
 \code{data.frame}

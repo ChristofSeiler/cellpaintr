@@ -397,25 +397,25 @@ transformLogScale <- function(sce, robust = FALSE) {
 #' @param feature_name String with feature name
 #' @param sce_feature \code{\link[SingleCellExperiment]{SingleCellExperiment}}
 #' @param starts Starting string
-#' @param assay_type A string specifying the assay
 #' @param target Name of target variable for prediction
+#' @param group Grouping variable for cross-validation, e.g., patient
 #' @param interest_level Factor interest level in `target` variable
 #' @param reference_level Factor reference level in `target` variable
-#' @param group Grouping variable for cross-validation, e.g., patient
 #' @param weights Weights variable when features are aggregated
 #' @param n_threads Number of parallel threads for fitting of models
+#' @param assay_type A string specifying the assay
 #' @return \code{\link[tibble]{tibble}} data frame
 #'
 compute_y_hat <- function(feature_name,
                           sce_feature,
                           starts,
-                          assay_type,
                           target,
+                          group,
                           interest_level,
                           reference_level,
-                          group,
                           weights,
-                          n_threads) {
+                          n_threads,
+                          assay_type) {
     # convert to regular expression
     if (feature_name == "all") {
         pattern <- ".*"
@@ -492,15 +492,15 @@ compute_y_hat <- function(feature_name,
 #' @export
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
-#' @param assay_type A string specifying the assay
 #' @param target Name of target variable for prediction
+#' @param group Grouping variable for cross-validation, e.g., patient
 #' @param interest_level Factor interest level in `target` variable
 #' @param reference_level Factor reference level in `target` variable
 #' @param types Vector of strings of feature types
 #' @param channels Vector of strings of feature channels
-#' @param group Grouping variable for cross-validation, e.g., patient
 #' @param weights Weights variable when features are aggregated
 #' @param n_threads Number of parallel threads for fitting of models
+#' @param assay_type A string specifying the assay
 #' @return \code{\link[tibble]{tibble}} data frame
 #'
 #' @examples
@@ -522,15 +522,15 @@ compute_y_hat <- function(feature_name,
 #' )
 #'
 predictLOO <- function(sce,
-                       assay_type = "tfmfeatures",
-                       target = "Treatment",
+                       target,
+                       group,
                        interest_level,
                        reference_level,
                        types = NULL,
                        channels = NULL,
-                       group = "Patient",
                        weights = NULL,
-                       n_threads = 1) {
+                       n_threads = 1,
+                       assay_type = "tfmfeatures") {
     # subset for binary classification
     sce_subset <- sce[, sce[[target]] %in% c(reference_level, interest_level)]
 
@@ -539,16 +539,17 @@ predictLOO <- function(sce,
 
     # combine and add to reducedDim slot
     y_hat <- compute_y_hat("all", sce_subset,
-        starts = TRUE, assay_type,
-        target, interest_level, reference_level, group,
-        weights, n_threads
+        starts = TRUE,
+        target, group, interest_level, reference_level,
+        weights, n_threads, assay_type
     )
     if (length(types) > 0) {
         y_hat <- bind_cols(
             y_hat,
             purrr::map(types, compute_y_hat, sce_subset,
-                starts = TRUE, assay_type, target, interest_level,
-                reference_level, group, weights, n_threads,
+                starts = TRUE,
+                target, group, interest_level, reference_level,
+                weights, n_threads, assay_type,
                 .progress = TRUE
             ) |>
                 bind_cols()
@@ -558,8 +559,9 @@ predictLOO <- function(sce,
         y_hat <- bind_cols(
             y_hat,
             purrr::map(channels, compute_y_hat, sce_subset,
-                starts = FALSE, assay_type, target, interest_level,
-                reference_level, group, weights, n_threads,
+                starts = FALSE,
+                target, group, interest_level, reference_level,
+                weights, n_threads, assay_type,
                 .progress = TRUE
             ) |>
                 bind_cols()
@@ -580,13 +582,16 @@ predictLOO <- function(sce,
 #' @importFrom scater aggregateAcrossCells
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#' @param target Name of target variable for prediction
+#' @param group Grouping variable for cross-validation, e.g., patient
 #' @param assay_type A string specifying the assay
-#' @param meta_vars a vector of variables from `colData`
 #' @return \code{data.frame}
 #'
 aggregateYhat <- function(sce,
-                          assay_type = "tfmfeatures",
-                          meta_vars = c("Patient", "Treatment")) {
+                          target,
+                          group,
+                          assay_type = "tfmfeatures") {
+    meta_vars <- c(target, group)
     summed <- aggregateAcrossCells(
         sce,
         id = colData(sce)[, meta_vars],
@@ -607,9 +612,9 @@ aggregateYhat <- function(sce,
 #' @export
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
-#' @param assay_type A string specifying the assay
-#' @param meta_vars a vector of variables from `colData`
 #' @param target Name of target variable for prediction
+#' @param group Grouping variable for cross-validation, e.g., patient
+#' @param assay_type A string specifying the assay
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
 #' @examples
@@ -630,13 +635,14 @@ aggregateYhat <- function(sce,
 #'     n_threads = 1
 #' )
 #'
-#' plotLOO(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
+#' plotLOO(sce_single, target = "Drug", group = "Patient")
 #'
 plotLOO <- function(sce,
-                    assay_type = "tfmfeatures",
-                    meta_vars = c("Patient", "Treatment"),
-                    target = "Treatment") {
-    y_hat <- aggregateYhat(sce, assay_type, meta_vars)
+                    target,
+                    group,
+                    assay_type = "tfmfeatures") {
+    meta_vars <- c(target, group)
+    y_hat <- aggregateYhat(sce, target, group, assay_type)
 
     y_hat |>
         pivot_longer(
@@ -660,9 +666,9 @@ plotLOO <- function(sce,
 #' @export
 #'
 #' @param sce A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
-#' @param assay_type A string specifying the assay
-#' @param meta_vars a vector of variables from `colData`
 #' @param target Name of target variable for prediction
+#' @param group Grouping variable for cross-validation, e.g., patient
+#' @param assay_type A string specifying the assay
 #' @return \code{data.frame}
 #'
 #' @examples
@@ -683,17 +689,18 @@ plotLOO <- function(sce,
 #'     n_threads = 1
 #' )
 #'
-#' calculateStats(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
+#' calculateStats(sce_single, target = "Drug", group = "Patient")
 #'
 calculateStats <- function(sce,
-                           assay_type = "tfmfeatures",
-                           meta_vars = c("Patient", "Treatment"),
-                           target = "Treatment") {
+                           target,
+                           group,
+                           assay_type = "tfmfeatures") {
+    meta_vars <- c(target, group)
     # standard convention in base R to store reference level as first
     reference_level <- levels(sce[[target]])[1]
     interest_level <- levels(sce[[target]])[2]
 
-    y_hat <- aggregateYhat(sce, assay_type, meta_vars)
+    y_hat <- aggregateYhat(sce, target, group, assay_type)
     feature_vars <- setdiff(names(y_hat), meta_vars)
     y_hat$Target <- interest_level
 
@@ -731,13 +738,13 @@ calculateStats <- function(sce,
 #' @export
 #'
 #' @param sce A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
-#' @param assay_type A string specifying the assay
-#' @param meta_vars a vector of variables from `colData`
 #' @param target Name of target variable for prediction
+#' @param group Grouping variable for cross-validation, e.g., patient
 #' @param p_cutoff Cut-off for statistical significance. A horizontal line
 #'                 will be drawn at -log10(p_cutoff).
 #' @param fc_cutoff Cut-off for absolute log2 fold-change. A vertical lines
 #'                  will be drawn at fc_cutoff.
+#' @param assay_type A string specifying the assay
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
 #' @examples
@@ -759,17 +766,17 @@ calculateStats <- function(sce,
 #' )
 #'
 #' volcanoPlot(sce_single,
-#'     meta_vars = c("Patient", "Drug"), target = "Drug",
+#'     target = "Drug", group = "Patient",
 #'     p_cutoff = 0.05, fc_cutoff = 0.5
 #' )
 #'
 volcanoPlot <- function(sce,
-                        assay_type = "tfmfeatures",
-                        meta_vars = c("Patient", "Treatment"),
-                        target = "Treatment",
+                        target,
+                        group,
                         p_cutoff = NULL,
-                        fc_cutoff = 1.0) {
-    stats <- calculateStats(sce, assay_type, meta_vars, target)
+                        fc_cutoff = 1.0,
+                        assay_type = "tfmfeatures") {
+    stats <- calculateStats(sce, target, group, assay_type)
 
     if (is.null(p_cutoff)) {
         p_cutoff <- 0.01 / nrow(stats)
@@ -803,9 +810,9 @@ volcanoPlot <- function(sce,
 #' @export
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
-#' @param assay_type A string specifying the assay
-#' @param meta_vars a vector of variables from `colData`
 #' @param target Name of target variable for prediction
+#' @param group Grouping variable for cross-validation, e.g., patient
+#' @param assay_type A string specifying the assay
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
 #' @examples
@@ -826,11 +833,13 @@ volcanoPlot <- function(sce,
 #'     n_threads = 1
 #' )
 #'
-#' plotROC(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
+#' plotROC(sce_single, target = "Drug", group = "Patient")
 #'
-plotROC <- function(sce, assay_type = "tfmfeatures",
-                    meta_vars = c("Patient", "Treatment"),
-                    target = "Treatment") {
+plotROC <- function(sce,
+                    target,
+                    group,
+                    assay_type = "tfmfeatures") {
+    meta_vars <- c(target, group)
     summed <- aggregateAcrossCells(
         sce,
         id = colData(sce)[, meta_vars],
@@ -889,9 +898,9 @@ plotROC <- function(sce, assay_type = "tfmfeatures",
 #' @export
 #'
 #' @param sce A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
-#' @param assay_type A string specifying the assay
-#' @param meta_vars a vector of variables from `colData`
 #' @param target Name of target variable for prediction
+#' @param group Grouping variable for cross-validation, e.g., patient
+#' @param assay_type A string specifying the assay
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
 #' @examples
@@ -912,12 +921,13 @@ plotROC <- function(sce, assay_type = "tfmfeatures",
 #'     n_threads = 1
 #' )
 #'
-#' plotAUC(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
+#' plotAUC(sce_single, target = "Drug", group = "Patient")
 #'
 plotAUC <- function(sce,
-                    assay_type = "tfmfeatures",
-                    meta_vars = c("Patient", "Treatment"),
-                    target = "Treatment") {
+                    target,
+                    group,
+                    assay_type = "tfmfeatures") {
+    meta_vars <- c(target, group)
     summed <- aggregateAcrossCells(
         sce,
         id = colData(sce)[, meta_vars],

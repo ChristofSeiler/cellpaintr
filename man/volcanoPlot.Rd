@@ -6,27 +6,27 @@
 \usage{
 volcanoPlot(
   sce,
-  assay_type = "tfmfeatures",
-  meta_vars = c("Patient", "Treatment"),
-  target = "Treatment",
+  target,
+  group,
   p_cutoff = NULL,
-  fc_cutoff = 1
+  fc_cutoff = 1,
+  assay_type = "tfmfeatures"
 )
 }
 \arguments{
 \item{sce}{A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object}
 
-\item{assay_type}{A string specifying the assay}
-
-\item{meta_vars}{a vector of variables from `colData`}
-
 \item{target}{Name of target variable for prediction}
+
+\item{group}{Grouping variable for cross-validation, e.g., patient}
 
 \item{p_cutoff}{Cut-off for statistical significance. A horizontal line
 will be drawn at -log10(p_cutoff).}
 
 \item{fc_cutoff}{Cut-off for absolute log2 fold-change. A vertical lines
 will be drawn at fc_cutoff.}
+
+\item{assay_type}{A string specifying the assay}
 }
 \value{
 \code{\link[ggplot2]{ggplot2}} object
@@ -53,7 +53,7 @@ sce_single <- predictLOO(
 )
 
 volcanoPlot(sce_single,
-    meta_vars = c("Patient", "Drug"), target = "Drug",
+    target = "Drug", group = "Patient",
     p_cutoff = 0.05, fc_cutoff = 0.5
 )
 

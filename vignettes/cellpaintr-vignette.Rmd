@@ -115,7 +115,10 @@ sce_aggr <- aggregateAcrossCells(
 Use `scater` for exploratory data analysis. PCA on pseudo-bulk features.
 
 ```{r compute-pca}
-sce_aggr <- runPCA(sce_aggr, exprs_values = "tfmfeatures", ncomponents = 10)
+sce_aggr <- scater::runPCA(sce_aggr,
+    exprs_values = "tfmfeatures",
+    ncomponents = 10
+)
 plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Patient")
 plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Drug")
 ```
@@ -159,7 +162,7 @@ Summarize feature subgroups in a volcano plot.
 
 ```{r plot-volcano}
 volcanoPlot(sce_single,
-    meta_vars = c("Patient", "Drug"), target = "Drug",
+    target = "Drug", group = "Patient",
     p_cutoff = 0.05, fc_cutoff = 0.5
 )
 ```
@@ -167,9 +170,9 @@ volcanoPlot(sce_single,
 Individual scores.
 
 ```{r plot-scores}
-plotLOO(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
-plotAUC(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
-plotROC(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
+plotLOO(sce_single, target = "Drug", group = "Patient")
+plotAUC(sce_single, target = "Drug", group = "Patient")
+plotROC(sce_single, target = "Drug", group = "Patient")
 ```
 
 Compare a list of drugs to negative control.
@@ -198,7 +201,7 @@ Custom volcano plot for summarizing drugs faceted by features.
 p_adj_cutoff <- 0.05
 fc_cutoff <- 0.5
 tb_stats <- lapply(sce_list, calculateStats,
-    meta_vars = c("Patient", "Drug"), target = "Drug"
+    target = "Drug", group = "Patient"
 ) |>
     bind_rows() |>
     mutate(pvalue_adj = p.adjust(pvalue, method = "BH")) |>

@@ -4,21 +4,16 @@
 \alias{plotLOO}
 \title{Plot predicted leave-one-out probabilities}
 \usage{
-plotLOO(
-  sce,
-  assay_type = "tfmfeatures",
-  meta_vars = c("Patient", "Treatment"),
-  target = "Treatment"
-)
+plotLOO(sce, target, group, assay_type = "tfmfeatures")
 }
 \arguments{
 \item{sce}{\code{\link[SingleCellExperiment]{SingleCellExperiment}} object}
 
-\item{assay_type}{A string specifying the assay}
-
-\item{meta_vars}{a vector of variables from `colData`}
-
 \item{target}{Name of target variable for prediction}
+
+\item{group}{Grouping variable for cross-validation, e.g., patient}
+
+\item{assay_type}{A string specifying the assay}
 }
 \value{
 \code{\link[ggplot2]{ggplot2}} object
@@ -44,6 +39,6 @@ sce_single <- predictLOO(
     n_threads = 1
 )
 
-plotLOO(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
+plotLOO(sce_single, target = "Drug", group = "Patient")
 
 }

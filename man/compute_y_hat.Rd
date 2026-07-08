@@ -8,13 +8,13 @@ compute_y_hat(
   feature_name,
   sce_feature,
   starts,
-  assay_type,
   target,
+  group,
   interest_level,
   reference_level,
-  group,
   weights,
-  n_threads
+  n_threads,
+  assay_type
 )
 }
 \arguments{
@@ -24,19 +24,19 @@ compute_y_hat(
 
 \item{starts}{Starting string}
 
-\item{assay_type}{A string specifying the assay}
-
 \item{target}{Name of target variable for prediction}
+
+\item{group}{Grouping variable for cross-validation, e.g., patient}
 
 \item{interest_level}{Factor interest level in `target` variable}
 
 \item{reference_level}{Factor reference level in `target` variable}
 
-\item{group}{Grouping variable for cross-validation, e.g., patient}
-
 \item{weights}{Weights variable when features are aggregated}
 
 \item{n_threads}{Number of parallel threads for fitting of models}
+
+\item{assay_type}{A string specifying the assay}
 }
 \value{
 \code{\link[tibble]{tibble}} data frame

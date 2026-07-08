@@ -6,23 +6,23 @@
 \usage{
 predictLOO(
   sce,
-  assay_type = "tfmfeatures",
-  target = "Treatment",
+  target,
+  group,
   interest_level,
   reference_level,
   types = NULL,
   channels = NULL,
-  group = "Patient",
   weights = NULL,
-  n_threads = 1
+  n_threads = 1,
+  assay_type = "tfmfeatures"
 )
 }
 \arguments{
 \item{sce}{\code{\link[SingleCellExperiment]{SingleCellExperiment}} object}
 
-\item{assay_type}{A string specifying the assay}
-
 \item{target}{Name of target variable for prediction}
+
+\item{group}{Grouping variable for cross-validation, e.g., patient}
 
 \item{interest_level}{Factor interest level in `target` variable}
 
@@ -32,11 +32,11 @@ predictLOO(
 
 \item{channels}{Vector of strings of feature channels}
 
-\item{group}{Grouping variable for cross-validation, e.g., patient}
-
 \item{weights}{Weights variable when features are aggregated}
 
 \item{n_threads}{Number of parallel threads for fitting of models}
+
+\item{assay_type}{A string specifying the assay}
 }
 \value{
 \code{\link[tibble]{tibble}} data frame
