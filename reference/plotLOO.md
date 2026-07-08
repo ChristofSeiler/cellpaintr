@@ -5,12 +5,7 @@ Plot predicted leave-one-out probabilities
 ## Usage
 
 ``` r
-plotLOO(
-  sce,
-  assay_type = "tfmfeatures",
-  meta_vars = c("Patient", "Treatment"),
-  target = "Treatment"
-)
+plotLOO(sce, target, group, assay_type = "tfmfeatures")
 ```
 
 ## Arguments
@@ -20,17 +15,17 @@ plotLOO(
   [`SingleCellExperiment`](https://rdrr.io/pkg/SingleCellExperiment/man/SingleCellExperiment.html)
   object
 
-- assay_type:
-
-  A string specifying the assay
-
-- meta_vars:
-
-  a vector of variables from \`colData\`
-
 - target:
 
   Name of target variable for prediction
+
+- group:
+
+  Grouping variable for cross-validation, e.g., patient
+
+- assay_type:
+
+  A string specifying the assay
 
 ## Value
 
@@ -57,6 +52,6 @@ sce_single <- predictLOO(
     n_threads = 1
 )
 
-plotLOO(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
+plotLOO(sce_single, target = "Drug", group = "Patient")
 
 ```

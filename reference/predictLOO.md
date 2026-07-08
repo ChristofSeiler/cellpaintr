@@ -7,15 +7,15 @@ Predict target from features
 ``` r
 predictLOO(
   sce,
-  assay_type = "tfmfeatures",
-  target = "Treatment",
+  target,
+  group,
   interest_level,
   reference_level,
   types = NULL,
   channels = NULL,
-  group = "Patient",
   weights = NULL,
-  n_threads = 1
+  n_threads = 1,
+  assay_type = "tfmfeatures"
 )
 ```
 
@@ -26,13 +26,13 @@ predictLOO(
   [`SingleCellExperiment`](https://rdrr.io/pkg/SingleCellExperiment/man/SingleCellExperiment.html)
   object
 
-- assay_type:
-
-  A string specifying the assay
-
 - target:
 
   Name of target variable for prediction
+
+- group:
+
+  Grouping variable for cross-validation, e.g., patient
 
 - interest_level:
 
@@ -50,10 +50,6 @@ predictLOO(
 
   Vector of strings of feature channels
 
-- group:
-
-  Grouping variable for cross-validation, e.g., patient
-
 - weights:
 
   Weights variable when features are aggregated
@@ -61,6 +57,10 @@ predictLOO(
 - n_threads:
 
   Number of parallel threads for fitting of models
+
+- assay_type:
+
+  A string specifying the assay
 
 ## Value
 

@@ -110,7 +110,10 @@ Use `scater` for exploratory data analysis. PCA on pseudo-bulk features.
 
 ``` r
 
-sce_aggr <- runPCA(sce_aggr, exprs_values = "tfmfeatures", ncomponents = 10)
+sce_aggr <- scater::runPCA(sce_aggr,
+    exprs_values = "tfmfeatures",
+    ncomponents = 10
+)
 plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Patient")
 ```
 
@@ -176,7 +179,7 @@ Summarize feature subgroups in a volcano plot.
 ``` r
 
 volcanoPlot(sce_single,
-    meta_vars = c("Patient", "Drug"), target = "Drug",
+    target = "Drug", group = "Patient",
     p_cutoff = 0.05, fc_cutoff = 0.5
 )
 ```
@@ -187,21 +190,21 @@ Individual scores.
 
 ``` r
 
-plotLOO(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
+plotLOO(sce_single, target = "Drug", group = "Patient")
 ```
 
 ![](cellpaintr-vignette_files/figure-html/plot-scores-1.png)
 
 ``` r
 
-plotAUC(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
+plotAUC(sce_single, target = "Drug", group = "Patient")
 ```
 
 ![](cellpaintr-vignette_files/figure-html/plot-scores-2.png)
 
 ``` r
 
-plotROC(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
+plotROC(sce_single, target = "Drug", group = "Patient")
 ```
 
 ![](cellpaintr-vignette_files/figure-html/plot-scores-3.png)
@@ -234,7 +237,7 @@ Custom volcano plot for summarizing drugs faceted by features.
 p_adj_cutoff <- 0.05
 fc_cutoff <- 0.5
 tb_stats <- lapply(sce_list, calculateStats,
-    meta_vars = c("Patient", "Drug"), target = "Drug"
+    target = "Drug", group = "Patient"
 ) |>
     bind_rows() |>
     mutate(pvalue_adj = p.adjust(pvalue, method = "BH")) |>
@@ -302,7 +305,7 @@ sessionInfo()
     ## [19] BiocStyle_2.38.0           
     ## 
     ## loaded via a namespace (and not attached):
-    ##  [1] gridExtra_2.3.1     rlang_1.2.0         magrittr_2.0.5     
+    ##  [1] gridExtra_2.3.1     rlang_1.3.0         magrittr_2.0.5     
     ##  [4] furrr_0.4.0         otel_0.2.0          compiler_4.5.3     
     ##  [7] systemfonts_1.3.2   vctrs_0.7.3         stringr_1.6.0      
     ## [10] pkgconfig_2.0.3     crayon_1.5.3        fastmap_1.2.0      
@@ -313,7 +316,7 @@ sessionInfo()
     ## [25] BiocParallel_1.44.0 irlba_2.3.7         parallel_4.5.3     
     ## [28] R6_2.6.1            bslib_0.11.0        rsample_1.3.2      
     ## [31] stringi_1.8.7       RColorBrewer_1.1-3  ranger_0.18.0      
-    ## [34] parallelly_1.48.0   jquerylib_0.1.4     Rcpp_1.1.1-1.1     
+    ## [34] parallelly_1.48.0   jquerylib_0.1.4     Rcpp_1.1.2         
     ## [37] bookdown_0.47       knitr_1.51          FNN_1.1.4.1        
     ## [40] readr_2.2.0         Matrix_1.7-4        tidyselect_1.2.1   
     ## [43] abind_1.4-8         yaml_2.3.12         viridis_0.6.5      
@@ -330,6 +333,6 @@ sessionInfo()
     ## [76] textshaping_1.0.5   parsnip_1.6.0       S4Arrays_1.10.1    
     ## [79] viridisLite_0.4.3   uwot_0.2.4          gtable_0.3.6       
     ## [82] sass_0.4.10         digest_0.6.39       SparseArray_1.10.10
-    ## [85] farver_2.1.2        htmltools_0.5.9     pkgdown_2.2.0      
+    ## [85] farver_2.1.2        htmltools_0.5.9     pkgdown_2.2.1      
     ## [88] lifecycle_1.0.5     hardhat_1.4.3       sparsevctrs_0.3.6  
     ## [91] bit64_4.8.2

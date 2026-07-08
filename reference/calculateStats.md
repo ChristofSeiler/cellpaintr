@@ -6,12 +6,7 @@ a list of SingleCellExperiment objects
 ## Usage
 
 ``` r
-calculateStats(
-  sce,
-  assay_type = "tfmfeatures",
-  meta_vars = c("Patient", "Treatment"),
-  target = "Treatment"
-)
+calculateStats(sce, target, group, assay_type = "tfmfeatures")
 ```
 
 ## Arguments
@@ -22,17 +17,17 @@ calculateStats(
   [`SingleCellExperiment`](https://rdrr.io/pkg/SingleCellExperiment/man/SingleCellExperiment.html)
   object
 
-- assay_type:
-
-  A string specifying the assay
-
-- meta_vars:
-
-  a vector of variables from \`colData\`
-
 - target:
 
   Name of target variable for prediction
+
+- group:
+
+  Grouping variable for cross-validation, e.g., patient
+
+- assay_type:
+
+  A string specifying the assay
 
 ## Value
 
@@ -58,7 +53,7 @@ sce_single <- predictLOO(
     n_threads = 1
 )
 
-calculateStats(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
+calculateStats(sce_single, target = "Drug", group = "Patient")
 #>   Target   Feature       pvalue log2FoldChange
 #> 1     D7       all 0.0008479434     0.36380804
 #> 2     D7 AreaShape 0.8285342602    -0.04039513

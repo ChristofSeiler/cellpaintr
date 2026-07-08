@@ -5,12 +5,7 @@ Plot AUC comparison
 ## Usage
 
 ``` r
-plotAUC(
-  sce,
-  assay_type = "tfmfeatures",
-  meta_vars = c("Patient", "Treatment"),
-  target = "Treatment"
-)
+plotAUC(sce, target, group, assay_type = "tfmfeatures")
 ```
 
 ## Arguments
@@ -21,17 +16,17 @@ plotAUC(
   [`SingleCellExperiment`](https://rdrr.io/pkg/SingleCellExperiment/man/SingleCellExperiment.html)
   object
 
-- assay_type:
-
-  A string specifying the assay
-
-- meta_vars:
-
-  a vector of variables from \`colData\`
-
 - target:
 
   Name of target variable for prediction
+
+- group:
+
+  Grouping variable for cross-validation, e.g., patient
+
+- assay_type:
+
+  A string specifying the assay
 
 ## Value
 
@@ -58,6 +53,6 @@ sce_single <- predictLOO(
     n_threads = 1
 )
 
-plotAUC(sce_single, meta_vars = c("Patient", "Drug"), target = "Drug")
+plotAUC(sce_single, target = "Drug", group = "Patient")
 
 ```

@@ -7,11 +7,11 @@ Plot predicted leave-one-out probabilities
 ``` r
 volcanoPlot(
   sce,
-  assay_type = "tfmfeatures",
-  meta_vars = c("Patient", "Treatment"),
-  target = "Treatment",
+  target,
+  group,
   p_cutoff = NULL,
-  fc_cutoff = 1
+  fc_cutoff = 1,
+  assay_type = "tfmfeatures"
 )
 ```
 
@@ -23,17 +23,13 @@ volcanoPlot(
   [`SingleCellExperiment`](https://rdrr.io/pkg/SingleCellExperiment/man/SingleCellExperiment.html)
   object
 
-- assay_type:
-
-  A string specifying the assay
-
-- meta_vars:
-
-  a vector of variables from \`colData\`
-
 - target:
 
   Name of target variable for prediction
+
+- group:
+
+  Grouping variable for cross-validation, e.g., patient
 
 - p_cutoff:
 
@@ -44,6 +40,10 @@ volcanoPlot(
 
   Cut-off for absolute log2 fold-change. A vertical lines will be drawn
   at fc_cutoff.
+
+- assay_type:
+
+  A string specifying the assay
 
 ## Value
 
@@ -71,7 +71,7 @@ sce_single <- predictLOO(
 )
 
 volcanoPlot(sce_single,
-    meta_vars = c("Patient", "Drug"), target = "Drug",
+    target = "Drug", group = "Patient",
     p_cutoff = 0.05, fc_cutoff = 0.5
 )
 

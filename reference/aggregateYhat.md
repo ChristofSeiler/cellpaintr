@@ -5,11 +5,7 @@ Aggregate predicted leave-one-out probabilities over meta variables
 ## Usage
 
 ``` r
-aggregateYhat(
-  sce,
-  assay_type = "tfmfeatures",
-  meta_vars = c("Patient", "Treatment")
-)
+aggregateYhat(sce, target, group, assay_type = "tfmfeatures")
 ```
 
 ## Arguments
@@ -19,13 +15,17 @@ aggregateYhat(
   [`SingleCellExperiment`](https://rdrr.io/pkg/SingleCellExperiment/man/SingleCellExperiment.html)
   object
 
+- target:
+
+  Name of target variable for prediction
+
+- group:
+
+  Grouping variable for cross-validation, e.g., patient
+
 - assay_type:
 
   A string specifying the assay
-
-- meta_vars:
-
-  a vector of variables from \`colData\`
 
 ## Value
 

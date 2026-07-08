@@ -9,13 +9,13 @@ compute_y_hat(
   feature_name,
   sce_feature,
   starts,
-  assay_type,
   target,
+  group,
   interest_level,
   reference_level,
-  group,
   weights,
-  n_threads
+  n_threads,
+  assay_type
 )
 ```
 
@@ -33,13 +33,13 @@ compute_y_hat(
 
   Starting string
 
-- assay_type:
-
-  A string specifying the assay
-
 - target:
 
   Name of target variable for prediction
+
+- group:
+
+  Grouping variable for cross-validation, e.g., patient
 
 - interest_level:
 
@@ -49,10 +49,6 @@ compute_y_hat(
 
   Factor reference level in \`target\` variable
 
-- group:
-
-  Grouping variable for cross-validation, e.g., patient
-
 - weights:
 
   Weights variable when features are aggregated
@@ -60,6 +56,10 @@ compute_y_hat(
 - n_threads:
 
   Number of parallel threads for fitting of models
+
+- assay_type:
+
+  A string specifying the assay
 
 ## Value
 

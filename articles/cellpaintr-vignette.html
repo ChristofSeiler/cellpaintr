@@ -72,7 +72,7 @@ Ospelt</h4>
             <address class="author_afil">
       Center of Experimental Rheumatology, Department of Rheumatology,
 University Hospital Zurich, University of Zurich,
-Switzerland<br><h4 data-toc-skip class="date">2026-07-06</h4>
+Switzerland<br><h4 data-toc-skip class="date">2026-07-08</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ChristofSeiler/cellpaintr/blob/main/vignettes/cellpaintr-vignette.Rmd" class="external-link"><code>vignettes/cellpaintr-vignette.Rmd</code></a></small>
       <div class="d-none name"><code>cellpaintr-vignette.Rmd</code></div>
@@ -175,7 +175,10 @@ with single-cell RNA sequencing workflows.</p>
 <p>Use <code>scater</code> for exploratory data analysis. PCA on
 pseudo-bulk features.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sce_aggr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocSingular/man/runPCA.html" class="external-link">runPCA</a></span><span class="op">(</span><span class="va">sce_aggr</span>, exprs_values <span class="op">=</span> <span class="st">"tfmfeatures"</span>, ncomponents <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">sce_aggr</span> <span class="op">&lt;-</span> <span class="fu">scater</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocSingular/man/runPCA.html" class="external-link">runPCA</a></span><span class="op">(</span><span class="va">sce_aggr</span>,</span>
+<span>    exprs_values <span class="op">=</span> <span class="st">"tfmfeatures"</span>,</span>
+<span>    ncomponents <span class="op">=</span> <span class="fl">10</span></span>
+<span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/scater/man/plotReducedDim.html" class="external-link">plotReducedDim</a></span><span class="op">(</span><span class="va">sce_aggr</span>, dimred <span class="op">=</span> <span class="st">"PCA"</span>, colour_by <span class="op">=</span> <span class="st">"Patient"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="cellpaintr-vignette_files/figure-html/compute-pca-1.png" class="r-plt" alt="" width="700.0000032"></p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
@@ -216,19 +219,19 @@ pseudo-bulk features.</p>
 <p>Summarize feature subgroups in a volcano plot.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/volcanoPlot.html">volcanoPlot</a></span><span class="op">(</span><span class="va">sce_single</span>,</span>
-<span>    meta_vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Patient"</span>, <span class="st">"Drug"</span><span class="op">)</span>, target <span class="op">=</span> <span class="st">"Drug"</span>,</span>
+<span>    target <span class="op">=</span> <span class="st">"Drug"</span>, group <span class="op">=</span> <span class="st">"Patient"</span>,</span>
 <span>    p_cutoff <span class="op">=</span> <span class="fl">0.05</span>, fc_cutoff <span class="op">=</span> <span class="fl">0.5</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p><img src="cellpaintr-vignette_files/figure-html/plot-volcano-1.png" class="r-plt" alt="" width="700.0000032"></p>
 <p>Individual scores.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plotLOO.html">plotLOO</a></span><span class="op">(</span><span class="va">sce_single</span>, meta_vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Patient"</span>, <span class="st">"Drug"</span><span class="op">)</span>, target <span class="op">=</span> <span class="st">"Drug"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plotLOO.html">plotLOO</a></span><span class="op">(</span><span class="va">sce_single</span>, target <span class="op">=</span> <span class="st">"Drug"</span>, group <span class="op">=</span> <span class="st">"Patient"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="cellpaintr-vignette_files/figure-html/plot-scores-1.png" class="r-plt" alt="" width="700.0000032"></p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plotAUC.html">plotAUC</a></span><span class="op">(</span><span class="va">sce_single</span>, meta_vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Patient"</span>, <span class="st">"Drug"</span><span class="op">)</span>, target <span class="op">=</span> <span class="st">"Drug"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plotAUC.html">plotAUC</a></span><span class="op">(</span><span class="va">sce_single</span>, target <span class="op">=</span> <span class="st">"Drug"</span>, group <span class="op">=</span> <span class="st">"Patient"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="cellpaintr-vignette_files/figure-html/plot-scores-2.png" class="r-plt" alt="" width="700.0000032"></p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plotROC.html">plotROC</a></span><span class="op">(</span><span class="va">sce_single</span>, meta_vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Patient"</span>, <span class="st">"Drug"</span><span class="op">)</span>, target <span class="op">=</span> <span class="st">"Drug"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plotROC.html">plotROC</a></span><span class="op">(</span><span class="va">sce_single</span>, target <span class="op">=</span> <span class="st">"Drug"</span>, group <span class="op">=</span> <span class="st">"Patient"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="cellpaintr-vignette_files/figure-html/plot-scores-3.png" class="r-plt" alt="" width="700.0000032"></p>
 <p>Compare a list of drugs to negative control.</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
@@ -252,7 +255,7 @@ pseudo-bulk features.</p>
 <span><span class="va">p_adj_cutoff</span> <span class="op">&lt;-</span> <span class="fl">0.05</span></span>
 <span><span class="va">fc_cutoff</span> <span class="op">&lt;-</span> <span class="fl">0.5</span></span>
 <span><span class="va">tb_stats</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">sce_list</span>, <span class="va">calculateStats</span>,</span>
-<span>    meta_vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Patient"</span>, <span class="st">"Drug"</span><span class="op">)</span>, target <span class="op">=</span> <span class="st">"Drug"</span></span>
+<span>    target <span class="op">=</span> <span class="st">"Drug"</span>, group <span class="op">=</span> <span class="st">"Patient"</span></span>
 <span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>pvalue_adj <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">p.adjust</a></span><span class="op">(</span><span class="va">pvalue</span>, method <span class="op">=</span> <span class="st">"BH"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -317,7 +320,7 @@ pseudo-bulk features.</p>
 <span><span class="co">## [19] BiocStyle_2.38.0           </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## loaded via a namespace (and not attached):</span></span>
-<span><span class="co">##  [1] gridExtra_2.3.1     rlang_1.2.0         magrittr_2.0.5     </span></span>
+<span><span class="co">##  [1] gridExtra_2.3.1     rlang_1.3.0         magrittr_2.0.5     </span></span>
 <span><span class="co">##  [4] furrr_0.4.0         otel_0.2.0          compiler_4.5.3     </span></span>
 <span><span class="co">##  [7] systemfonts_1.3.2   vctrs_0.7.3         stringr_1.6.0      </span></span>
 <span><span class="co">## [10] pkgconfig_2.0.3     crayon_1.5.3        fastmap_1.2.0      </span></span>
@@ -328,7 +331,7 @@ pseudo-bulk features.</p>
 <span><span class="co">## [25] BiocParallel_1.44.0 irlba_2.3.7         parallel_4.5.3     </span></span>
 <span><span class="co">## [28] R6_2.6.1            bslib_0.11.0        rsample_1.3.2      </span></span>
 <span><span class="co">## [31] stringi_1.8.7       RColorBrewer_1.1-3  ranger_0.18.0      </span></span>
-<span><span class="co">## [34] parallelly_1.48.0   jquerylib_0.1.4     Rcpp_1.1.1-1.1     </span></span>
+<span><span class="co">## [34] parallelly_1.48.0   jquerylib_0.1.4     Rcpp_1.1.2         </span></span>
 <span><span class="co">## [37] bookdown_0.47       knitr_1.51          FNN_1.1.4.1        </span></span>
 <span><span class="co">## [40] readr_2.2.0         Matrix_1.7-4        tidyselect_1.2.1   </span></span>
 <span><span class="co">## [43] abind_1.4-8         yaml_2.3.12         viridis_0.6.5      </span></span>
@@ -345,7 +348,7 @@ pseudo-bulk features.</p>
 <span><span class="co">## [76] textshaping_1.0.5   parsnip_1.6.0       S4Arrays_1.10.1    </span></span>
 <span><span class="co">## [79] viridisLite_0.4.3   uwot_0.2.4          gtable_0.3.6       </span></span>
 <span><span class="co">## [82] sass_0.4.10         digest_0.6.39       SparseArray_1.10.10</span></span>
-<span><span class="co">## [85] farver_2.1.2        htmltools_0.5.9     pkgdown_2.2.0      </span></span>
+<span><span class="co">## [85] farver_2.1.2        htmltools_0.5.9     pkgdown_2.2.1      </span></span>
 <span><span class="co">## [88] lifecycle_1.0.5     hardhat_1.4.3       sparsevctrs_0.3.6  </span></span>
 <span><span class="co">## [91] bit64_4.8.2</span></span></code></pre>
 </div>
@@ -360,7 +363,7 @@ pseudo-bulk features.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>
