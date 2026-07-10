@@ -840,16 +840,8 @@ plotROC <- function(sce,
                     group,
                     assay_type = "tfmfeatures") {
     meta_vars <- c(target, group)
-    summed <- aggregateAcrossCells(
-        sce,
-        id = colData(sce)[, meta_vars],
-        use.assay.type = assay_type, statistics = "mean"
-    )
-
-    result <- cbind(
-        colData(summed)[, meta_vars] |> as.data.frame(),
-        reducedDim(summed, type = "prevalidated")
-    ) |>
+    y_hat <- aggregateYhat(sce, target, group, assay_type)
+    result <- y_hat |>
         pivot_longer(
             cols = -c(all_of(meta_vars)),
             names_to = "features", values_to = "pred"
@@ -928,16 +920,8 @@ plotAUC <- function(sce,
                     group,
                     assay_type = "tfmfeatures") {
     meta_vars <- c(target, group)
-    summed <- aggregateAcrossCells(
-        sce,
-        id = colData(sce)[, meta_vars],
-        use.assay.type = assay_type, statistics = "mean"
-    )
-
-    result <- cbind(
-        colData(summed)[, meta_vars] |> as.data.frame(),
-        reducedDim(summed, type = "prevalidated")
-    ) |>
+    y_hat <- aggregateYhat(sce, target, group, assay_type)
+    result <- y_hat |>
         pivot_longer(
             cols = -c(all_of(meta_vars)),
             names_to = "features", values_to = "pred"
