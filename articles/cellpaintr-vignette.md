@@ -311,7 +311,7 @@ sessionInfo()
     ## [10] pkgconfig_2.0.3     crayon_1.5.3        fastmap_1.2.0      
     ## [13] XVector_0.50.0      labeling_0.4.3      rmarkdown_2.31     
     ## [16] tzdb_0.5.0          ggbeeswarm_0.7.3    ragg_1.5.2         
-    ## [19] bit_4.6.0           xfun_0.59           cachem_1.1.0       
+    ## [19] bit_4.6.0           xfun_0.60           cachem_1.1.0       
     ## [22] beachmat_2.26.0     jsonlite_2.0.0      DelayedArray_0.36.1
     ## [25] BiocParallel_1.44.0 irlba_2.3.7         parallel_4.5.3     
     ## [28] R6_2.6.1            bslib_0.11.0        rsample_1.3.2      
