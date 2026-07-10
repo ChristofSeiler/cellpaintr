@@ -199,6 +199,7 @@ plotCellsPerImage <- function(sce, bins = 100) {
 #' @param filter_by PC to use for feature selection
 #' @param top Number of top features to select
 #' @param pcs Number of PCs to plot
+#' @param assay_type A string specifying the assay
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
 #' @examples
@@ -209,8 +210,9 @@ plotCellsPerImage <- function(sce, bins = 100) {
 #' sce <- scater::runPCA(sce, exprs_values = "tfmfeatures", ncomponents = 10)
 #' plotPCACor(sce, filter_by = 1)
 #'
-plotPCACor <- function(sce, filter_by = 1, top = 20, pcs = seq(5)) {
-    features <- assay(sce, "tfmfeatures")
+plotPCACor <- function(sce, filter_by = 1, top = 20, pcs = seq(5),
+                       assay_type = "tfmfeatures") {
+    features <- assay(sce, assay_type)
     scores <- reducedDim(sce, "PCA")[, pcs]
     features_pcs <- cor(t(as.matrix(features)), scores)
 
@@ -579,7 +581,7 @@ predictLOO <- function(sce,
 
 #' Aggregate predicted leave-one-out probabilities over meta variables
 #'
-#' @importFrom scater aggregateAcrossCells
+#' @importFrom scrapper aggregateAcrossCells.se
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #' @param target Name of target variable for prediction
@@ -592,15 +594,23 @@ aggregateYhat <- function(sce,
                           group,
                           assay_type = "tfmfeatures") {
     meta_vars <- c(target, group)
-    summed <- aggregateAcrossCells(
+
+    # get group index
+    summed <- scrapper::aggregateAcrossCells.se(
         sce,
-        id = colData(sce)[, meta_vars],
-        use.assay.type = assay_type, statistics = "mean"
+        factors = colData(sce)[, meta_vars],
+        assay.type = assay_type
     )
 
+    # calculate mean score
+    idx <- metadata(summed)$aggregated$index
+    pre <- reducedDim(sce, "prevalidated")
+    agg_pre <- rowsum(pre, idx) / tabulate(idx)
+
+    # combine it with meta vars
     cbind(
         colData(summed)[, meta_vars] |> as.data.frame(),
-        reducedDim(summed, type = "prevalidated")
+        agg_pre
     )
 }
 
@@ -660,7 +670,6 @@ plotLOO <- function(sce,
 #' over a list of SingleCellExperiment objects
 #'
 #' @importFrom dplyr pull bind_rows all_of
-#' @importFrom scater aggregateAcrossCells
 #' @importFrom tidyr pivot_wider
 #' @importFrom stats t.test
 #' @export
@@ -886,7 +895,6 @@ plotROC <- function(sce,
 #' @importFrom yardstick roc_auc
 #' @importFrom stringr str_remove
 #' @importFrom tidyr pivot_longer
-#' @importFrom scater aggregateAcrossCells
 #' @export
 #'
 #' @param sce A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object

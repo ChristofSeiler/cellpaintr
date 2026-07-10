@@ -53,6 +53,7 @@ Load packages.
 ```{r load-libs}
 library(cellpaintr)
 library(scater)
+library(scrapper)
 library(purrr)
 library(dplyr)
 library(ggrepel)
@@ -104,11 +105,10 @@ sce <- transformLogScale(sce, robust = TRUE)
 Pseudo-bulk over images.
 
 ```{r aggreate}
-sce_aggr <- aggregateAcrossCells(
+sce_aggr <- scrapper::aggregateAcrossCells.se(
     sce,
-    id = colData(sce)[, c("ImageNumber", "Drug", "Patient")],
-    use.assay.type = "tfmfeatures",
-    statistics = "mean"
+    factors = colData(sce)[, c("ImageNumber", "Drug", "Patient")],
+    assay.type = "tfmfeatures"
 )
 ```
 
@@ -116,25 +116,25 @@ Use `scater` for exploratory data analysis. PCA on pseudo-bulk features.
 
 ```{r compute-pca}
 sce_aggr <- scater::runPCA(sce_aggr,
-    exprs_values = "tfmfeatures",
+    assay.type = "sums",
     ncomponents = 10
 )
-plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Patient")
-plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Drug")
+scater::plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Patient")
+scater::plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Drug")
 ```
 
 What is driving PC1?
 
 ```{r plot-pca}
-plotPCACor(sce_aggr, filter_by = 1)
+plotPCACor(sce_aggr, filter_by = 1, assay_type = "sums")
 ```
 
 UMAP.
 
 ```{r umap}
-sce_aggr <- runUMAP(sce_aggr, exprs_values = "tfmfeatures")
-plotUMAP(sce_aggr, colour_by = "Patient")
-plotUMAP(sce_aggr, colour_by = "Drug")
+sce_aggr <- scater::runUMAP(sce_aggr, exprs_values = "sums")
+scater::plotUMAP(sce_aggr, colour_by = "Patient")
+scater::plotUMAP(sce_aggr, colour_by = "Drug")
 ```
 
 ## Supervised Analysis

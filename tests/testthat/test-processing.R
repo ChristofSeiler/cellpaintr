@@ -30,12 +30,12 @@ test_that("train prediction model on types with weights", {
     sce <- transformLogScale(sce)
 
     # aggregate
-    sce_aggr <- aggregateAcrossCells(
-        sce,
-        id = colData(sce)[, c("ImageNumber", "Patient")],
-        use.assay.type = "tfmfeatures",
-        statistics = "mean"
+    sce_aggr <- scrapper::aggregateAcrossCells.se(
+      sce,
+      factors = colData(sce)[, c("ImageNumber", "Patient")],
+      assay.type = "tfmfeatures"
     )
+    sce_aggr <- as(sce_aggr, "SingleCellExperiment")
 
     sce_aggr$Drug <- as.factor(sce_aggr$Drug)
     sce_aggr$Drug <- relevel(sce_aggr$Drug, ref = "D1")
@@ -44,11 +44,12 @@ test_that("train prediction model on types with weights", {
     # leave-one-out score
     sce_single <- predictLOO(
         sce_aggr,
-        weights = "ncells",
+        weights = "counts",
         target = "Drug", group = "Patient",
         interest_level = "D7", reference_level = "D1",
         types = types,
-        n_threads = 1
+        n_threads = 1,
+        assay_type = "sums"
     )
     scores <- reducedDim(sce_single, "prevalidated")
 

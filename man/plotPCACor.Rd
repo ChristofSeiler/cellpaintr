@@ -4,7 +4,13 @@
 \alias{plotPCACor}
 \title{Plot number of cells per image}
 \usage{
-plotPCACor(sce, filter_by = 1, top = 20, pcs = seq(5))
+plotPCACor(
+  sce,
+  filter_by = 1,
+  top = 20,
+  pcs = seq(5),
+  assay_type = "tfmfeatures"
+)
 }
 \arguments{
 \item{sce}{\code{\link[SingleCellExperiment]{SingleCellExperiment}} object}
@@ -14,6 +20,8 @@ plotPCACor(sce, filter_by = 1, top = 20, pcs = seq(5))
 \item{top}{Number of top features to select}
 
 \item{pcs}{Number of PCs to plot}
+
+\item{assay_type}{A string specifying the assay}
 }
 \value{
 \code{\link[ggplot2]{ggplot2}} object
