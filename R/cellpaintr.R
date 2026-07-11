@@ -796,7 +796,10 @@ volcanoPlot <- function(sce,
             Feature, ""
         )) |>
         ggplot(aes(log2FoldChange, -log10(pvalue), label = Feature)) +
-        geom_vline(xintercept = c(0, fc_cutoff), alpha = 0.5, linetype = "dashed") +
+        geom_vline(
+            xintercept = c(0, fc_cutoff), alpha = 0.5,
+            linetype = "dashed"
+        ) +
         geom_hline(
             yintercept = c(0, -log10(p_cutoff)), alpha = 0.5,
             linetype = "dashed"
