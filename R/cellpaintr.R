@@ -2,6 +2,7 @@
 #'
 #' @importFrom readr read_csv write_csv
 #' @importFrom stringr str_detect
+#' @importFrom stats rgamma rnorm rpois
 #' @export
 #'
 #' @return path to csv file

@@ -40,7 +40,6 @@ Imports:
     yardstick,
     rsample,
     purrr,
-    scater,
     scrapper,
     tibble,
     tidyr,
@@ -53,7 +52,8 @@ Suggests:
     knitr,
     rmarkdown,
     testthat (>= 3.0.0),
-    BiocStyle
+    BiocStyle,
+    scater
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.0.0
 URL: https://github.com/ChristofSeiler/cellpaintr, https://christofseiler.github.io/cellpaintr/
