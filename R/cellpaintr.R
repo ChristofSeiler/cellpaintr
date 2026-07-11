@@ -597,8 +597,8 @@ aggregateYhat <- function(sce,
 
     # get group index
     aggr <- scrapper::aggregateAcrossCells(
-      assay(sce, assay_type),
-      factors = colData(sce)[, meta_vars]
+        assay(sce, assay_type),
+        factors = colData(sce)[, meta_vars]
     )
 
     # calculate mean score

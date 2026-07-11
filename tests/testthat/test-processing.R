@@ -31,12 +31,12 @@ test_that("train prediction model on types with weights", {
 
     # aggregate
     aggr <- scrapper::aggregateAcrossCells(
-      assay(sce, "tfmfeatures"),
-      factors = colData(sce)[, c("ImageNumber", "Drug", "Patient")]
+        assay(sce, "tfmfeatures"),
+        factors = colData(sce)[, c("ImageNumber", "Drug", "Patient")]
     )
     sce_aggr <- SingleCellExperiment(
-      assays = list(sums = aggr$sums),
-      colData = DataFrame(aggr$combinations, ncells = aggr$counts)
+        assays = list(sums = aggr$sums),
+        colData = DataFrame(aggr$combinations, ncells = aggr$counts)
     )
 
     sce_aggr$Drug <- as.factor(sce_aggr$Drug)
