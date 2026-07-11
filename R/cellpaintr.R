@@ -611,7 +611,7 @@ aggregateYhat <- function(sce,
     cbind(
         aggr$combinations,
         agg_pre
-    )
+    ) |> data.frame()
 }
 
 #' Plot predicted leave-one-out probabilities
