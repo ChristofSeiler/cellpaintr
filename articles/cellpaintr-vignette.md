@@ -38,6 +38,7 @@ Load packages.
 
 library(cellpaintr)
 library(scater)
+library(scrapper)
 library(purrr)
 library(dplyr)
 library(ggrepel)
@@ -98,11 +99,13 @@ Pseudo-bulk over images.
 
 ``` r
 
-sce_aggr <- aggregateAcrossCells(
-    sce,
-    id = colData(sce)[, c("ImageNumber", "Drug", "Patient")],
-    use.assay.type = "tfmfeatures",
-    statistics = "mean"
+aggr <- scrapper::aggregateAcrossCells(
+    assay(sce, "tfmfeatures"),
+    factors = colData(sce)[, c("ImageNumber", "Drug", "Patient")]
+)
+sce_aggr <- SingleCellExperiment(
+    assays = list(sums = aggr$sums),
+    colData = DataFrame(aggr$combinations, ncells = aggr$counts)
 )
 ```
 
@@ -111,17 +114,17 @@ Use `scater` for exploratory data analysis. PCA on pseudo-bulk features.
 ``` r
 
 sce_aggr <- scater::runPCA(sce_aggr,
-    exprs_values = "tfmfeatures",
+    assay.type = "sums",
     ncomponents = 10
 )
-plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Patient")
+scater::plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Patient")
 ```
 
 ![](cellpaintr-vignette_files/figure-html/compute-pca-1.png)
 
 ``` r
 
-plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Drug")
+scater::plotReducedDim(sce_aggr, dimred = "PCA", colour_by = "Drug")
 ```
 
 ![](cellpaintr-vignette_files/figure-html/compute-pca-2.png)
@@ -130,7 +133,7 @@ What is driving PC1?
 
 ``` r
 
-plotPCACor(sce_aggr, filter_by = 1)
+plotPCACor(sce_aggr, filter_by = 1, assay_type = "sums")
 ```
 
 ![](cellpaintr-vignette_files/figure-html/plot-pca-1.png)
@@ -139,15 +142,15 @@ UMAP.
 
 ``` r
 
-sce_aggr <- runUMAP(sce_aggr, exprs_values = "tfmfeatures")
-plotUMAP(sce_aggr, colour_by = "Patient")
+sce_aggr <- scater::runUMAP(sce_aggr, exprs_values = "sums")
+scater::plotUMAP(sce_aggr, colour_by = "Patient")
 ```
 
 ![](cellpaintr-vignette_files/figure-html/umap-1.png)
 
 ``` r
 
-plotUMAP(sce_aggr, colour_by = "Drug")
+scater::plotUMAP(sce_aggr, colour_by = "Drug")
 ```
 
 ![](cellpaintr-vignette_files/figure-html/umap-2.png)
@@ -294,28 +297,28 @@ sessionInfo()
     ## 
     ## other attached packages:
     ##  [1] ggrepel_0.9.8               dplyr_1.2.1                
-    ##  [3] purrr_1.2.2                 scater_1.38.1              
-    ##  [5] ggplot2_4.0.3               scuttle_1.20.0             
-    ##  [7] cellpaintr_0.3.0            SingleCellExperiment_1.32.0
-    ##  [9] SummarizedExperiment_1.40.0 Biobase_2.70.0             
-    ## [11] GenomicRanges_1.62.1        Seqinfo_1.0.0              
-    ## [13] IRanges_2.44.0              S4Vectors_0.48.1           
-    ## [15] BiocGenerics_0.56.0         generics_0.1.4             
-    ## [17] MatrixGenerics_1.22.0       matrixStats_1.5.0          
-    ## [19] BiocStyle_2.38.0           
+    ##  [3] purrr_1.2.2                 scrapper_1.4.0             
+    ##  [5] scater_1.38.1               ggplot2_4.0.3              
+    ##  [7] scuttle_1.20.0              cellpaintr_0.3.0           
+    ##  [9] SingleCellExperiment_1.32.0 SummarizedExperiment_1.40.0
+    ## [11] Biobase_2.70.0              GenomicRanges_1.62.1       
+    ## [13] Seqinfo_1.0.0               IRanges_2.44.0             
+    ## [15] S4Vectors_0.48.1            BiocGenerics_0.56.0        
+    ## [17] generics_0.1.4              MatrixGenerics_1.22.0      
+    ## [19] matrixStats_1.5.0           BiocStyle_2.38.0           
     ## 
     ## loaded via a namespace (and not attached):
     ##  [1] gridExtra_2.3.1     rlang_1.3.0         magrittr_2.0.5     
     ##  [4] furrr_0.4.0         otel_0.2.0          compiler_4.5.3     
     ##  [7] systemfonts_1.3.2   vctrs_0.7.3         stringr_1.6.0      
-    ## [10] pkgconfig_2.0.3     crayon_1.5.3        fastmap_1.2.0      
+    ## [10] crayon_1.5.3        pkgconfig_2.0.3     fastmap_1.2.0      
     ## [13] XVector_0.50.0      labeling_0.4.3      rmarkdown_2.31     
     ## [16] tzdb_0.5.0          ggbeeswarm_0.7.3    ragg_1.5.2         
     ## [19] bit_4.6.0           xfun_0.60           cachem_1.1.0       
     ## [22] beachmat_2.26.0     jsonlite_2.0.0      DelayedArray_0.36.1
     ## [25] BiocParallel_1.44.0 irlba_2.3.7         parallel_4.5.3     
-    ## [28] R6_2.6.1            bslib_0.11.0        rsample_1.3.2      
-    ## [31] stringi_1.8.7       RColorBrewer_1.1-3  ranger_0.18.0      
+    ## [28] R6_2.6.1            bslib_0.11.0        stringi_1.8.7      
+    ## [31] rsample_1.3.2       RColorBrewer_1.1-3  ranger_0.18.0      
     ## [34] parallelly_1.48.0   jquerylib_0.1.4     Rcpp_1.1.2         
     ## [37] bookdown_0.47       knitr_1.51          FNN_1.1.4.1        
     ## [40] readr_2.2.0         Matrix_1.7-4        tidyselect_1.2.1   

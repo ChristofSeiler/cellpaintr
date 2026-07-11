@@ -5,7 +5,13 @@ Plot number of cells per image
 ## Usage
 
 ``` r
-plotPCACor(sce, filter_by = 1, top = 20, pcs = seq(5))
+plotPCACor(
+  sce,
+  filter_by = 1,
+  top = 20,
+  pcs = seq(5),
+  assay_type = "tfmfeatures"
+)
 ```
 
 ## Arguments
@@ -26,6 +32,10 @@ plotPCACor(sce, filter_by = 1, top = 20, pcs = seq(5))
 - pcs:
 
   Number of PCs to plot
+
+- assay_type:
+
+  A string specifying the assay
 
 ## Value
 
