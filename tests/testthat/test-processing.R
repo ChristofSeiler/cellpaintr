@@ -30,12 +30,14 @@ test_that("train prediction model on types with weights", {
     sce <- transformLogScale(sce)
 
     # aggregate
-    sce_aggr <- scrapper::aggregateAcrossCells.se(
-      sce,
-      factors = colData(sce)[, c("ImageNumber", "Patient")],
-      assay.type = "tfmfeatures"
+    aggr <- scrapper::aggregateAcrossCells(
+      assay(sce, "tfmfeatures"),
+      factors = colData(sce)[, c("ImageNumber", "Drug", "Patient")]
     )
-    sce_aggr <- as(sce_aggr, "SingleCellExperiment")
+    sce_aggr <- SingleCellExperiment(
+      assays = list(sums = aggr$sums),
+      colData = DataFrame(aggr$combinations, ncells = aggr$counts)
+    )
 
     sce_aggr$Drug <- as.factor(sce_aggr$Drug)
     sce_aggr$Drug <- relevel(sce_aggr$Drug, ref = "D1")
@@ -44,7 +46,7 @@ test_that("train prediction model on types with weights", {
     # leave-one-out score
     sce_single <- predictLOO(
         sce_aggr,
-        weights = "counts",
+        weights = "ncells",
         target = "Drug", group = "Patient",
         interest_level = "D7", reference_level = "D1",
         types = types,

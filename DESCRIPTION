@@ -41,6 +41,7 @@ Imports:
     rsample,
     purrr,
     scater,
+    scrapper,
     tibble,
     tidyr,
     ggrepel

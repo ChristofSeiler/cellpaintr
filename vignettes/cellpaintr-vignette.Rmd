@@ -105,10 +105,13 @@ sce <- transformLogScale(sce, robust = TRUE)
 Pseudo-bulk over images.
 
 ```{r aggreate}
-sce_aggr <- scrapper::aggregateAcrossCells.se(
-    sce,
-    factors = colData(sce)[, c("ImageNumber", "Drug", "Patient")],
-    assay.type = "tfmfeatures"
+aggr <- scrapper::aggregateAcrossCells(
+  assay(sce, "tfmfeatures"),
+  factors = colData(sce)[, c("ImageNumber", "Drug", "Patient")]
+)
+sce_aggr <- SingleCellExperiment(
+  assays = list(sums = aggr$sums),
+  colData = DataFrame(aggr$combinations, ncells = aggr$counts)
 )
 ```
 

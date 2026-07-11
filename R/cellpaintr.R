@@ -581,7 +581,7 @@ predictLOO <- function(sce,
 
 #' Aggregate predicted leave-one-out probabilities over meta variables
 #'
-#' @importFrom scrapper aggregateAcrossCells.se
+#' @importFrom scrapper aggregateAcrossCells
 #'
 #' @param sce \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
 #' @param target Name of target variable for prediction
@@ -596,20 +596,19 @@ aggregateYhat <- function(sce,
     meta_vars <- c(target, group)
 
     # get group index
-    summed <- scrapper::aggregateAcrossCells.se(
-        sce,
-        factors = colData(sce)[, meta_vars],
-        assay.type = assay_type
+    aggr <- scrapper::aggregateAcrossCells(
+      assay(sce, assay_type),
+      factors = colData(sce)[, meta_vars]
     )
 
     # calculate mean score
-    idx <- metadata(summed)$aggregated$index
+    idx <- aggr$index
     pre <- reducedDim(sce, "prevalidated")
     agg_pre <- rowsum(pre, idx) / tabulate(idx)
 
     # combine it with meta vars
     cbind(
-        colData(summed)[, meta_vars] |> as.data.frame(),
+        aggr$combinations,
         agg_pre
     )
 }
@@ -856,6 +855,7 @@ plotROC <- function(sce,
             names_to = "features", values_to = "pred"
         ) |>
         droplevels()
+    result[[target]] <- factor(result[[target]], levels = levels(sce[[target]]))
 
     # title
     reference_level <- levels(result[[target]])[1]
@@ -935,6 +935,7 @@ plotAUC <- function(sce,
             names_to = "features", values_to = "pred"
         ) |>
         droplevels()
+    result[[target]] <- factor(result[[target]], levels = levels(sce[[target]]))
 
     reference_level <- levels(result[[target]])[1]
     interest_level <- levels(result[[target]])[2]
