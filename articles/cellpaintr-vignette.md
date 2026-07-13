@@ -299,7 +299,7 @@ sessionInfo()
     ##  [1] ggrepel_0.9.8               dplyr_1.2.1                
     ##  [3] purrr_1.2.2                 scrapper_1.4.0             
     ##  [5] scater_1.38.1               ggplot2_4.0.3              
-    ##  [7] scuttle_1.20.0              cellpaintr_0.3.0           
+    ##  [7] scuttle_1.20.0              cellpaintr_0.99.0          
     ##  [9] SingleCellExperiment_1.32.0 SummarizedExperiment_1.40.0
     ## [11] Biobase_2.70.0              GenomicRanges_1.62.1       
     ## [13] Seqinfo_1.0.0               IRanges_2.44.0             

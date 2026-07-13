@@ -11,3 +11,7 @@
 ## cellpaintr 0.3.0
 
 - Getting it ready for submission to Bioconductor
+
+## cellpaintr 0.99.0
+
+- Submitted to Bioconductor
