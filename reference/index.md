@@ -34,7 +34,7 @@
   : Remove cells if not enough or too many in one image
 - [`removeZeroInflation()`](https://christofseiler.github.io/cellpaintr/reference/removeZeroInflation.md)
   : Remove zero-inflated features
-- [`transformLogScale()`](https://christofseiler.github.io/cellpaintr/reference/transformLogScale.md)
-  : Filter low variance features
+- [`transformScale()`](https://christofseiler.github.io/cellpaintr/reference/transformScale.md)
+  : Transform, center, and scale features
 - [`volcanoPlot()`](https://christofseiler.github.io/cellpaintr/reference/volcanoPlot.md)
   : Plot predicted leave-one-out probabilities

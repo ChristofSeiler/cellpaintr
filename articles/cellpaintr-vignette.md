@@ -90,7 +90,7 @@ Transform non-negatives features and scale all features.
 
 ``` r
 
-sce <- transformLogScale(sce, robust = TRUE)
+sce <- transformScale(sce, robust = TRUE)
 ```
 
 ### Unsupervised Analysis
@@ -317,7 +317,7 @@ sessionInfo()
     ## [19] bit_4.6.0           xfun_0.60           cachem_1.1.0       
     ## [22] beachmat_2.26.0     jsonlite_2.0.0      DelayedArray_0.36.1
     ## [25] BiocParallel_1.44.0 irlba_2.3.7         parallel_4.5.3     
-    ## [28] R6_2.6.1            bslib_0.11.0        stringi_1.8.7      
+    ## [28] R6_2.6.1            bslib_0.12.0        stringi_1.8.9      
     ## [31] rsample_1.3.2       RColorBrewer_1.1-3  ranger_0.18.0      
     ## [34] parallelly_1.48.0   jquerylib_0.1.4     Rcpp_1.1.2         
     ## [37] bookdown_0.47       knitr_1.51          FNN_1.1.4.1        
@@ -325,7 +325,7 @@ sessionInfo()
     ## [43] abind_1.4-8         yaml_2.3.12         viridis_0.6.5      
     ## [46] codetools_0.2-20    listenv_1.0.0       lattice_0.22-9     
     ## [49] tibble_3.3.1        withr_3.0.3         S7_0.2.2           
-    ## [52] evaluate_1.0.5      future_1.70.0       desc_1.4.3         
+    ## [52] evaluate_1.0.5      future_1.75.0       desc_1.4.3         
     ## [55] pillar_1.11.1       BiocManager_1.30.27 renv_1.1.5         
     ## [58] vroom_1.7.1         hms_1.1.4           scales_1.4.0       
     ## [61] globals_0.19.1      glue_1.8.1          tools_4.5.3        

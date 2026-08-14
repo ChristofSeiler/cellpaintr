@@ -79,7 +79,7 @@ over a list of SingleCellExperiment objects</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">23</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">cell_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="generate_data.html">generate_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="loadData.html">loadData</a></span><span class="op">(</span><span class="va">cell_file</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="transformLogScale.html">transformLogScale</a></span><span class="op">(</span><span class="va">sce</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="transformScale.html">transformScale</a></span><span class="op">(</span><span class="va">sce</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">sce</span><span class="op">$</span><span class="va">Drug</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">as.factor</a></span><span class="op">(</span><span class="va">sce</span><span class="op">$</span><span class="va">Drug</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sce</span><span class="op">$</span><span class="va">Drug</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/relevel.html" class="external-link">relevel</a></span><span class="op">(</span><span class="va">sce</span><span class="op">$</span><span class="va">Drug</span>, ref <span class="op">=</span> <span class="st">"D1"</span><span class="op">)</span></span></span>
@@ -95,10 +95,10 @@ over a list of SingleCellExperiment objects</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">calculateStats</span><span class="op">(</span><span class="va">sce_single</span>, target <span class="op">=</span> <span class="st">"Drug"</span>, group <span class="op">=</span> <span class="st">"Patient"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Target   Feature       pvalue log2FoldChange</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1     D7       all 0.0008479434     0.36380804</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2     D7 AreaShape 0.8285342602    -0.04039513</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3     D7 Intensity 0.6854724293    -0.03239716</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4     D7   Texture 0.0002283086     0.54088688</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1     D7       all 0.0005141139     0.35479769</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2     D7 AreaShape 0.8187338398    -0.03537504</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3     D7 Intensity 0.6461917724    -0.02411133</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4     D7   Texture 0.0001644491     0.53511545</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
