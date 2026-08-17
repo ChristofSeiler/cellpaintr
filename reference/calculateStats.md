@@ -55,8 +55,8 @@ sce_single <- predictLOO(
 
 calculateStats(sce_single, target = "Drug", group = "Patient")
 #>   Target   Feature       pvalue log2FoldChange
-#> 1     D7       all 0.0005141139     0.35479769
-#> 2     D7 AreaShape 0.8187338398    -0.03537504
-#> 3     D7 Intensity 0.6461917724    -0.02411133
-#> 4     D7   Texture 0.0001644491     0.53511545
+#> 1     D7       all 3.051405e-05     0.93041835
+#> 2     D7 AreaShape 9.141136e-01    -0.05218685
+#> 3     D7 Intensity 6.024086e-01    -0.01291385
+#> 4     D7   Texture 5.444865e-06     1.45407136
 ```

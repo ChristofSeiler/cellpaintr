@@ -32,6 +32,8 @@
   : Remove cells with missing features
 - [`removeOutliers()`](https://christofseiler.github.io/cellpaintr/reference/removeOutliers.md)
   : Remove cells if not enough or too many in one image
+- [`removeRowColEffect()`](https://christofseiler.github.io/cellpaintr/reference/removeRowColEffect.md)
+  : Remove row and column effect using the median polish procedure
 - [`removeZeroInflation()`](https://christofseiler.github.io/cellpaintr/reference/removeZeroInflation.md)
   : Remove zero-inflated features
 - [`transformScale()`](https://christofseiler.github.io/cellpaintr/reference/transformScale.md)
