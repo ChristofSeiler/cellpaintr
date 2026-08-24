@@ -17,5 +17,5 @@ path to csv file
 ``` r
 set.seed(23)
 generate_data()
-#> [1] "/tmp/RtmpIL2uc5/file40717bbffba7.csv"
+#> [1] "/tmp/RtmpIHW6vZ/file40f3714d247d.csv"
 ```
