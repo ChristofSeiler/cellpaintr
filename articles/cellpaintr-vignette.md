@@ -299,7 +299,7 @@ sessionInfo()
     ##  [1] ggrepel_0.9.8               dplyr_1.2.1                
     ##  [3] purrr_1.2.2                 scrapper_1.4.0             
     ##  [5] scater_1.38.1               ggplot2_4.0.3              
-    ##  [7] scuttle_1.20.0              cellpaintr_0.99.0          
+    ##  [7] scuttle_1.20.0              cellpaintr_0.99.1          
     ##  [9] SingleCellExperiment_1.32.0 SummarizedExperiment_1.40.0
     ## [11] Biobase_2.70.0              GenomicRanges_1.62.1       
     ## [13] Seqinfo_1.0.0               IRanges_2.44.0             
@@ -338,4 +338,4 @@ sessionInfo()
     ## [82] sass_0.4.10         digest_0.6.39       SparseArray_1.10.10
     ## [85] farver_2.1.2        htmltools_0.5.9     pkgdown_2.2.1      
     ## [88] lifecycle_1.0.5     hardhat_1.4.3       sparsevctrs_0.3.6  
-    ## [91] bit64_4.8.2
+    ## [91] bit64_4.8.4
