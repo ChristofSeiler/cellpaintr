@@ -15,9 +15,9 @@ removeRowColEffect(sce, assay_type = "tfmfeatures")
   [`SingleCellExperiment`](https://rdrr.io/pkg/SingleCellExperiment/man/SingleCellExperiment.html)
   object
 
-- robust:
+- assay_type:
 
-  If true robust z-score, otherwise standard z-score
+  A string specifying the assay
 
 ## Value
 
@@ -38,5 +38,4 @@ col <- factor(as.numeric(col))
 sce$Row <- row
 sce$Col <- col
 sce <- removeRowColEffect(sce)
-#> Error in join_by(Row): could not find function "join_by"
 ```
