@@ -10,7 +10,9 @@ volcanoPlot(
   group,
   p_cutoff = NULL,
   fc_cutoff = 1,
-  assay_type = "tfmfeatures"
+  assay_type = "tfmfeatures",
+  stats = NULL,
+  ...
 )
 }
 \arguments{
@@ -21,12 +23,22 @@ volcanoPlot(
 \item{group}{Grouping variable for cross-validation, e.g., patient}
 
 \item{p_cutoff}{Cut-off for statistical significance. A horizontal line
-will be drawn at -log10(p_cutoff).}
+will be drawn at -log10(p_cutoff). Defaults to 0.01
+divided by the number of feature groups. With few
+patients, permutation p-values cannot fall below this
+default, because the smallest attainable p-value is one
+over the number of relabelings.}
 
 \item{fc_cutoff}{Cut-off for absolute log2 fold-change. A vertical lines
 will be drawn at fc_cutoff.}
 
 \item{assay_type}{A string specifying the assay}
+
+\item{stats}{Output of \code{\link{calculateStats}}; if `NULL`, it is
+computed from `sce`}
+
+\item{...}{Further arguments to \code{\link{calculateStats}}, such as
+`method` or `n_permutations`}
 }
 \value{
 \code{\link[ggplot2]{ggplot2}} object
@@ -52,9 +64,11 @@ sce_single <- predictLOO(
     n_threads = 1
 )
 
+# p-values from the t-distribution keep the example fast; the default
+# permutation test refits all models for every relabeling of the patients
 volcanoPlot(sce_single,
     target = "Drug", group = "Patient",
-    p_cutoff = 0.05, fc_cutoff = 0.5
+    p_cutoff = 0.05, fc_cutoff = 0.5, method = "t"
 )
 
 }

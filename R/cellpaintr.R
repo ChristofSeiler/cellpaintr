@@ -647,6 +647,7 @@ compute_y_hat <- function(feature_name,
 #'
 #' @importFrom SummarizedExperiment assay
 #' @importFrom SingleCellExperiment colData reducedDim reducedDim<-
+#' @importFrom S4Vectors metadata<-
 #' @importFrom dplyr bind_cols bind_rows arrange select
 #' @importFrom parsnip rand_forest set_mode set_engine
 #' @importFrom rsample group_initial_split training testing
@@ -665,7 +666,13 @@ compute_y_hat <- function(feature_name,
 #' @param weights Weights variable when features are aggregated
 #' @param n_threads Number of parallel threads for fitting of models
 #' @param assay_type A string specifying the assay
-#' @return \code{\link[tibble]{tibble}} data frame
+#' @param progress Show a progress bar while fitting the models of feature
+#'   types and channels
+#' @return \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#'   with the cells of the two levels, the leave-one-out prediction scores in
+#'   \code{reducedDim(sce, "prevalidated")}, and the settings of this call in
+#'   \code{metadata(sce)$predictLOO}, which \code{\link{calculateStats}} uses
+#'   to refit the models in its permutation test
 #'
 #' @examples
 #' set.seed(23)
@@ -694,7 +701,8 @@ predictLOO <- function(sce,
                        channels = NULL,
                        weights = NULL,
                        n_threads = 1,
-                       assay_type = "tfmfeatures") {
+                       assay_type = "tfmfeatures",
+                       progress = TRUE) {
     # subset for binary classification
     sce_subset <- sce[, sce[[target]] %in% c(reference_level, interest_level)]
 
@@ -714,7 +722,7 @@ predictLOO <- function(sce,
                 starts = TRUE,
                 target, group, interest_level, reference_level,
                 weights, n_threads, assay_type,
-                .progress = TRUE
+                .progress = progress
             ) |>
                 bind_cols()
         )
@@ -726,7 +734,7 @@ predictLOO <- function(sce,
                 starts = FALSE,
                 target, group, interest_level, reference_level,
                 weights, n_threads, assay_type,
-                .progress = TRUE
+                .progress = progress
             ) |>
                 bind_cols()
         )
@@ -738,6 +746,19 @@ predictLOO <- function(sce,
     rownames(y_hat) <- cell_id
     colnames(sce_subset) <- cell_id
     reducedDim(sce_subset, "prevalidated") <- y_hat
+
+    # record the settings, which calculateStats() needs to refit the models
+    metadata(sce_subset)$predictLOO <- list(
+        target = target,
+        group = group,
+        interest_level = interest_level,
+        reference_level = reference_level,
+        types = types,
+        channels = channels,
+        weights = weights,
+        n_threads = n_threads,
+        assay_type = assay_type
+    )
     sce_subset
 }
 
@@ -827,54 +848,35 @@ plotLOO <- function(sce,
         facet_wrap(~features)
 }
 
-#' Aggregate predicted leave-one-out probabilities over meta variables
-#' over a list of SingleCellExperiment objects
+#' Internal function to compute the test statistic of each feature group
 #'
-#' @importFrom dplyr pull bind_rows all_of
+#' One-sided t-statistic for higher mean scores in the interest level,
+#' computed on the scores averaged per patient and level: paired if every
+#' patient has both levels, with pooled variance otherwise.
+#'
+#' @importFrom dplyr pull bind_rows all_of select
 #' @importFrom tidyr pivot_wider
 #' @importFrom stats t.test
-#' @export
 #'
-#' @param sce A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+#' @param sce Output of \code{\link{predictLOO}}
 #' @param target Name of target variable for prediction
 #' @param group Grouping variable for cross-validation, e.g., patient
 #' @param assay_type A string specifying the assay
-#' @return \code{data.frame}
+#' @param interest_level Factor interest level in `target` variable
+#' @param reference_level Factor reference level in `target` variable
+#' @return \code{data.frame} with one row per feature group
+#' @noRd
 #'
-#' @examples
-#' set.seed(23)
-#' cell_file <- generate_data()
-#' sce <- loadData(cell_file)
-#' sce <- transformScale(sce)
-#'
-#' sce$Drug <- as.factor(sce$Drug)
-#' sce$Drug <- relevel(sce$Drug, ref = "D1")
-#' types <- c("AreaShape", "Intensity", "Texture")
-#'
-#' sce_single <- predictLOO(
-#'     sce,
-#'     target = "Drug", group = "Patient",
-#'     interest_level = "D7", reference_level = "D1",
-#'     types = types,
-#'     n_threads = 1
-#' )
-#'
-#' calculateStats(sce_single, target = "Drug", group = "Patient")
-#'
-calculateStats <- function(sce,
-                           target,
-                           group,
-                           assay_type = "tfmfeatures") {
+score_statistics <- function(sce,
+                             target,
+                             group,
+                             assay_type,
+                             interest_level,
+                             reference_level) {
     meta_vars <- c(target, group)
-    # standard convention in base R to store reference level as first
-    reference_level <- levels(sce[[target]])[1]
-    interest_level <- levels(sce[[target]])[2]
-
     y_hat <- aggregateYhat(sce, target, group, assay_type)
     feature_vars <- setdiff(names(y_hat), meta_vars)
-    y_hat$Target <- interest_level
 
-    # test one feature at a time
     lapply(feature_vars, function(feature) {
         wide <- y_hat |>
             select(all_of(c(meta_vars, feature))) |>
@@ -886,18 +888,285 @@ calculateStats <- function(sce,
         x <- pull(wide, all_of(reference_level))
         y <- pull(wide, all_of(interest_level))
         paired <- sum(is.na(c(x, y))) == 0
-        result <- t.test(x, y,
-            paired = paired, var.equal = TRUE,
-            alternative = "less"
+        result <- tryCatch(
+            t.test(x, y,
+                paired = paired, var.equal = TRUE,
+                alternative = "less"
+            ),
+            error = function(e) list(statistic = NA_real_, p.value = NA_real_)
         )
 
         data.frame(
-            Target = interest_level,
             Feature = feature,
+            statistic = -unname(result$statistic),
             pvalue = result$p.value,
             log2FoldChange = log2(mean(y, na.rm = TRUE) / mean(x, na.rm = TRUE))
         )
     }) |> bind_rows()
+}
+
+#' Internal function to list relabelings of whole patients
+#'
+#' @importFrom utils combn
+#'
+#' @param design Either "paired" or "unpaired"
+#' @param n Number of patients
+#' @param observed Logical vector of patients with the interest level
+#' @param exact Enumerate all relabelings instead of sampling them
+#' @param n_permutations Number of random relabelings if not exact
+#' @return Logical matrix with one row per relabeling, the observed labels
+#'   excluded, and one column per patient: patients whose two levels are
+#'   swapped (paired design) or patients with the interest level (unpaired)
+#' @noRd
+#'
+patient_relabelings <- function(design, n, observed, exact, n_permutations) {
+    if (design == "paired") {
+        if (exact) {
+            grid <- as.matrix(expand.grid(rep(list(c(FALSE, TRUE)), n)))
+            return(unname(grid[-1, , drop = FALSE]))
+        }
+        return(matrix(
+            sample(c(FALSE, TRUE), n_permutations * n, replace = TRUE),
+            nrow = n_permutations
+        ))
+    }
+    n_interest <- sum(observed)
+    if (exact) {
+        subsets <- combn(n, n_interest)
+        grid <- t(apply(subsets, 2, function(subset) seq_len(n) %in% subset))
+        is_observed <- apply(grid, 1, function(row) all(row == observed))
+        return(grid[!is_observed, , drop = FALSE])
+    }
+    t(replicate(n_permutations, seq_len(n) %in% sample(n, n_interest)))
+}
+
+#' Internal function to compute permutation p-values by relabeling patients
+#'
+#' @importFrom cli cli_abort cli_progress_bar cli_progress_update
+#' @importFrom cli cli_progress_done
+#'
+#' @param sce Output of \code{\link{predictLOO}}
+#' @param observed Output of \code{score_statistics} for the observed labels
+#' @param settings Settings of \code{\link{predictLOO}} from its metadata
+#' @param n_permutations Maximal number of relabelings besides the observed
+#' @return List with p-values and the number of relabelings
+#' @noRd
+#'
+permutation_pvalues <- function(sce, observed, settings, n_permutations) {
+    target <- settings$target
+    group <- settings$group
+    interest_level <- settings$interest_level
+    reference_level <- settings$reference_level
+    labels <- as.character(sce[[target]])
+    patients <- as.character(sce[[group]])
+    ids <- sort(unique(patients))
+    n <- length(ids)
+    in_interest <- ids %in% patients[labels == interest_level]
+    in_reference <- ids %in% patients[labels == reference_level]
+
+    # paired: every patient has both levels; unpaired: every patient has one
+    if (all(in_interest & in_reference)) {
+        design <- "paired"
+        n_total <- 2^n
+    } else if (all(xor(in_interest, in_reference))) {
+        design <- "unpaired"
+        n_total <- choose(n, sum(in_interest))
+    } else {
+        cli_abort(c(
+            "The permutation test needs a paired or an unpaired design.",
+            "i" = paste(
+                "Every level of {.arg group} needs cells of both levels",
+                "of {.arg target} (paired) or of one level (unpaired)."
+            )
+        ))
+    }
+    exact <- n_total <= n_permutations + 1
+    relabelings <- patient_relabelings(
+        design, n, in_interest, exact, n_permutations
+    )
+    n_relabelings <- nrow(relabelings) + 1
+    message(
+        "Permutation test with ", if (exact) "all " else "", n_relabelings,
+        " relabelings of ", n, " levels of '", group, "' (", design,
+        " design); smallest attainable p-value 1/", n_relabelings, "."
+    )
+
+    # labels of the cells after relabeling whole patients
+    relabel <- function(selected_ids) {
+        selected <- patients %in% selected_ids
+        if (design == "paired") {
+            swapped <- labels
+            swapped[selected] <- ifelse(labels[selected] == interest_level,
+                reference_level, interest_level
+            )
+            return(swapped)
+        }
+        ifelse(selected, interest_level, reference_level)
+    }
+
+    # refit all leave-one-out models for each relabeling
+    null_statistics <- matrix(NA_real_,
+        nrow = nrow(relabelings), ncol = nrow(observed)
+    )
+    cli_progress_bar("Refitting models", total = nrow(relabelings))
+    for (b in seq_len(nrow(relabelings))) {
+        relabeled <- sce
+        relabeled[[target]] <- factor(relabel(ids[relabelings[b, ]]),
+            levels = levels(sce[[target]])
+        )
+        refit <- do.call(
+            predictLOO,
+            c(list(sce = relabeled), settings, list(progress = FALSE))
+        )
+        statistics <- score_statistics(refit, target, group,
+            settings$assay_type, interest_level, reference_level
+        )
+        null_statistics[b, ] <- statistics$statistic[
+            match(observed$Feature, statistics$Feature)
+        ]
+        cli_progress_update()
+    }
+    cli_progress_done()
+
+    # a relabeling counts against the observed labels if its statistic is at
+    # least as large; undefined statistics count against them too
+    exceeds <- sweep(null_statistics, 2, observed$statistic, ">=") |
+        is.na(null_statistics)
+    list(
+        pvalue = (1 + colSums(exceeds)) / n_relabelings,
+        relabelings = n_relabelings
+    )
+}
+
+#' Test each feature group for a difference between two levels
+#'
+#' Average the leave-one-out prediction scores of \code{\link{predictLOO}}
+#' per patient and level, and test in each feature group whether the
+#' interest level has higher scores than the reference level.
+#'
+#' The test statistic is the one-sided t-statistic for higher mean scores in
+#' the interest level. It is paired if every patient (`group`) has cells of
+#' both levels, and uses a pooled variance if every patient has cells of one
+#' level.
+#'
+#' With `method = "permutation"` (the default), the p-value comes from
+#' relabeling whole patients: in a paired design, the two levels of a patient
+#' are swapped; in an unpaired design, the levels are permuted across
+#' patients. For each relabeling, all leave-one-out models are refitted with
+#' the settings of the call to \code{\link{predictLOO}}, and the p-value is
+#' the proportion of relabelings, the observed one included, with a statistic
+#' at least as large. If there are at most `n_permutations + 1` relabelings
+#' (\eqn{2^n} for \eqn{n} patients in a paired design), all of them are
+#' enumerated and the test is exact; otherwise, `n_permutations` relabelings
+#' are drawn at random. The smallest attainable p-value is one over the
+#' number of relabelings. Because all models are refitted for every
+#' relabeling, the test takes that many times longer than
+#' \code{\link{predictLOO}}. Use \code{\link[base]{set.seed}} for
+#' reproducible results.
+#'
+#' With `method = "t"`, the p-value comes from the t-distribution. This is
+#' fast but anti-conservative, because the models of different held-out
+#' patients share most of their training data, which makes the scores of
+#' different patients positively correlated.
+#'
+#' @importFrom S4Vectors metadata
+#' @importFrom cli cli_abort
+#' @export
+#'
+#' @param sce Output of \code{\link{predictLOO}}
+#' @param target Name of target variable for prediction
+#' @param group Grouping variable for cross-validation, e.g., patient
+#' @param assay_type A string specifying the assay
+#' @param method Either `"permutation"` (default) for a permutation test that
+#'   relabels whole patients, or `"t"` for p-values from the t-distribution
+#' @param n_permutations Largest number of relabelings besides the observed
+#'   labels; if there are more, this many are drawn at random
+#' @return \code{data.frame} with one row per feature group and the columns
+#'   `Target` (interest level), `Feature` (feature group), `pvalue`, and
+#'   `log2FoldChange` (log2 ratio of the mean scores of the interest and the
+#'   reference level). With the permutation test, the attribute
+#'   `relabelings` holds the number of relabelings, the observed one
+#'   included.
+#'
+#' @examples
+#' set.seed(23)
+#' cell_file <- generate_data()
+#' sce <- loadData(cell_file)
+#' sce <- transformScale(sce)
+#'
+#' sce$Drug <- as.factor(sce$Drug)
+#' sce$Drug <- relevel(sce$Drug, ref = "D1")
+#'
+#' sce_single <- predictLOO(
+#'     sce,
+#'     target = "Drug", group = "Patient",
+#'     interest_level = "D7", reference_level = "D1",
+#'     n_threads = 1
+#' )
+#'
+#' # permutation test; by default, it enumerates all 64 relabelings of the
+#' # six patients, here 9 random relabelings keep the example fast
+#' calculateStats(sce_single,
+#'     target = "Drug", group = "Patient",
+#'     n_permutations = 9
+#' )
+#'
+#' # p-values from the t-distribution: fast but anti-conservative
+#' calculateStats(sce_single,
+#'     target = "Drug", group = "Patient",
+#'     method = "t"
+#' )
+#'
+calculateStats <- function(sce,
+                           target,
+                           group,
+                           assay_type = "tfmfeatures",
+                           method = c("permutation", "t"),
+                           n_permutations = 999) {
+    method <- match.arg(method)
+    settings <- metadata(sce)$predictLOO
+
+    # levels as passed to predictLOO(); objects from earlier versions of
+    # cellpaintr store the reference level first
+    if (!is.null(settings) && identical(settings$target, target)) {
+        reference_level <- settings$reference_level
+        interest_level <- settings$interest_level
+    } else {
+        reference_level <- levels(sce[[target]])[1]
+        interest_level <- levels(sce[[target]])[2]
+    }
+
+    observed <- score_statistics(sce, target, group, assay_type,
+        interest_level, reference_level
+    )
+    stats <- data.frame(
+        Target = interest_level,
+        Feature = observed$Feature,
+        pvalue = observed$pvalue,
+        log2FoldChange = observed$log2FoldChange
+    )
+    if (method == "t") {
+        return(stats)
+    }
+
+    if (is.null(settings) || !identical(settings$target, target) ||
+        !identical(settings$group, group)) {
+        cli_abort(c(
+            "The permutation test refits the models of {.fn predictLOO}.",
+            "i" = paste(
+                "Pass its output with the same {.arg target} and",
+                "{.arg group}, or use {.code method = \"t\"}."
+            )
+        ))
+    }
+    if (!is.numeric(n_permutations) || length(n_permutations) != 1 ||
+        n_permutations < 1) {
+        cli_abort("{.arg n_permutations} must be a positive number.")
+    }
+    permutation <- permutation_pvalues(sce, observed, settings, n_permutations)
+    stats$pvalue <- permutation$pvalue
+    attr(stats, "relabelings") <- permutation$relabelings
+    stats
 }
 
 #' Plot predicted leave-one-out probabilities
@@ -911,10 +1180,18 @@ calculateStats <- function(sce,
 #' @param target Name of target variable for prediction
 #' @param group Grouping variable for cross-validation, e.g., patient
 #' @param p_cutoff Cut-off for statistical significance. A horizontal line
-#'                 will be drawn at -log10(p_cutoff).
+#'                 will be drawn at -log10(p_cutoff). Defaults to 0.01
+#'                 divided by the number of feature groups. With few
+#'                 patients, permutation p-values cannot fall below this
+#'                 default, because the smallest attainable p-value is one
+#'                 over the number of relabelings.
 #' @param fc_cutoff Cut-off for absolute log2 fold-change. A vertical lines
 #'                  will be drawn at fc_cutoff.
 #' @param assay_type A string specifying the assay
+#' @param stats Output of \code{\link{calculateStats}}; if `NULL`, it is
+#'              computed from `sce`
+#' @param ... Further arguments to \code{\link{calculateStats}}, such as
+#'            `method` or `n_permutations`
 #' @return \code{\link[ggplot2]{ggplot2}} object
 #'
 #' @examples
@@ -935,9 +1212,11 @@ calculateStats <- function(sce,
 #'     n_threads = 1
 #' )
 #'
+#' # p-values from the t-distribution keep the example fast; the default
+#' # permutation test refits all models for every relabeling of the patients
 #' volcanoPlot(sce_single,
 #'     target = "Drug", group = "Patient",
-#'     p_cutoff = 0.05, fc_cutoff = 0.5
+#'     p_cutoff = 0.05, fc_cutoff = 0.5, method = "t"
 #' )
 #'
 volcanoPlot <- function(sce,
@@ -945,8 +1224,12 @@ volcanoPlot <- function(sce,
                         group,
                         p_cutoff = NULL,
                         fc_cutoff = 1.0,
-                        assay_type = "tfmfeatures") {
-    stats <- calculateStats(sce, target, group, assay_type)
+                        assay_type = "tfmfeatures",
+                        stats = NULL,
+                        ...) {
+    if (is.null(stats)) {
+        stats <- calculateStats(sce, target, group, assay_type, ...)
+    }
 
     if (is.null(p_cutoff)) {
         p_cutoff <- 0.01 / nrow(stats)

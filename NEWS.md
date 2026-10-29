@@ -13,3 +13,19 @@
 # cellpaintr 0.99.0
 
 - Submitted to Bioconductor
+
+# cellpaintr 0.99.4
+
+- `calculateStats()` calibrates the t-statistic with a permutation test that
+  relabels whole patients and refits all leave-one-out models
+  (`method = "permutation"`, the new default). It enumerates all
+  relabelings if there are at most `n_permutations + 1` of them and samples
+  them otherwise. `method = "t"` keeps the p-values from the t-distribution,
+  which are anti-conservative because the scores of different held-out
+  patients are correlated.
+- `predictLOO()` records its settings in `metadata()`, and
+  `calculateStats()` takes the interest and reference levels from there
+  instead of from the order of the factor levels.
+- `volcanoPlot()` accepts precomputed statistics (`stats`) and passes
+  further arguments, such as `method`, to `calculateStats()`.
+

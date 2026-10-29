@@ -104,7 +104,7 @@ test_that("extract prediction scores", {
         n_threads = 1
     )
     stats <- calculateStats(sce_single,
-        target = "Drug", group = "Patient"
+        target = "Drug", group = "Patient", method = "t"
     )
 
     expect_setequal(

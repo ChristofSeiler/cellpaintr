@@ -161,12 +161,27 @@ sce_single <- predictLOO(
 )
 ```
 
+Test each feature group for higher scores of D7 than of D1.
+`calculateStats()` averages the leave-one-out scores per patient and drug
+and computes a one-sided t-statistic per feature group.
+Its permutation test swaps the drug labels of whole patients,
+refits all leave-one-out models,
+and compares the observed statistic with those of all relabelings.
+With six patients, there are $2^6 = 64$ relabelings,
+so the smallest attainable p-value is 1/64,
+and the test refits the models 63 times.
+
+```{r test-single-drug}
+stats <- calculateStats(sce_single, target = "Drug", group = "Patient")
+stats
+```
+
 Summarize feature subgroups in a volcano plot.
 
 ```{r plot-volcano}
 volcanoPlot(sce_single,
     target = "Drug", group = "Patient",
-    p_cutoff = 0.05, fc_cutoff = 0.5
+    stats = stats, p_cutoff = 0.05, fc_cutoff = 0.5
 )
 ```
 
@@ -198,13 +213,19 @@ sce_list <- map(interest_levels, function(interest_level) {
 ```
 
 Custom volcano plot for summarizing drugs faceted by features.
+For a quick screen of many drugs,
+`method = "t"` takes p-values from the t-distribution
+instead of the permutation test.
+These p-values are anti-conservative,
+because the scores of different held-out patients are correlated,
+so use them to rank drugs and confirm hits with the permutation test.
 
 ```{r plot-volcano-custom}
 # prepare stats table
 p_adj_cutoff <- 0.05
 fc_cutoff <- 0.5
 tb_stats <- lapply(sce_list, calculateStats,
-    target = "Drug", group = "Patient"
+    target = "Drug", group = "Patient", method = "t"
 ) |>
     bind_rows() |>
     mutate(pvalue_adj = p.adjust(pvalue, method = "BH")) |>

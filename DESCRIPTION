@@ -1,7 +1,7 @@
 Package: cellpaintr
 Type: Package
 Title: Perturbation Analysis for Cell Painting Data
-Version: 0.99.3
+Version: 0.99.4
 Authors@R: c(
     person("Christof", "Seiler", 
     email = "christof.seiler@usz.ch", 
@@ -44,7 +44,9 @@ Imports:
     tibble,
     tidyr,
     ggrepel,
-    cli
+    cli,
+    S4Vectors,
+    utils
 Depends:
     R (>= 4.5.0),
     SummarizedExperiment,

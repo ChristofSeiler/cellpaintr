@@ -45,7 +45,7 @@ test_that("plot prediction scores", {
     # volcano plot
     p <- volcanoPlot(sce_single,
         target = "Drug", group = "Patient",
-        p_cutoff = 0.05, fc_cutoff = 0.5
+        p_cutoff = 0.05, fc_cutoff = 0.5, method = "t"
     )
     expect_s3_class(p, "ggplot")
     expect_equal(rlang::as_name(p$mapping$x), "log2FoldChange")
@@ -63,7 +63,7 @@ test_that("plot prediction scores", {
     # no p_cutoff defined
     p <- volcanoPlot(sce_single,
         target = "Drug", group = "Patient",
-        fc_cutoff = 0.5
+        fc_cutoff = 0.5, method = "t"
     )
     expect_s3_class(p, "ggplot")
 })

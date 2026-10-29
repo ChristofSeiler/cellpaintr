@@ -14,7 +14,8 @@ predictLOO(
   channels = NULL,
   weights = NULL,
   n_threads = 1,
-  assay_type = "tfmfeatures"
+  assay_type = "tfmfeatures",
+  progress = TRUE
 )
 }
 \arguments{
@@ -37,9 +38,16 @@ predictLOO(
 \item{n_threads}{Number of parallel threads for fitting of models}
 
 \item{assay_type}{A string specifying the assay}
+
+\item{progress}{Show a progress bar while fitting the models of feature
+types and channels}
 }
 \value{
-\code{\link[tibble]{tibble}} data frame
+\code{\link[SingleCellExperiment]{SingleCellExperiment}} object
+  with the cells of the two levels, the leave-one-out prediction scores in
+  \code{reducedDim(sce, "prevalidated")}, and the settings of this call in
+  \code{metadata(sce)$predictLOO}, which \code{\link{calculateStats}} uses
+  to refit the models in its permutation test
 }
 \description{
 Predict target from features
