@@ -11,7 +11,9 @@ volcanoPlot(
   group,
   p_cutoff = NULL,
   fc_cutoff = 1,
-  assay_type = "tfmfeatures"
+  assay_type = "tfmfeatures",
+  stats = NULL,
+  ...
 )
 ```
 
@@ -34,7 +36,10 @@ volcanoPlot(
 - p_cutoff:
 
   Cut-off for statistical significance. A horizontal line will be drawn
-  at -log10(p_cutoff).
+  at -log10(p_cutoff). Defaults to 0.01 divided by the number of feature
+  groups. With few patients, permutation p-values cannot fall below this
+  default, because the smallest attainable p-value is one over the
+  number of relabelings.
 
 - fc_cutoff:
 
@@ -44,6 +49,18 @@ volcanoPlot(
 - assay_type:
 
   A string specifying the assay
+
+- stats:
+
+  Output of
+  [`calculateStats`](https://christofseiler.github.io/cellpaintr/reference/calculateStats.md);
+  if \`NULL\`, it is computed from \`sce\`
+
+- ...:
+
+  Further arguments to
+  [`calculateStats`](https://christofseiler.github.io/cellpaintr/reference/calculateStats.md),
+  such as \`method\` or \`n_permutations\`
 
 ## Value
 
@@ -70,9 +87,11 @@ sce_single <- predictLOO(
     n_threads = 1
 )
 
+# p-values from the t-distribution keep the example fast; the default
+# permutation test refits all models for every relabeling of the patients
 volcanoPlot(sce_single,
     target = "Drug", group = "Patient",
-    p_cutoff = 0.05, fc_cutoff = 0.5
+    p_cutoff = 0.05, fc_cutoff = 0.5, method = "t"
 )
 
 ```

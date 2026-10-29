@@ -21,8 +21,7 @@ devtools::install_github("ChristofSeiler/cellpaintr")
 - [`aggregateYhat()`](https://christofseiler.github.io/cellpaintr/reference/aggregateYhat.md)
   : Aggregate predicted leave-one-out probabilities over meta variables
 - [`calculateStats()`](https://christofseiler.github.io/cellpaintr/reference/calculateStats.md)
-  : Aggregate predicted leave-one-out probabilities over meta variables
-  over a list of SingleCellExperiment objects
+  : Test each feature group for a difference between two levels
 - [`compute_y_hat()`](https://christofseiler.github.io/cellpaintr/reference/compute_y_hat.md)
   : Internal function to compute y_hat on a subset of the features
 - [`generate_data()`](https://christofseiler.github.io/cellpaintr/reference/generate_data.md)

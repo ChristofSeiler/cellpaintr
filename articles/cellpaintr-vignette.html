@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">cellpaintr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,7 +72,7 @@ Ospelt</h4>
             <address class="author_afil">
       Center of Experimental Rheumatology, Department of Rheumatology,
 University Hospital Zurich, University of Zurich,
-Switzerland<br><h4 data-toc-skip class="date">2026-08-24</h4>
+Switzerland<br><h4 data-toc-skip class="date">2026-10-29</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ChristofSeiler/cellpaintr/blob/main/vignettes/cellpaintr-vignette.Rmd" class="external-link"><code>vignettes/cellpaintr-vignette.Rmd</code></a></small>
       <div class="d-none name"><code>cellpaintr-vignette.Rmd</code></div>
@@ -219,25 +219,42 @@ pseudo-bulk features.</p>
 <span>    types <span class="op">=</span> <span class="va">types</span>,</span>
 <span>    n_threads <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Summarize feature subgroups in a volcano plot.</p>
+<p>Test each feature group for higher scores of D7 than of D1.
+<code><a href="../reference/calculateStats.html">calculateStats()</a></code> averages the leave-one-out scores per
+patient and drug and computes a one-sided t-statistic per feature group.
+Its permutation test swaps the drug labels of whole patients, refits all
+leave-one-out models, and compares the observed statistic with those of
+all relabelings. With six patients, there are
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>6</mn></msup><mo>=</mo><mn>64</mn></mrow><annotation encoding="application/x-tex">2^6 = 64</annotation></semantics></math>
+relabelings, so the smallest attainable p-value is 1/64, and the test
+refits the models 63 times.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">stats</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculateStats.html">calculateStats</a></span><span class="op">(</span><span class="va">sce_single</span>, target <span class="op">=</span> <span class="st">"Drug"</span>, group <span class="op">=</span> <span class="st">"Patient"</span><span class="op">)</span></span>
+<span><span class="va">stats</span></span></code></pre></div>
+<pre><code><span><span class="co">##   Target   Feature   pvalue log2FoldChange</span></span>
+<span><span class="co">## 1     D7       all 0.015625     0.92049456</span></span>
+<span><span class="co">## 2     D7 AreaShape 0.656250    -0.03576254</span></span>
+<span><span class="co">## 3     D7 Intensity 0.578125    -0.01486919</span></span>
+<span><span class="co">## 4     D7   Texture 0.031250     1.48667981</span></span></code></pre>
+<p>Summarize feature subgroups in a volcano plot.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/volcanoPlot.html">volcanoPlot</a></span><span class="op">(</span><span class="va">sce_single</span>,</span>
 <span>    target <span class="op">=</span> <span class="st">"Drug"</span>, group <span class="op">=</span> <span class="st">"Patient"</span>,</span>
-<span>    p_cutoff <span class="op">=</span> <span class="fl">0.05</span>, fc_cutoff <span class="op">=</span> <span class="fl">0.5</span></span>
+<span>    stats <span class="op">=</span> <span class="va">stats</span>, p_cutoff <span class="op">=</span> <span class="fl">0.05</span>, fc_cutoff <span class="op">=</span> <span class="fl">0.5</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p><img src="cellpaintr-vignette_files/figure-html/plot-volcano-1.png" class="r-plt" alt="" width="700.0000032"></p>
 <p>Individual scores.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plotLOO.html">plotLOO</a></span><span class="op">(</span><span class="va">sce_single</span>, target <span class="op">=</span> <span class="st">"Drug"</span>, group <span class="op">=</span> <span class="st">"Patient"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="cellpaintr-vignette_files/figure-html/plot-scores-1.png" class="r-plt" alt="" width="700.0000032"></p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plotAUC.html">plotAUC</a></span><span class="op">(</span><span class="va">sce_single</span>, target <span class="op">=</span> <span class="st">"Drug"</span>, group <span class="op">=</span> <span class="st">"Patient"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="cellpaintr-vignette_files/figure-html/plot-scores-2.png" class="r-plt" alt="" width="700.0000032"></p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plotROC.html">plotROC</a></span><span class="op">(</span><span class="va">sce_single</span>, target <span class="op">=</span> <span class="st">"Drug"</span>, group <span class="op">=</span> <span class="st">"Patient"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="cellpaintr-vignette_files/figure-html/plot-scores-3.png" class="r-plt" alt="" width="700.0000032"></p>
 <p>Compare a list of drugs to negative control.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">23</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">reference_level</span> <span class="op">&lt;-</span> <span class="st">"D1"</span></span>
@@ -252,13 +269,18 @@ pseudo-bulk features.</p>
 <span>        n_threads <span class="op">=</span> <span class="fl">1</span></span>
 <span>    <span class="op">)</span></span>
 <span><span class="op">}</span>, .progress <span class="op">=</span> <span class="st">"drug screening"</span><span class="op">)</span></span></code></pre></div>
-<p>Custom volcano plot for summarizing drugs faceted by features.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<p>Custom volcano plot for summarizing drugs faceted by features. For a
+quick screen of many drugs, <code>method = "t"</code> takes p-values
+from the t-distribution instead of the permutation test. These p-values
+are anti-conservative, because the scores of different held-out patients
+are correlated, so use them to rank drugs and confirm hits with the
+permutation test.</p>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># prepare stats table</span></span>
 <span><span class="va">p_adj_cutoff</span> <span class="op">&lt;-</span> <span class="fl">0.05</span></span>
 <span><span class="va">fc_cutoff</span> <span class="op">&lt;-</span> <span class="fl">0.5</span></span>
 <span><span class="va">tb_stats</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">sce_list</span>, <span class="va">calculateStats</span>,</span>
-<span>    target <span class="op">=</span> <span class="st">"Drug"</span>, group <span class="op">=</span> <span class="st">"Patient"</span></span>
+<span>    target <span class="op">=</span> <span class="st">"Drug"</span>, group <span class="op">=</span> <span class="st">"Patient"</span>, method <span class="op">=</span> <span class="st">"t"</span></span>
 <span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>pvalue_adj <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">p.adjust</a></span><span class="op">(</span><span class="va">pvalue</span>, method <span class="op">=</span> <span class="st">"BH"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -287,11 +309,11 @@ pseudo-bulk features.</p>
 <div class="section level2">
 <h2 class="unnumbered" id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## R version 4.5.3 (2026-03-11)</span></span>
 <span><span class="co">## Platform: x86_64-pc-linux-gnu</span></span>
-<span><span class="co">## Running under: Ubuntu 24.04.4 LTS</span></span>
+<span><span class="co">## Running under: Ubuntu 24.04.5 LTS</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Matrix products: default</span></span>
 <span><span class="co">## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 </span></span>
@@ -314,7 +336,7 @@ pseudo-bulk features.</p>
 <span><span class="co">##  [1] ggrepel_0.9.8               dplyr_1.2.1                </span></span>
 <span><span class="co">##  [3] purrr_1.2.2                 scrapper_1.4.0             </span></span>
 <span><span class="co">##  [5] scater_1.38.1               ggplot2_4.0.3              </span></span>
-<span><span class="co">##  [7] scuttle_1.20.0              cellpaintr_0.99.3          </span></span>
+<span><span class="co">##  [7] scuttle_1.20.0              cellpaintr_0.99.4          </span></span>
 <span><span class="co">##  [9] SingleCellExperiment_1.32.0 SummarizedExperiment_1.40.0</span></span>
 <span><span class="co">## [11] Biobase_2.70.0              GenomicRanges_1.62.1       </span></span>
 <span><span class="co">## [13] Seqinfo_1.0.0               IRanges_2.44.0             </span></span>
@@ -327,33 +349,33 @@ pseudo-bulk features.</p>
 <span><span class="co">##  [4] furrr_0.4.0         otel_0.2.0          compiler_4.5.3     </span></span>
 <span><span class="co">##  [7] systemfonts_1.3.2   vctrs_0.7.3         stringr_1.6.0      </span></span>
 <span><span class="co">## [10] crayon_1.5.3        pkgconfig_2.0.3     fastmap_1.2.0      </span></span>
-<span><span class="co">## [13] XVector_0.50.0      labeling_0.4.3      rmarkdown_2.31     </span></span>
+<span><span class="co">## [13] XVector_0.50.0      labeling_0.4.3      rmarkdown_2.32     </span></span>
 <span><span class="co">## [16] tzdb_0.5.0          ggbeeswarm_0.7.3    ragg_1.5.2         </span></span>
-<span><span class="co">## [19] bit_4.6.0           xfun_0.60           cachem_1.1.0       </span></span>
+<span><span class="co">## [19] bit_4.6.0           xfun_0.62           cachem_1.1.0       </span></span>
 <span><span class="co">## [22] beachmat_2.26.0     jsonlite_2.0.0      DelayedArray_0.36.1</span></span>
-<span><span class="co">## [25] BiocParallel_1.44.0 irlba_2.3.7         parallel_4.5.3     </span></span>
+<span><span class="co">## [25] BiocParallel_1.44.0 irlba_2.4.1         parallel_4.5.3     </span></span>
 <span><span class="co">## [28] R6_2.6.1            bslib_0.12.0        stringi_1.8.9      </span></span>
 <span><span class="co">## [31] rsample_1.3.2       RColorBrewer_1.1-3  ranger_0.18.0      </span></span>
 <span><span class="co">## [34] parallelly_1.48.0   jquerylib_0.1.4     Rcpp_1.1.2         </span></span>
-<span><span class="co">## [37] bookdown_0.47       knitr_1.51          FNN_1.1.4.1        </span></span>
+<span><span class="co">## [37] bookdown_0.48       knitr_1.52          FNN_1.1.4.1        </span></span>
 <span><span class="co">## [40] readr_2.2.0         Matrix_1.7-4        tidyselect_1.2.1   </span></span>
 <span><span class="co">## [43] abind_1.4-8         yaml_2.3.12         viridis_0.6.5      </span></span>
-<span><span class="co">## [46] codetools_0.2-20    listenv_1.0.0       lattice_0.22-9     </span></span>
+<span><span class="co">## [46] codetools_0.2-20    listenv_1.1.0       lattice_0.22-9     </span></span>
 <span><span class="co">## [49] tibble_3.3.1        withr_3.0.3         S7_0.2.2           </span></span>
-<span><span class="co">## [52] evaluate_1.0.5      future_1.75.0       desc_1.4.3         </span></span>
+<span><span class="co">## [52] evaluate_1.0.5      future_1.80.0       desc_1.4.3         </span></span>
 <span><span class="co">## [55] pillar_1.11.1       BiocManager_1.30.27 renv_1.1.5         </span></span>
 <span><span class="co">## [58] vroom_1.7.1         hms_1.1.4           scales_1.4.0       </span></span>
-<span><span class="co">## [61] globals_0.19.1      glue_1.8.1          tools_4.5.3        </span></span>
+<span><span class="co">## [61] globals_0.20.0      glue_1.8.1          tools_4.5.3        </span></span>
 <span><span class="co">## [64] BiocNeighbors_2.4.0 RSpectra_0.16-2     ScaledMatrix_1.18.0</span></span>
 <span><span class="co">## [67] fs_2.1.0            grid_4.5.3          yardstick_1.4.0    </span></span>
 <span><span class="co">## [70] tidyr_1.3.2         beeswarm_0.4.0      BiocSingular_1.26.1</span></span>
-<span><span class="co">## [73] vipor_0.4.7         cli_3.6.6           rsvd_1.0.5         </span></span>
-<span><span class="co">## [76] textshaping_1.0.5   parsnip_1.6.0       S4Arrays_1.10.1    </span></span>
-<span><span class="co">## [79] viridisLite_0.4.3   uwot_0.2.4          gtable_0.3.6       </span></span>
+<span><span class="co">## [73] vipor_0.4.7         cli_3.6.6           rsvd_1.0.6         </span></span>
+<span><span class="co">## [76] textshaping_1.0.5   parsnip_1.6.1       S4Arrays_1.10.1    </span></span>
+<span><span class="co">## [79] viridisLite_0.4.3   uwot_0.2.5          gtable_0.3.6       </span></span>
 <span><span class="co">## [82] sass_0.4.10         digest_0.6.39       SparseArray_1.10.10</span></span>
 <span><span class="co">## [85] farver_2.1.2        htmltools_0.5.9     pkgdown_2.2.1      </span></span>
 <span><span class="co">## [88] lifecycle_1.0.5     hardhat_1.4.3       sparsevctrs_0.3.6  </span></span>
-<span><span class="co">## [91] bit64_4.8.4</span></span></code></pre>
+<span><span class="co">## [91] bit64_4.8.6</span></span></code></pre>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

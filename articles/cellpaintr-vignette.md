@@ -177,13 +177,34 @@ sce_single <- predictLOO(
 )
 ```
 
+Test each feature group for higher scores of D7 than of D1.
+[`calculateStats()`](https://christofseiler.github.io/cellpaintr/reference/calculateStats.md)
+averages the leave-one-out scores per patient and drug and computes a
+one-sided t-statistic per feature group. Its permutation test swaps the
+drug labels of whole patients, refits all leave-one-out models, and
+compares the observed statistic with those of all relabelings. With six
+patients, there are $`2^6 = 64`$ relabelings, so the smallest attainable
+p-value is 1/64, and the test refits the models 63 times.
+
+``` r
+
+stats <- calculateStats(sce_single, target = "Drug", group = "Patient")
+stats
+```
+
+    ##   Target   Feature   pvalue log2FoldChange
+    ## 1     D7       all 0.015625     0.92049456
+    ## 2     D7 AreaShape 0.656250    -0.03576254
+    ## 3     D7 Intensity 0.578125    -0.01486919
+    ## 4     D7   Texture 0.031250     1.48667981
+
 Summarize feature subgroups in a volcano plot.
 
 ``` r
 
 volcanoPlot(sce_single,
     target = "Drug", group = "Patient",
-    p_cutoff = 0.05, fc_cutoff = 0.5
+    stats = stats, p_cutoff = 0.05, fc_cutoff = 0.5
 )
 ```
 
@@ -232,7 +253,12 @@ sce_list <- map(interest_levels, function(interest_level) {
 }, .progress = "drug screening")
 ```
 
-Custom volcano plot for summarizing drugs faceted by features.
+Custom volcano plot for summarizing drugs faceted by features. For a
+quick screen of many drugs, `method = "t"` takes p-values from the
+t-distribution instead of the permutation test. These p-values are
+anti-conservative, because the scores of different held-out patients are
+correlated, so use them to rank drugs and confirm hits with the
+permutation test.
 
 ``` r
 
@@ -240,7 +266,7 @@ Custom volcano plot for summarizing drugs faceted by features.
 p_adj_cutoff <- 0.05
 fc_cutoff <- 0.5
 tb_stats <- lapply(sce_list, calculateStats,
-    target = "Drug", group = "Patient"
+    target = "Drug", group = "Patient", method = "t"
 ) |>
     bind_rows() |>
     mutate(pvalue_adj = p.adjust(pvalue, method = "BH")) |>
@@ -276,7 +302,7 @@ sessionInfo()
 
     ## R version 4.5.3 (2026-03-11)
     ## Platform: x86_64-pc-linux-gnu
-    ## Running under: Ubuntu 24.04.4 LTS
+    ## Running under: Ubuntu 24.04.5 LTS
     ## 
     ## Matrix products: default
     ## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
@@ -299,7 +325,7 @@ sessionInfo()
     ##  [1] ggrepel_0.9.8               dplyr_1.2.1                
     ##  [3] purrr_1.2.2                 scrapper_1.4.0             
     ##  [5] scater_1.38.1               ggplot2_4.0.3              
-    ##  [7] scuttle_1.20.0              cellpaintr_0.99.3          
+    ##  [7] scuttle_1.20.0              cellpaintr_0.99.4          
     ##  [9] SingleCellExperiment_1.32.0 SummarizedExperiment_1.40.0
     ## [11] Biobase_2.70.0              GenomicRanges_1.62.1       
     ## [13] Seqinfo_1.0.0               IRanges_2.44.0             
@@ -312,30 +338,30 @@ sessionInfo()
     ##  [4] furrr_0.4.0         otel_0.2.0          compiler_4.5.3     
     ##  [7] systemfonts_1.3.2   vctrs_0.7.3         stringr_1.6.0      
     ## [10] crayon_1.5.3        pkgconfig_2.0.3     fastmap_1.2.0      
-    ## [13] XVector_0.50.0      labeling_0.4.3      rmarkdown_2.31     
+    ## [13] XVector_0.50.0      labeling_0.4.3      rmarkdown_2.32     
     ## [16] tzdb_0.5.0          ggbeeswarm_0.7.3    ragg_1.5.2         
-    ## [19] bit_4.6.0           xfun_0.60           cachem_1.1.0       
+    ## [19] bit_4.6.0           xfun_0.62           cachem_1.1.0       
     ## [22] beachmat_2.26.0     jsonlite_2.0.0      DelayedArray_0.36.1
-    ## [25] BiocParallel_1.44.0 irlba_2.3.7         parallel_4.5.3     
+    ## [25] BiocParallel_1.44.0 irlba_2.4.1         parallel_4.5.3     
     ## [28] R6_2.6.1            bslib_0.12.0        stringi_1.8.9      
     ## [31] rsample_1.3.2       RColorBrewer_1.1-3  ranger_0.18.0      
     ## [34] parallelly_1.48.0   jquerylib_0.1.4     Rcpp_1.1.2         
-    ## [37] bookdown_0.47       knitr_1.51          FNN_1.1.4.1        
+    ## [37] bookdown_0.48       knitr_1.52          FNN_1.1.4.1        
     ## [40] readr_2.2.0         Matrix_1.7-4        tidyselect_1.2.1   
     ## [43] abind_1.4-8         yaml_2.3.12         viridis_0.6.5      
-    ## [46] codetools_0.2-20    listenv_1.0.0       lattice_0.22-9     
+    ## [46] codetools_0.2-20    listenv_1.1.0       lattice_0.22-9     
     ## [49] tibble_3.3.1        withr_3.0.3         S7_0.2.2           
-    ## [52] evaluate_1.0.5      future_1.75.0       desc_1.4.3         
+    ## [52] evaluate_1.0.5      future_1.80.0       desc_1.4.3         
     ## [55] pillar_1.11.1       BiocManager_1.30.27 renv_1.1.5         
     ## [58] vroom_1.7.1         hms_1.1.4           scales_1.4.0       
-    ## [61] globals_0.19.1      glue_1.8.1          tools_4.5.3        
+    ## [61] globals_0.20.0      glue_1.8.1          tools_4.5.3        
     ## [64] BiocNeighbors_2.4.0 RSpectra_0.16-2     ScaledMatrix_1.18.0
     ## [67] fs_2.1.0            grid_4.5.3          yardstick_1.4.0    
     ## [70] tidyr_1.3.2         beeswarm_0.4.0      BiocSingular_1.26.1
-    ## [73] vipor_0.4.7         cli_3.6.6           rsvd_1.0.5         
-    ## [76] textshaping_1.0.5   parsnip_1.6.0       S4Arrays_1.10.1    
-    ## [79] viridisLite_0.4.3   uwot_0.2.4          gtable_0.3.6       
+    ## [73] vipor_0.4.7         cli_3.6.6           rsvd_1.0.6         
+    ## [76] textshaping_1.0.5   parsnip_1.6.1       S4Arrays_1.10.1    
+    ## [79] viridisLite_0.4.3   uwot_0.2.5          gtable_0.3.6       
     ## [82] sass_0.4.10         digest_0.6.39       SparseArray_1.10.10
     ## [85] farver_2.1.2        htmltools_0.5.9     pkgdown_2.2.1      
     ## [88] lifecycle_1.0.5     hardhat_1.4.3       sparsevctrs_0.3.6  
-    ## [91] bit64_4.8.4
+    ## [91] bit64_4.8.6

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">cellpaintr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,6 +51,15 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.99.0" id="cellpaintr-0990">cellpaintr 0.99.0<a class="anchor" aria-label="anchor" href="#cellpaintr-0990"></a></h2>
 <ul><li>Submitted to Bioconductor</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.99.4" id="cellpaintr-0994">cellpaintr 0.99.4<a class="anchor" aria-label="anchor" href="#cellpaintr-0994"></a></h2>
+<ul><li>
+<code><a href="../reference/calculateStats.html">calculateStats()</a></code> calibrates the t-statistic with a permutation test that relabels whole patients and refits all leave-one-out models (<code>method = "permutation"</code>, the new default). It enumerates all relabelings if there are at most <code>n_permutations + 1</code> of them and samples them otherwise. <code>method = "t"</code> keeps the p-values from the t-distribution, which are anti-conservative because the scores of different held-out patients are correlated.</li>
+<li>
+<code><a href="../reference/predictLOO.html">predictLOO()</a></code> records its settings in <code>metadata()</code>, and <code><a href="../reference/calculateStats.html">calculateStats()</a></code> takes the interest and reference levels from there instead of from the order of the factor levels.</li>
+<li>
+<code><a href="../reference/volcanoPlot.html">volcanoPlot()</a></code> accepts precomputed statistics (<code>stats</code>) and passes further arguments, such as <code>method</code>, to <code><a href="../reference/calculateStats.html">calculateStats()</a></code>.</li>
 </ul></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

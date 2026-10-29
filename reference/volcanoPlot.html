@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">cellpaintr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,7 +49,9 @@
 <span>  <span class="va">group</span>,</span>
 <span>  p_cutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  fc_cutoff <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  assay_type <span class="op">=</span> <span class="st">"tfmfeatures"</span></span>
+<span>  assay_type <span class="op">=</span> <span class="st">"tfmfeatures"</span>,</span>
+<span>  stats <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -71,7 +73,11 @@
 
 <dt id="arg-p-cutoff">p_cutoff<a class="anchor" aria-label="anchor" href="#arg-p-cutoff"></a></dt>
 <dd><p>Cut-off for statistical significance. A horizontal line
-will be drawn at -log10(p_cutoff).</p></dd>
+will be drawn at -log10(p_cutoff). Defaults to 0.01
+divided by the number of feature groups. With few
+patients, permutation p-values cannot fall below this
+default, because the smallest attainable p-value is one
+over the number of relabelings.</p></dd>
 
 
 <dt id="arg-fc-cutoff">fc_cutoff<a class="anchor" aria-label="anchor" href="#arg-fc-cutoff"></a></dt>
@@ -81,6 +87,16 @@ will be drawn at fc_cutoff.</p></dd>
 
 <dt id="arg-assay-type">assay_type<a class="anchor" aria-label="anchor" href="#arg-assay-type"></a></dt>
 <dd><p>A string specifying the assay</p></dd>
+
+
+<dt id="arg-stats">stats<a class="anchor" aria-label="anchor" href="#arg-stats"></a></dt>
+<dd><p>Output of <code><a href="calculateStats.html">calculateStats</a></code>; if `NULL`, it is
+computed from `sce`</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Further arguments to <code><a href="calculateStats.html">calculateStats</a></code>, such as
+`method` or `n_permutations`</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -107,9 +123,11 @@ will be drawn at fc_cutoff.</p></dd>
 <span class="r-in"><span>    n_threads <span class="op">=</span> <span class="fl">1</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># p-values from the t-distribution keep the example fast; the default</span></span></span>
+<span class="r-in"><span><span class="co"># permutation test refits all models for every relabeling of the patients</span></span></span>
 <span class="r-in"><span><span class="fu">volcanoPlot</span><span class="op">(</span><span class="va">sce_single</span>,</span></span>
 <span class="r-in"><span>    target <span class="op">=</span> <span class="st">"Drug"</span>, group <span class="op">=</span> <span class="st">"Patient"</span>,</span></span>
-<span class="r-in"><span>    p_cutoff <span class="op">=</span> <span class="fl">0.05</span>, fc_cutoff <span class="op">=</span> <span class="fl">0.5</span></span></span>
+<span class="r-in"><span>    p_cutoff <span class="op">=</span> <span class="fl">0.05</span>, fc_cutoff <span class="op">=</span> <span class="fl">0.5</span>, method <span class="op">=</span> <span class="st">"t"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="volcanoPlot-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>

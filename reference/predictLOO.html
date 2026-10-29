@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">cellpaintr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,8 @@
 <span>  channels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n_threads <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  assay_type <span class="op">=</span> <span class="st">"tfmfeatures"</span></span>
+<span>  assay_type <span class="op">=</span> <span class="st">"tfmfeatures"</span>,</span>
+<span>  progress <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -100,10 +101,19 @@
 <dt id="arg-assay-type">assay_type<a class="anchor" aria-label="anchor" href="#arg-assay-type"></a></dt>
 <dd><p>A string specifying the assay</p></dd>
 
+
+<dt id="arg-progress">progress<a class="anchor" aria-label="anchor" href="#arg-progress"></a></dt>
+<dd><p>Show a progress bar while fitting the models of feature
+types and channels</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p><code><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></code> data frame</p>
+    <p><code><a href="https://rdrr.io/pkg/SingleCellExperiment/man/SingleCellExperiment.html" class="external-link">SingleCellExperiment</a></code> object
+  with the cells of the two levels, the leave-one-out prediction scores in
+  <code>reducedDim(sce, "prevalidated")</code>, and the settings of this call in
+  <code>metadata(sce)$predictLOO</code>, which <code><a href="calculateStats.html">calculateStats</a></code> uses
+  to refit the models in its permutation test</p>
     </div>
 
     <div class="section level2">

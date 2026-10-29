@@ -15,7 +15,8 @@ predictLOO(
   channels = NULL,
   weights = NULL,
   n_threads = 1,
-  assay_type = "tfmfeatures"
+  assay_type = "tfmfeatures",
+  progress = TRUE
 )
 ```
 
@@ -62,10 +63,19 @@ predictLOO(
 
   A string specifying the assay
 
+- progress:
+
+  Show a progress bar while fitting the models of feature types and
+  channels
+
 ## Value
 
-[`tibble`](https://tibble.tidyverse.org/reference/tibble.html) data
-frame
+[`SingleCellExperiment`](https://rdrr.io/pkg/SingleCellExperiment/man/SingleCellExperiment.html)
+object with the cells of the two levels, the leave-one-out prediction
+scores in `reducedDim(sce, "prevalidated")`, and the settings of this
+call in `metadata(sce)$predictLOO`, which
+[`calculateStats`](https://christofseiler.github.io/cellpaintr/reference/calculateStats.md)
+uses to refit the models in its permutation test
 
 ## Examples
 
