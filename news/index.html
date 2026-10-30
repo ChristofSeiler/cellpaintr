@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">cellpaintr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,6 +60,10 @@
 <code><a href="../reference/predictLOO.html">predictLOO()</a></code> records its settings in <code>metadata()</code>, and <code><a href="../reference/calculateStats.html">calculateStats()</a></code> takes the interest and reference levels from there instead of from the order of the factor levels.</li>
 <li>
 <code><a href="../reference/volcanoPlot.html">volcanoPlot()</a></code> accepts precomputed statistics (<code>stats</code>) and passes further arguments, such as <code>method</code>, to <code><a href="../reference/calculateStats.html">calculateStats()</a></code>.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.99.5" id="cellpaintr-0995">cellpaintr 0.99.5<a class="anchor" aria-label="anchor" href="#cellpaintr-0995"></a></h2>
+<ul><li>The permutation test of <code><a href="../reference/calculateStats.html">calculateStats()</a></code> handles mixed designs, in which only some patients have cells of both levels, for example after quality control removed all cells of one level of a patient. It swaps the levels of the patients with both levels, permutes the levels among the other patients, and reports which patients have cells of one level only.</li>
 </ul></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
