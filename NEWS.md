@@ -29,3 +29,10 @@
 - `volcanoPlot()` accepts precomputed statistics (`stats`) and passes
   further arguments, such as `method`, to `calculateStats()`.
 
+# cellpaintr 0.99.5
+
+- The permutation test of `calculateStats()` handles mixed designs, in which
+  only some patients have cells of both levels, for example after quality
+  control removed all cells of one level of a patient. It swaps the levels
+  of the patients with both levels, permutes the levels among the other
+  patients, and reports which patients have cells of one level only.

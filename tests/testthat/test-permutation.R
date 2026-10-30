@@ -73,20 +73,34 @@ test_that("permutation test permutes patients in an unpaired design", {
     expect_true(on_grid(stats$pvalue, 6))
 })
 
-test_that("permutation test rejects mixed designs", {
+test_that("permutation test handles mixed designs", {
+    sce <- simulate_sce()
+    # P1 has only D1 cells, P4 only D8 cells, P2 and P3 have both
+    keep <- sce$Patient %in% c("P1", "P2", "P3", "P4") &
+        !(sce$Patient == "P1" & sce$Drug == "D8") &
+        !(sce$Patient == "P4" & sce$Drug == "D1")
+    sce_single <- fit_loo(sce[, keep])
+    expect_message(
+        stats <- calculateStats(sce_single, target = "Drug", group = "Patient"),
+        "mixed design"
+    )
+
+    # P2 and P3 keep or swap their levels, and either P1 or P4 gets D8
+    expect_equal(attr(stats, "relabelings"), 2^2 * choose(2, 1))
+    expect_true(on_grid(stats$pvalue, 8))
+})
+
+test_that("permutation test samples relabelings in mixed designs", {
     sce <- simulate_sce()
     keep <- sce$Patient %in% c("P1", "P2", "P3") &
         !(sce$Patient == "P1" & sce$Drug == "D8")
     sce_single <- fit_loo(sce[, keep])
+    stats <- suppressMessages(calculateStats(sce_single,
+        target = "Drug", group = "Patient", n_permutations = 2
+    ))
 
-    expect_error(
-        calculateStats(sce_single, target = "Drug", group = "Patient"),
-        "paired or an unpaired design"
-    )
-    stats <- calculateStats(sce_single,
-        target = "Drug", group = "Patient", method = "t"
-    )
-    expect_equal(nrow(stats), 1)
+    expect_equal(attr(stats, "relabelings"), 3)
+    expect_true(on_grid(stats$pvalue, 3))
 })
 
 test_that("permutation test needs the settings of predictLOO", {

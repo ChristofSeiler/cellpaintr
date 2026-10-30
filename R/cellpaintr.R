@@ -909,17 +909,24 @@ score_statistics <- function(sce,
 #'
 #' @importFrom utils combn
 #'
-#' @param design Either "paired" or "unpaired"
+#' @param design Either "paired", "unpaired", or "mixed"
 #' @param n Number of patients
 #' @param observed Logical vector of patients with the interest level
 #' @param exact Enumerate all relabelings instead of sampling them
 #' @param n_permutations Number of random relabelings if not exact
+#' @param both Logical vector of patients with both levels (mixed design)
 #' @return Logical matrix with one row per relabeling, the observed labels
 #'   excluded, and one column per patient: patients whose two levels are
-#'   swapped (paired design) or patients with the interest level (unpaired)
+#'   swapped (paired design, and patients with both levels in a mixed
+#'   design) or patients with the interest level (unpaired design, and
+#'   patients with one level in a mixed design)
 #' @noRd
 #'
-patient_relabelings <- function(design, n, observed, exact, n_permutations) {
+patient_relabelings <- function(design, n, observed, exact, n_permutations,
+                                both = NULL) {
+    if (design == "mixed") {
+        return(mixed_relabelings(observed, both, exact, n_permutations))
+    }
     if (design == "paired") {
         if (exact) {
             grid <- as.matrix(expand.grid(rep(list(c(FALSE, TRUE)), n)))
@@ -938,6 +945,66 @@ patient_relabelings <- function(design, n, observed, exact, n_permutations) {
         return(grid[!is_observed, , drop = FALSE])
     }
     t(replicate(n_permutations, seq_len(n) %in% sample(n, n_interest)))
+}
+
+#' Internal function to list all subsets of k out of m patients
+#'
+#' @importFrom utils combn
+#' @return Logical matrix with one row per subset and one column per patient
+#' @noRd
+#'
+all_subsets <- function(m, k) {
+    if (k == 0 || k == m) {
+        return(matrix(rep(k == m, m), nrow = 1))
+    }
+    t(apply(combn(m, k), 2, function(subset) seq_len(m) %in% subset))
+}
+
+#' Internal function to list relabelings in a mixed design
+#'
+#' Patients with both levels keep or swap their two levels, and the levels
+#' of the patients with one level are permuted among them.
+#'
+#' @param observed Logical vector of patients with the interest level
+#' @param both Logical vector of patients with both levels
+#' @param exact Enumerate all relabelings instead of sampling them
+#' @param n_permutations Number of random relabelings if not exact
+#' @return Logical matrix as returned by \code{patient_relabelings}
+#' @noRd
+#'
+mixed_relabelings <- function(observed, both, exact, n_permutations) {
+    single <- !both
+    n_both <- sum(both)
+    n_single <- sum(single)
+    n_interest <- sum(observed[single])
+    if (!exact) {
+        grid <- matrix(FALSE, nrow = n_permutations, ncol = length(both))
+        grid[, both] <- sample(c(FALSE, TRUE), n_permutations * n_both,
+            replace = TRUE
+        )
+        grid[, single] <- matrix(
+            replicate(
+                n_permutations,
+                seq_len(n_single) %in% sample(n_single, n_interest)
+            ),
+            ncol = n_single, byrow = TRUE
+        )
+        return(grid)
+    }
+    swaps <- as.matrix(expand.grid(rep(list(c(FALSE, TRUE)), n_both)))
+    assignments <- all_subsets(n_single, n_interest)
+    index <- expand.grid(
+        swap = seq_len(nrow(swaps)),
+        assignment = seq_len(nrow(assignments))
+    )
+    grid <- matrix(FALSE, nrow = nrow(index), ncol = length(both))
+    grid[, both] <- swaps[index$swap, , drop = FALSE]
+    grid[, single] <- assignments[index$assignment, , drop = FALSE]
+    is_observed <- !apply(grid[, both, drop = FALSE], 1, any) &
+        apply(grid[, single, drop = FALSE], 1, function(row) {
+            all(row == observed[single])
+        })
+    grid[!is_observed, , drop = FALSE]
 }
 
 #' Internal function to compute permutation p-values by relabeling patients
@@ -964,25 +1031,22 @@ permutation_pvalues <- function(sce, observed, settings, n_permutations) {
     in_interest <- ids %in% patients[labels == interest_level]
     in_reference <- ids %in% patients[labels == reference_level]
 
-    # paired: every patient has both levels; unpaired: every patient has one
-    if (all(in_interest & in_reference)) {
+    # paired: every patient has both levels; unpaired: every patient has one;
+    # mixed: some patients have both levels, the others have one
+    both <- in_interest & in_reference
+    if (all(both)) {
         design <- "paired"
         n_total <- 2^n
     } else if (all(xor(in_interest, in_reference))) {
         design <- "unpaired"
         n_total <- choose(n, sum(in_interest))
     } else {
-        cli_abort(c(
-            "The permutation test needs a paired or an unpaired design.",
-            "i" = paste(
-                "Every level of {.arg group} needs cells of both levels",
-                "of {.arg target} (paired) or of one level (unpaired)."
-            )
-        ))
+        design <- "mixed"
+        n_total <- 2^sum(both) * choose(sum(!both), sum(in_interest & !both))
     }
     exact <- n_total <= n_permutations + 1
     relabelings <- patient_relabelings(
-        design, n, in_interest, exact, n_permutations
+        design, n, in_interest, exact, n_permutations, both
     )
     n_relabelings <- nrow(relabelings) + 1
     message(
@@ -990,18 +1054,35 @@ permutation_pvalues <- function(sce, observed, settings, n_permutations) {
         " relabelings of ", n, " levels of '", group, "' (", design,
         " design); smallest attainable p-value 1/", n_relabelings, "."
     )
+    if (design == "mixed") {
+        message(
+            "Levels of '", group, "' with cells of only one level of '",
+            target, "': ", paste(ids[!both], collapse = ", "), "."
+        )
+    }
 
     # labels of the cells after relabeling whole patients
-    relabel <- function(selected_ids) {
-        selected <- patients %in% selected_ids
-        if (design == "paired") {
-            swapped <- labels
-            swapped[selected] <- ifelse(labels[selected] == interest_level,
-                reference_level, interest_level
-            )
-            return(swapped)
+    relabel <- function(row) {
+        if (design == "unpaired") {
+            return(ifelse(patients %in% ids[row],
+                interest_level, reference_level
+            ))
         }
-        ifelse(selected, interest_level, reference_level)
+        # swap the two levels of the selected patients with both levels
+        swap <- if (design == "paired") row else row & both
+        swapped <- labels
+        selected <- patients %in% ids[swap]
+        swapped[selected] <- ifelse(labels[selected] == interest_level,
+            reference_level, interest_level
+        )
+        if (design == "mixed") {
+            # permute the levels among the patients with one level
+            single <- patients %in% ids[!both]
+            swapped[single] <- ifelse(patients[single] %in% ids[row & !both],
+                interest_level, reference_level
+            )
+        }
+        swapped
     }
 
     # refit all leave-one-out models for each relabeling
@@ -1011,7 +1092,7 @@ permutation_pvalues <- function(sce, observed, settings, n_permutations) {
     cli_progress_bar("Refitting models", total = nrow(relabelings))
     for (b in seq_len(nrow(relabelings))) {
         relabeled <- sce
-        relabeled[[target]] <- factor(relabel(ids[relabelings[b, ]]),
+        relabeled[[target]] <- factor(relabel(relabelings[b, ]),
             levels = levels(sce[[target]])
         )
         refit <- do.call(
@@ -1046,13 +1127,15 @@ permutation_pvalues <- function(sce, observed, settings, n_permutations) {
 #'
 #' The test statistic is the one-sided t-statistic for higher mean scores in
 #' the interest level. It is paired if every patient (`group`) has cells of
-#' both levels, and uses a pooled variance if every patient has cells of one
-#' level.
+#' both levels, and uses a pooled variance otherwise.
 #'
 #' With `method = "permutation"` (the default), the p-value comes from
 #' relabeling whole patients: in a paired design, the two levels of a patient
 #' are swapped; in an unpaired design, the levels are permuted across
-#' patients. For each relabeling, all leave-one-out models are refitted with
+#' patients; and in a mixed design, where only some patients have cells of
+#' both levels, the levels of those patients are swapped and the levels of
+#' the other patients are permuted among them. For each relabeling, all
+#' leave-one-out models are refitted with
 #' the settings of the call to \code{\link{predictLOO}}, and the p-value is
 #' the proportion of relabelings, the observed one included, with a statistic
 #' at least as large. If there are at most `n_permutations + 1` relabelings
