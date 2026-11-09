@@ -580,6 +580,56 @@ compute_y_hat <- function(feature_name,
                           weights,
                           n_threads,
                           assay_type) {
+    ml_data <- group_data(feature_name, sce_feature, starts, target,
+        interest_level, reference_level, assay_type
+    )
+
+    # compute y hats
+    patients <- unique(sce_feature[[group]])
+    result_list <- lapply(patients, function(patient) {
+        train_ids <- which(sce_feature[[group]] != patient)
+        test_ids <- which(sce_feature[[group]] == patient)
+        if (!is.null(weights)) {
+            case_weights <- sce_feature[[weights]][train_ids]
+        } else {
+            case_weights <- NULL
+        }
+        data.frame(
+            cell = test_ids,
+            score = fit_predict(ml_data, train_ids, test_ids, case_weights, n_threads)
+        )
+    })
+
+    # combine folds
+    result <- result_list |>
+        bind_rows() |>
+        arrange(cell)
+
+    # rename to feature type / channel
+    names(result)[2] <- feature_name
+    result |> select(all_of(feature_name))
+}
+
+#' Internal function to prepare the data of one feature group
+#'
+#' @param feature_name String with feature name, or "all" for all features
+#' @param sce_feature \code{\link[SingleCellExperiment]{SingleCellExperiment}}
+#' @param starts Select features that start with `feature_name` (types) or
+#'   contain it (channels)
+#' @param target Name of target variable for prediction
+#' @param interest_level Factor interest level in `target` variable
+#' @param reference_level Factor reference level in `target` variable
+#' @param assay_type A string specifying the assay
+#' @return \code{data.frame} with the factor `Target` and one column per feature
+#' @noRd
+#'
+group_data <- function(feature_name,
+                       sce_feature,
+                       starts,
+                       target,
+                       interest_level,
+                       reference_level,
+                       assay_type) {
     # convert to regular expression
     if (feature_name == "all") {
         pattern <- ".*"
@@ -603,44 +653,33 @@ compute_y_hat <- function(feature_name,
     ml_data$Target <- factor(ml_data$Target,
         levels = c(interest_level, reference_level)
     )
+    ml_data
+}
 
-    # compute y hats
-    patients <- unique(sce_feature[[group]])
-    result_list <- lapply(patients, function(patient) {
-        train_ids <- which(sce_feature[[group]] != patient)
-        test_ids <- which(sce_feature[[group]] == patient)
-
-        # train model
-        if (!is.null(weights)) {
-            case_weights <- sce_feature[[weights]][train_ids]
-        } else {
-            case_weights <- NULL
-        }
-        rf_spec <-
-            parsnip::rand_forest() |>
-            parsnip::set_mode("classification") |>
-            parsnip::set_engine("ranger",
-                num.threads = n_threads,
-                case.weights = case_weights
-            )
-        rf_fit <- rf_spec |>
-            parsnip::fit(Target ~ ., data = ml_data[train_ids, ])
-
-        # evaluate model
-        dplyr::bind_cols(
-            cell = test_ids,
-            predict(rf_fit, ml_data[test_ids, ], type = "prob")
+#' Internal function to fit a random forest and score held-out cells
+#'
+#' @param ml_data Output of \code{group_data}
+#' @param train_ids Rows of `ml_data` to train on
+#' @param test_ids Rows of `ml_data` to score
+#' @param case_weights Weights of the training rows, or `NULL`
+#' @param n_threads Number of parallel threads for fitting of models
+#' @return Numeric vector with the predicted probability of the interest level
+#'   for each row in `test_ids`
+#' @noRd
+#'
+fit_predict <- function(ml_data, train_ids, test_ids, case_weights, n_threads) {
+    rf_spec <-
+        parsnip::rand_forest() |>
+        parsnip::set_mode("classification") |>
+        parsnip::set_engine("ranger",
+            num.threads = n_threads,
+            case.weights = case_weights
         )
-    })
+    rf_fit <- rf_spec |>
+        parsnip::fit(Target ~ ., data = ml_data[train_ids, ])
 
-    # combine folds
-    result <- result_list |>
-        bind_rows() |>
-        arrange(cell)
-
-    # rename to feature type / channel
-    names(result)[2] <- feature_name
-    result |> select(all_of(feature_name))
+    # the first column is the interest level, the first factor level
+    predict(rf_fit, ml_data[test_ids, ], type = "prob")[[1]]
 }
 
 #' Predict target from features
@@ -1119,6 +1158,135 @@ permutation_pvalues <- function(sce, observed, settings, n_permutations) {
     )
 }
 
+#' Internal function for the p-value of the corrected t-test
+#'
+#' One-sided paired t-test of the score differences `d` whose sample
+#' variance is increased by max(C, 0) / (n - 1), with C the sum of
+#' `a[p, q] * a[q, p]` over all p != q. Under the null hypothesis,
+#' var(d) + C / (n - 1) is unbiased for n times the variance of mean(d).
+#'
+#' @importFrom stats pt var
+#'
+#' @param d Score differences of the patients (interest minus reference)
+#' @param a Matrix of influences: `a[p, q]` is the change in `d[p]` when
+#'   patient q is also left out of training; the diagonal is ignored
+#' @return List with `pvalue` and `variance_ratio`, the corrected over the
+#'   uncorrected variance
+#' @noRd
+#'
+corrected_t <- function(d, a) {
+    n <- length(d)
+    cross <- sum((a * t(a))[row(a) != col(a)])
+    variance <- var(d) + max(cross, 0) / (n - 1)
+    pvalue <- if (is.finite(variance) && variance > 0) {
+        pt(mean(d) / sqrt(variance / n), n - 1, lower.tail = FALSE)
+    } else {
+        NA_real_
+    }
+    list(pvalue = pvalue, variance_ratio = variance / var(d))
+}
+
+#' Internal function to compute corrected t-test p-values
+#'
+#' For each feature group, refit the model without each pair of patients to
+#' obtain the influences of the patients on each other's score differences.
+#'
+#' @importFrom cli cli_abort cli_progress_bar cli_progress_update
+#' @importFrom cli cli_progress_done
+#' @importFrom SingleCellExperiment reducedDim
+#' @importFrom utils combn
+#'
+#' @param sce Output of \code{\link{predictLOO}}
+#' @param settings Settings of \code{\link{predictLOO}} from its metadata
+#' @return List with p-values and variance ratios, one per feature group in
+#'   the order of the columns of \code{reducedDim(sce, "prevalidated")}
+#' @noRd
+#'
+corrected_pvalues <- function(sce, settings) {
+    target <- settings$target
+    group <- settings$group
+    interest_level <- settings$interest_level
+    reference_level <- settings$reference_level
+    labels <- as.character(sce[[target]])
+    patients <- as.character(sce[[group]])
+    ids <- sort(unique(patients))
+    n <- length(ids)
+
+    paired <- vapply(ids, function(id) {
+        all(c(interest_level, reference_level) %in% labels[patients == id])
+    }, logical(1))
+    if (!all(paired)) {
+        cli_abort(c(
+            paste(
+                "The corrected t-test needs a paired design, in which every",
+                "level of {.arg group} has cells of both levels of {.arg target}."
+            ),
+            "i" = "Levels with cells of one level only: {ids[!paired]}.",
+            "i" = "Use {.code method = \"permutation\"} instead."
+        ))
+    }
+    if (n < 3) {
+        cli_abort("The corrected t-test needs at least three levels of {.arg group}.")
+    }
+
+    score_difference <- function(score, in_patient) {
+        mean(score[in_patient & labels == interest_level]) -
+            mean(score[in_patient & labels == reference_level])
+    }
+
+    # feature groups in the order in which predictLOO() fitted them
+    feature_groups <- c("all", settings$types, settings$channels)
+    starts <- c(
+        TRUE, rep(TRUE, length(settings$types)),
+        rep(FALSE, length(settings$channels))
+    )
+    scores <- reducedDim(sce, "prevalidated")
+    if (ncol(scores) != length(feature_groups)) {
+        cli_abort("The prediction scores do not match the settings of {.fn predictLOO}.")
+    }
+
+    pairs <- combn(n, 2)
+    n_fits <- length(feature_groups) * ncol(pairs)
+    message(
+        "Corrected t-test with ", ncol(pairs), " leave-two-out fits per ",
+        "feature group for ", n, " levels of '", group, "' (", n_fits,
+        " fits in total)."
+    )
+    pvalue <- variance_ratio <- rep(NA_real_, length(feature_groups))
+    cli_progress_bar("Fitting leave-two-out models", total = n_fits)
+    for (k in seq_along(feature_groups)) {
+        d <- vapply(ids, function(id) score_difference(scores[, k], patients == id), 0)
+        ml_data <- group_data(feature_groups[k], sce, starts[k], target,
+            interest_level, reference_level, settings$assay_type
+        )
+        a <- matrix(0, n, n)
+        for (m in seq_len(ncol(pairs))) {
+            i <- pairs[1, m]
+            j <- pairs[2, m]
+            held_out <- patients %in% ids[c(i, j)]
+            train_ids <- which(!held_out)
+            test_ids <- which(held_out)
+            if (!is.null(settings$weights)) {
+                case_weights <- sce[[settings$weights]][train_ids]
+            } else {
+                case_weights <- NULL
+            }
+            score <- rep(NA_real_, length(patients))
+            score[test_ids] <- fit_predict(ml_data, train_ids, test_ids,
+                case_weights, settings$n_threads
+            )
+            a[i, j] <- d[i] - score_difference(score, patients == ids[i])
+            a[j, i] <- d[j] - score_difference(score, patients == ids[j])
+            cli_progress_update()
+        }
+        result <- corrected_t(d, a)
+        pvalue[k] <- result$pvalue
+        variance_ratio[k] <- result$variance_ratio
+    }
+    cli_progress_done()
+    list(pvalue = pvalue, variance_ratio = variance_ratio)
+}
+
 #' Test each feature group for a difference between two levels
 #'
 #' Average the leave-one-out prediction scores of \code{\link{predictLOO}}
@@ -1147,10 +1315,24 @@ permutation_pvalues <- function(sce, observed, settings, n_permutations) {
 #' \code{\link{predictLOO}}. Use \code{\link[base]{set.seed}} for
 #' reproducible results.
 #'
+#' With `method = "corrected"`, the p-value comes from a corrected paired
+#' t-test, which needs a paired design. The models of different held-out
+#' patients share most of their training data, which makes the score
+#' differences of different patients positively correlated, so the sample
+#' variance underestimates their variance. For every pair of patients, the
+#' corrected t-test refits the models without both of them, measures how much
+#' each of the two changes the other's score difference, and adds the
+#' products of these influences to the sample variance. Under the null
+#' hypothesis, the corrected variance is unbiased, and the test controls the
+#' type I error as the number of patients grows; for few patients it is
+#' approximate. It refits \eqn{n(n-1)/2} models per feature group for
+#' \eqn{n} patients, far fewer than the permutation test, and unlike the
+#' permutation test, it can reach small p-values with few patients. Use
+#' \code{\link[base]{set.seed}} for reproducible results.
+#'
 #' With `method = "t"`, the p-value comes from the t-distribution. This is
-#' fast but anti-conservative, because the models of different held-out
-#' patients share most of their training data, which makes the scores of
-#' different patients positively correlated.
+#' fast but anti-conservative, because the score differences of different
+#' patients are positively correlated.
 #'
 #' @importFrom S4Vectors metadata
 #' @importFrom cli cli_abort
@@ -1161,7 +1343,8 @@ permutation_pvalues <- function(sce, observed, settings, n_permutations) {
 #' @param group Grouping variable for cross-validation, e.g., patient
 #' @param assay_type A string specifying the assay
 #' @param method Either `"permutation"` (default) for a permutation test that
-#'   relabels whole patients, or `"t"` for p-values from the t-distribution
+#'   relabels whole patients, `"corrected"` for the corrected paired t-test,
+#'   or `"t"` for p-values from the t-distribution
 #' @param n_permutations Largest number of relabelings besides the observed
 #'   labels; if there are more, this many are drawn at random
 #' @return \code{data.frame} with one row per feature group and the columns
@@ -1169,7 +1352,8 @@ permutation_pvalues <- function(sce, observed, settings, n_permutations) {
 #'   `log2FoldChange` (log2 ratio of the mean scores of the interest and the
 #'   reference level). With the permutation test, the attribute
 #'   `relabelings` holds the number of relabelings, the observed one
-#'   included.
+#'   included. With the corrected t-test, the attribute `variance_ratio`
+#'   holds, per feature group, the corrected over the uncorrected variance.
 #'
 #' @examples
 #' set.seed(23)
@@ -1194,6 +1378,12 @@ permutation_pvalues <- function(sce, observed, settings, n_permutations) {
 #'     n_permutations = 9
 #' )
 #'
+#' # corrected t-test: 15 leave-two-out fits for six patients
+#' calculateStats(sce_single,
+#'     target = "Drug", group = "Patient",
+#'     method = "corrected"
+#' )
+#'
 #' # p-values from the t-distribution: fast but anti-conservative
 #' calculateStats(sce_single,
 #'     target = "Drug", group = "Patient",
@@ -1204,7 +1394,7 @@ calculateStats <- function(sce,
                            target,
                            group,
                            assay_type = "tfmfeatures",
-                           method = c("permutation", "t"),
+                           method = c("permutation", "corrected", "t"),
                            n_permutations = 999) {
     method <- match.arg(method)
     settings <- metadata(sce)$predictLOO
@@ -1235,12 +1425,20 @@ calculateStats <- function(sce,
     if (is.null(settings) || !identical(settings$target, target) ||
         !identical(settings$group, group)) {
         cli_abort(c(
-            "The permutation test refits the models of {.fn predictLOO}.",
+            "The {method} test refits the models of {.fn predictLOO}.",
             "i" = paste(
                 "Pass its output with the same {.arg target} and",
                 "{.arg group}, or use {.code method = \"t\"}."
             )
         ))
+    }
+    if (method == "corrected") {
+        corrected <- corrected_pvalues(sce, settings)
+        stats$pvalue <- corrected$pvalue
+        attr(stats, "variance_ratio") <- stats::setNames(
+            corrected$variance_ratio, stats$Feature
+        )
+        return(stats)
     }
     if (!is.numeric(n_permutations) || length(n_permutations) != 1 ||
         n_permutations < 1) {

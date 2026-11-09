@@ -176,6 +176,23 @@ stats <- calculateStats(sce_single, target = "Drug", group = "Patient")
 stats
 ```
 
+The corrected t-test is a faster alternative for paired designs.
+The scores of different held-out patients are correlated,
+because their models share most of their training patients,
+so the t-test underestimates the variance of the mean score difference.
+For every pair of patients, the corrected t-test refits the models without both of them
+and adds the influences of the two patients on each other to the variance.
+With six patients, it needs $6 \times 5 / 2 = 15$ fits per feature group instead of 63 refits of all models,
+and its p-values are not limited to multiples of 1/64.
+Unlike the permutation test, it is approximate for few patients.
+
+```{r test-corrected}
+stats_corrected <- calculateStats(sce_single,
+    target = "Drug", group = "Patient", method = "corrected"
+)
+stats_corrected
+```
+
 Summarize feature subgroups in a volcano plot.
 
 ```{r plot-volcano}
@@ -218,7 +235,8 @@ For a quick screen of many drugs,
 instead of the permutation test.
 These p-values are anti-conservative,
 because the scores of different held-out patients are correlated,
-so use them to rank drugs and confirm hits with the permutation test.
+so use them to rank drugs and confirm hits with the permutation test
+or the corrected t-test.
 
 ```{r plot-volcano-custom}
 # prepare stats table
