@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">cellpaintr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,6 +51,12 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.99.0" id="cellpaintr-0990">cellpaintr 0.99.0<a class="anchor" aria-label="anchor" href="#cellpaintr-0990"></a></h2>
 <ul><li>Submitted to Bioconductor</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.99.6" id="cellpaintr-0996">cellpaintr 0.99.6<a class="anchor" aria-label="anchor" href="#cellpaintr-0996"></a></h2>
+<ul><li>
+<code><a href="../reference/calculateStats.html">calculateStats()</a></code> offers a corrected paired t-test (<code>method = "corrected"</code>). For every pair of patients, it refits the models without both of them and adds the products of their influences on each other’s score differences to the sample variance, which makes the variance unbiased under the null hypothesis. It needs n(n-1)/2 fits per feature group for n patients instead of refitting all models for every relabeling, and it can reach small p-values with few patients. The attribute <code>variance_ratio</code> holds the corrected over the uncorrected variance. The permutation test stays the default.</li>
+<li>Internal: model fitting of <code><a href="../reference/compute_y_hat.html">compute_y_hat()</a></code> moved into helpers shared with the corrected t-test; results are unchanged.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.99.4" id="cellpaintr-0994">cellpaintr 0.99.4<a class="anchor" aria-label="anchor" href="#cellpaintr-0994"></a></h2>

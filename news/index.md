@@ -16,6 +16,23 @@
 
 - Submitted to Bioconductor
 
+## cellpaintr 0.99.6
+
+- [`calculateStats()`](https://christofseiler.github.io/cellpaintr/reference/calculateStats.md)
+  offers a corrected paired t-test (`method = "corrected"`). For every
+  pair of patients, it refits the models without both of them and adds
+  the products of their influences on each other’s score differences to
+  the sample variance, which makes the variance unbiased under the null
+  hypothesis. It needs n(n-1)/2 fits per feature group for n patients
+  instead of refitting all models for every relabeling, and it can reach
+  small p-values with few patients. The attribute `variance_ratio` holds
+  the corrected over the uncorrected variance. The permutation test
+  stays the default.
+- Internal: model fitting of
+  [`compute_y_hat()`](https://christofseiler.github.io/cellpaintr/reference/compute_y_hat.md)
+  moved into helpers shared with the corrected t-test; results are
+  unchanged.
+
 ## cellpaintr 0.99.4
 
 - [`calculateStats()`](https://christofseiler.github.io/cellpaintr/reference/calculateStats.md)
