@@ -12,21 +12,23 @@ plotAUC(sce, target, group, assay_type = "tfmfeatures")
 
 - sce:
 
-  A
   [`SingleCellExperiment`](https://rdrr.io/pkg/SingleCellExperiment/man/SingleCellExperiment.html)
   object
 
 - target:
 
-  Name of target variable for prediction
+  character(1), name of the column of `colData(sce)` with the condition
+  of each cell, such as the drug
 
 - group:
 
-  Grouping variable for cross-validation, e.g., patient
+  character(1), name of the column of `colData(sce)` with the replicate
+  of each cell, such as the patient; the replicates are the folds of the
+  leave-one-out cross-validation
 
 - assay_type:
 
-  A string specifying the assay
+  character(1), name of the assay with the features
 
 ## Value
 
@@ -37,7 +39,7 @@ object
 
 ``` r
 set.seed(23)
-cell_file <- generate_data()
+cell_file <- generateData()
 sce <- loadData(cell_file)
 sce <- transformScale(sce)
 

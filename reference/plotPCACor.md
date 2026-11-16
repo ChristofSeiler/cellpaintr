@@ -1,6 +1,8 @@
-# Plot number of cells per image
+# Plot correlations between features and principal components
 
-Plot number of cells per image
+Computes the Pearson correlation of every feature with the first
+principal components in `reducedDim(sce, "PCA")` and shows the features
+most correlated with one of them.
 
 ## Usage
 
@@ -23,19 +25,19 @@ plotPCACor(
 
 - filter_by:
 
-  PC to use for feature selection
+  numeric(1), principal component used to select features
 
 - top:
 
-  Number of top features to select
+  numeric(1), number of features to show
 
 - pcs:
 
-  Number of PCs to plot
+  integer vector, principal components to show
 
 - assay_type:
 
-  A string specifying the assay
+  character(1), name of the assay with the features
 
 ## Value
 
@@ -46,7 +48,7 @@ object
 
 ``` r
 set.seed(23)
-cell_file <- generate_data()
+cell_file <- generateData()
 sce <- loadData(cell_file)
 sce <- transformScale(sce, robust = TRUE)
 sce <- scater::runPCA(sce, exprs_values = "tfmfeatures", ncomponents = 10)

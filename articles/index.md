@@ -2,5 +2,5 @@
 
 ### All vignettes
 
-- [cellpaintr
-  Vignette](https://christofseiler.github.io/cellpaintr/articles/cellpaintr-vignette.md):
+- [Perturbation analysis of Cell Painting data with
+  cellpaintr](https://christofseiler.github.io/cellpaintr/articles/cellpaintr-vignette.md):

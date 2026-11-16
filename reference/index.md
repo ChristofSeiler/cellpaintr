@@ -2,13 +2,9 @@
 
 ## All functions
 
-- [`aggregateYhat()`](https://christofseiler.github.io/cellpaintr/reference/aggregateYhat.md)
-  : Aggregate predicted leave-one-out probabilities over meta variables
 - [`calculateStats()`](https://christofseiler.github.io/cellpaintr/reference/calculateStats.md)
   : Test each feature group for a difference between two levels
-- [`compute_y_hat()`](https://christofseiler.github.io/cellpaintr/reference/compute_y_hat.md)
-  : Internal function to compute y_hat on a subset of the features
-- [`generate_data()`](https://christofseiler.github.io/cellpaintr/reference/generate_data.md)
+- [`generateData()`](https://christofseiler.github.io/cellpaintr/reference/generateData.md)
   : Simulate CellProfiler data and write to a temporary file
 - [`loadData()`](https://christofseiler.github.io/cellpaintr/reference/loadData.md)
   : Load cell painting data from file and convert to a
@@ -20,7 +16,7 @@
 - [`plotLOO()`](https://christofseiler.github.io/cellpaintr/reference/plotLOO.md)
   : Plot predicted leave-one-out probabilities
 - [`plotPCACor()`](https://christofseiler.github.io/cellpaintr/reference/plotPCACor.md)
-  : Plot number of cells per image
+  : Plot correlations between features and principal components
 - [`plotROC()`](https://christofseiler.github.io/cellpaintr/reference/plotROC.md)
   : Plot ROC curves
 - [`predictLOO()`](https://christofseiler.github.io/cellpaintr/reference/predictLOO.md)

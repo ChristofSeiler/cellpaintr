@@ -29,44 +29,54 @@ predictLOO(
 
 - target:
 
-  Name of target variable for prediction
+  character(1), name of the column of `colData(sce)` with the condition
+  of each cell, such as the drug
 
 - group:
 
-  Grouping variable for cross-validation, e.g., patient
+  character(1), name of the column of `colData(sce)` with the replicate
+  of each cell, such as the patient; the replicates are the folds of the
+  leave-one-out cross-validation
 
 - interest_level:
 
-  Factor interest level in \`target\` variable
+  character(1), level of \`target\` compared with the reference, such as
+  a drug
 
 - reference_level:
 
-  Factor reference level in \`target\` variable
+  character(1), level of \`target\` used as the reference, such as the
+  control
 
 - types:
 
-  Vector of strings of feature types
+  `NULL` or character vector of CellProfiler measurement types, such as
+  `"Intensity"`; each type is a feature group of the features whose
+  names start with it
 
 - channels:
 
-  Vector of strings of feature channels
+  `NULL` or character vector of imaging channels, such as `"DNA"` or
+  `"Mito"`; each channel is a feature group of the features whose names
+  contain it
 
 - weights:
 
-  Weights variable when features are aggregated
+  `NULL` or character(1), name of the column of `colData(sce)` with case
+  weights, for example cell counts when cells are aggregated to images
 
 - n_threads:
 
-  Number of parallel threads for fitting of models
+  numeric(1), number of threads of each random forest fit
 
 - assay_type:
 
-  A string specifying the assay
+  character(1), name of the assay with the features
 
 - progress:
 
-  Show a progress bar while fitting the models of feature types and
-  channels
+  logical(1), show a progress bar while fitting the models of feature
+  types and channels
 
 ## Value
 
@@ -81,7 +91,7 @@ uses to refit the models in its permutation test
 
 ``` r
 set.seed(23)
-cell_file <- generate_data()
+cell_file <- generateData()
 sce <- loadData(cell_file)
 sce <- transformScale(sce)
 

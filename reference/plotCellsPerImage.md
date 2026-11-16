@@ -17,7 +17,7 @@ plotCellsPerImage(sce, bins = 100)
 
 - bins:
 
-  Number of histogram bins
+  numeric(1), number of histogram bins
 
 ## Value
 
@@ -28,7 +28,7 @@ object
 
 ``` r
 set.seed(23)
-cell_file <- generate_data()
+cell_file <- generateData()
 sce <- loadData(cell_file)
 plotCellsPerImage(sce)
 

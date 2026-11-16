@@ -5,10 +5,9 @@
 <url><loc>https://christofseiler.github.io/cellpaintr/authors.html</loc></url>
 <url><loc>https://christofseiler.github.io/cellpaintr/index.html</loc></url>
 <url><loc>https://christofseiler.github.io/cellpaintr/news/index.html</loc></url>
-<url><loc>https://christofseiler.github.io/cellpaintr/reference/aggregateYhat.html</loc></url>
 <url><loc>https://christofseiler.github.io/cellpaintr/reference/calculateStats.html</loc></url>
-<url><loc>https://christofseiler.github.io/cellpaintr/reference/compute_y_hat.html</loc></url>
-<url><loc>https://christofseiler.github.io/cellpaintr/reference/generate_data.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/reference/cellpaintr-package.html</loc></url>
+<url><loc>https://christofseiler.github.io/cellpaintr/reference/generateData.html</loc></url>
 <url><loc>https://christofseiler.github.io/cellpaintr/reference/index.html</loc></url>
 <url><loc>https://christofseiler.github.io/cellpaintr/reference/loadData.html</loc></url>
 <url><loc>https://christofseiler.github.io/cellpaintr/reference/plotAUC.html</loc></url>

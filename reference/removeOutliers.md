@@ -17,11 +17,11 @@ removeOutliers(sce, min, max)
 
 - min:
 
-  Remove cells below that number
+  numeric(1), remove the cells of images with fewer cells
 
 - max:
 
-  Remove cells above that number
+  numeric(1), remove the cells of images with more cells
 
 ## Value
 
@@ -32,7 +32,7 @@ object
 
 ``` r
 set.seed(23)
-cell_file <- generate_data()
+cell_file <- generateData()
 sce <- loadData(cell_file)
 sce <- removeOutliers(sce, min = 0, max = 300)
 ```
