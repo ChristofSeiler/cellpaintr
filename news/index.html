@@ -53,31 +53,6 @@
 <ul><li>Submitted to Bioconductor</li>
 </ul></div>
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.99.7" id="cellpaintr-0997">cellpaintr 0.99.7<a class="anchor" aria-label="anchor" href="#cellpaintr-0997"></a></h2>
-<p>Changes in response to the first Bioconductor review:</p>
-<ul><li><p><code>generate_data()</code> is renamed <code><a href="../reference/generateData.html">generateData()</a></code>, in line with the rest of the API.</p></li>
-<li><p>New example data: <code>inst/extdata/jump_subset.csv.gz</code>, 240 cells of the JUMP Cell Painting dataset (DMSO, AMG900, and dexamethasone on four plates) as exported by CellProfiler; <code>inst/scripts/make-jump-subset.R</code> documents how it was made, and <code>inst/scripts/README.md</code> the provenance of all files in <code>inst/extdata</code>.</p></li>
-<li><p>The vignette is rewritten around the JUMP data: it describes the CellProfiler input and its <code>Metadata_</code> columns, explains every step, and shows the messages of <code><a href="../reference/calculateStats.html">calculateStats()</a></code>.</p></li>
-<li><p>New package man page (<code><a href="../reference/cellpaintr-package.html">?cellpaintr</a></code>) with an overview of the workflow.</p></li>
-<li><p>Exported functions validate their inputs and stop with informative messages; <code><a href="../reference/predictLOO.html">predictLOO()</a></code> accepts a character <code>target</code>, needs at least two levels of <code>group</code>, and keeps the cell names of <code>sce</code> instead of replacing them with integers.</p></li>
-<li><p><code><a href="../reference/loadData.html">loadData()</a></code> passes further arguments to <code><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">readr::read_csv()</a></code>, for example <code>num_threads</code>.</p></li>
-<li><p><code><a href="../reference/removeNAs.html">removeNAs()</a></code>, <code><a href="../reference/removeLowVariance.html">removeLowVariance()</a></code>, <code><a href="../reference/removeZeroInflation.html">removeZeroInflation()</a></code>, and <code><a href="../reference/transformScale.html">transformScale()</a></code> have an <code>assay_type</code> argument, and use vectorized <code><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colSums()</a></code>, <code><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans()</a></code>, and <code>MatrixGenerics</code> instead of <code><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply()</a></code>.</p></li>
-<li><p>The relabelings of the permutation test run through <code><a href="https://future.apply.futureverse.org/reference/future_lapply.html" class="external-link">future.apply::future_lapply()</a></code>, sequentially by default and in parallel after <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code>, with reproducible random numbers.</p></li>
-<li><p>Functions are imported instead of declared as global variables; <code>rlang</code>, <code>stats</code>, <code>methods</code>, <code>MatrixGenerics</code>, and <code>future.apply</code> are imported.</p></li>
-<li><p>Long functions are split into helpers, and the code follows the Bioconductor style (80 characters, 4-space indents).</p></li>
-<li><p><code>compute_y_hat()</code> and <code>aggregateYhat()</code> are internal and have no man pages.</p></li>
-<li><p>More unit tests check values, not only classes, and cover the input checks.</p></li>
-<li><p>The corrected t-test of <code><a href="../reference/calculateStats.html">calculateStats()</a></code> (<code>method = "corrected"</code>) now divides the paired t-statistic by sqrt(2(n-1)/(n-2)), the factor by which it is too large if each score difference is a sum of pairwise interactions with the other patients. It needs no refits and no longer needs the settings of <code><a href="../reference/predictLOO.html">predictLOO()</a></code>. It replaces the leave-two-out variance correction of 0.99.6 and its attribute <code>variance_ratio</code>.</p></li>
-<li><p><code><a href="../reference/calculateStats.html">calculateStats()</a></code> offers the correction of the corrected resampled t-test of Nadeau and Bengio (2003) (<code>method = "nadeau_bengio"</code>), which divides the paired t-statistic by sqrt((2n-1)/(n-1)). It corrects less than <code>method = "corrected"</code> and needs a paired design with at least two patients and no refits.</p></li>
-<li><p>The permutation test of <code><a href="../reference/calculateStats.html">calculateStats()</a></code> no longer refits relabelings that only repeat another one. Exchanging the two levels in all patients at once turns every score into one minus the score and leaves the statistic unchanged, so one patient now keeps its labels whenever this exchange is itself a relabeling (always in a paired design). This halves the number of refits, and the test stays exact. In a paired design with n patients, there are 2^(n-1) relabelings, and the smallest attainable p-value is 2^(1-n) instead of a nominal 2^-n that depended on the forest seeds.</p></li>
-</ul></div>
-    <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.99.6" id="cellpaintr-0996">cellpaintr 0.99.6<a class="anchor" aria-label="anchor" href="#cellpaintr-0996"></a></h2>
-<ul><li>
-<code><a href="../reference/calculateStats.html">calculateStats()</a></code> offers a corrected paired t-test (<code>method = "corrected"</code>). For every pair of patients, it refits the models without both of them and adds the products of their influences on each other’s score differences to the sample variance, which makes the variance unbiased under the null hypothesis. It needs n(n-1)/2 fits per feature group for n patients instead of refitting all models for every relabeling, and it can reach small p-values with few patients. The attribute <code>variance_ratio</code> holds the corrected over the uncorrected variance. The permutation test stays the default.</li>
-<li>Internal: model fitting of <code>compute_y_hat()</code> moved into helpers shared with the corrected t-test; results are unchanged.</li>
-</ul></div>
-    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.99.4" id="cellpaintr-0994">cellpaintr 0.99.4<a class="anchor" aria-label="anchor" href="#cellpaintr-0994"></a></h2>
 <ul><li>
 <code><a href="../reference/calculateStats.html">calculateStats()</a></code> calibrates the t-statistic with a permutation test that relabels whole patients and refits all leave-one-out models (<code>method = "permutation"</code>, the new default). It enumerates all relabelings if there are at most <code>n_permutations + 1</code> of them and samples them otherwise. <code>method = "t"</code> keeps the p-values from the t-distribution, which are anti-conservative because the scores of different held-out patients are correlated.</li>
@@ -89,6 +64,37 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.99.5" id="cellpaintr-0995">cellpaintr 0.99.5<a class="anchor" aria-label="anchor" href="#cellpaintr-0995"></a></h2>
 <ul><li>The permutation test of <code><a href="../reference/calculateStats.html">calculateStats()</a></code> handles mixed designs, in which only some patients have cells of both levels, for example after quality control removed all cells of one level of a patient. It swaps the levels of the patients with both levels, permutes the levels among the other patients, and reports which patients have cells of one level only.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.99.6" id="cellpaintr-0996">cellpaintr 0.99.6<a class="anchor" aria-label="anchor" href="#cellpaintr-0996"></a></h2>
+<ul><li>
+<code><a href="../reference/calculateStats.html">calculateStats()</a></code> offers a corrected paired t-test (<code>method = "corrected"</code>). For every pair of patients, it refits the models without both of them and adds the products of their influences on each other’s score differences to the sample variance, which makes the variance unbiased under the null hypothesis. It needs n(n-1)/2 fits per feature group for n patients instead of refitting all models for every relabeling, and it can reach small p-values with few patients. The attribute <code>variance_ratio</code> holds the corrected over the uncorrected variance. The permutation test stays the default.</li>
+<li>Internal: model fitting of <code>compute_y_hat()</code> moved into helpers shared with the corrected t-test; results are unchanged.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.99.7" id="cellpaintr-0997">cellpaintr 0.99.7<a class="anchor" aria-label="anchor" href="#cellpaintr-0997"></a></h2>
+<p>Changes in response to the first Bioconductor review:</p>
+<ul><li>
+<code>generate_data()</code> is renamed <code><a href="../reference/generateData.html">generateData()</a></code>, in line with the rest of the API.</li>
+<li>New example data: <code>inst/extdata/jump_subset.csv.gz</code>, 240 cells of the JUMP Cell Painting dataset (DMSO, AMG900, and dexamethasone on four plates) as exported by CellProfiler; <code>inst/scripts/make-jump-subset.R</code> documents how it was made, and <code>inst/scripts/README.md</code> the provenance of all files in <code>inst/extdata</code>.</li>
+<li>The vignette is rewritten around the JUMP data: it describes the CellProfiler input and its <code>Metadata_</code> columns, explains every step, and shows the messages of <code><a href="../reference/calculateStats.html">calculateStats()</a></code>.</li>
+<li>New package man page (<code><a href="../reference/cellpaintr-package.html">?cellpaintr</a></code>) with an overview of the workflow.</li>
+<li>Exported functions validate their inputs and stop with informative messages; <code><a href="../reference/predictLOO.html">predictLOO()</a></code> accepts a character <code>target</code>, needs at least two levels of <code>group</code>, and keeps the cell names of <code>sce</code> instead of replacing them with integers.</li>
+<li>
+<code><a href="../reference/loadData.html">loadData()</a></code> passes further arguments to <code><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">readr::read_csv()</a></code>, for example <code>num_threads</code>.</li>
+<li>
+<code><a href="../reference/removeNAs.html">removeNAs()</a></code>, <code><a href="../reference/removeLowVariance.html">removeLowVariance()</a></code>, <code><a href="../reference/removeZeroInflation.html">removeZeroInflation()</a></code>, and <code><a href="../reference/transformScale.html">transformScale()</a></code> have an <code>assay_type</code> argument, and use vectorized <code><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colSums()</a></code>, <code><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans()</a></code>, and <code>MatrixGenerics</code> instead of <code><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply()</a></code>.</li>
+<li>The relabelings of the permutation test run through <code><a href="https://future.apply.futureverse.org/reference/future_lapply.html" class="external-link">future.apply::future_lapply()</a></code>, sequentially by default and in parallel after <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code>, with reproducible random numbers.</li>
+<li>Functions are imported instead of declared as global variables; <code>rlang</code>, <code>stats</code>, <code>methods</code>, <code>MatrixGenerics</code>, and <code>future.apply</code> are imported.</li>
+<li>Long functions are split into helpers, and the code follows the Bioconductor style (80 characters, 4-space indents).</li>
+<li>
+<code>compute_y_hat()</code> and <code>aggregateYhat()</code> are internal and have no man pages.</li>
+<li>More unit tests check values, not only classes, and cover the input checks.</li>
+</ul><p>Changes to improve the package but unrelated to the Bioconductor review:</p>
+<ul><li>The corrected t-test of <code><a href="../reference/calculateStats.html">calculateStats()</a></code> (<code>method = "corrected"</code>) now divides the paired t-statistic by sqrt(2(n-1)/(n-2)), the factor by which it is too large if each score difference is a sum of pairwise interactions with the other patients. It needs no refits and no longer needs the settings of <code><a href="../reference/predictLOO.html">predictLOO()</a></code>. It replaces the leave-two-out variance correction of 0.99.6 and its attribute <code>variance_ratio</code>.</li>
+<li>
+<code><a href="../reference/calculateStats.html">calculateStats()</a></code> offers the correction of the corrected resampled t-test of Nadeau and Bengio (2003) (<code>method = "nadeau_bengio"</code>), which divides the paired t-statistic by sqrt((2n-1)/(n-1)). It corrects less than <code>method = "corrected"</code> and needs a paired design with at least two patients and no refits.</li>
+<li>The permutation test of <code><a href="../reference/calculateStats.html">calculateStats()</a></code> no longer refits relabelings that only repeat another one. Exchanging the two levels in all patients at once turns every score into one minus the score and leaves the statistic unchanged, so one patient now keeps its labels whenever this exchange is itself a relabeling (always in a paired design). This halves the number of refits, and the test stays exact. In a paired design with n patients, there are 2^(n-1) relabelings, and the smallest attainable p-value is 2^(1-n) instead of a nominal 2^-n that depended on the forest seeds.</li>
 </ul></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

@@ -672,7 +672,7 @@ sessionInfo()
     ## loaded via a namespace (and not attached):
     ##  [1] gridExtra_2.3.1     rlang_1.3.0         magrittr_2.0.5     
     ##  [4] furrr_0.4.0         otel_0.3.0          compiler_4.5.3     
-    ##  [7] systemfonts_1.3.2   vctrs_0.7.3         stringr_1.6.0      
+    ##  [7] systemfonts_1.3.3   vctrs_0.7.3         stringr_1.6.0      
     ## [10] crayon_1.5.3        pkgconfig_2.0.3     fastmap_1.2.0      
     ## [13] XVector_0.50.0      labeling_0.4.3      rmarkdown_2.32     
     ## [16] tzdb_0.5.0          ggbeeswarm_0.7.3    ragg_1.5.2         
