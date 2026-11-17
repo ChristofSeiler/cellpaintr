@@ -95,13 +95,13 @@
 <li>
 <code><a href="../reference/calculateStats.html">calculateStats()</a></code> offers the correction of the corrected resampled t-test of Nadeau and Bengio (2003) (<code>method = "nadeau_bengio"</code>), which divides the paired t-statistic by sqrt((2n-1)/(n-1)). It corrects less than <code>method = "corrected"</code> and needs a paired design with at least two patients and no refits.</li>
 <li>The permutation test of <code><a href="../reference/calculateStats.html">calculateStats()</a></code> no longer refits relabelings that only repeat another one. Exchanging the two levels in all patients at once turns every score into one minus the score and leaves the statistic unchanged, so one patient now keeps its labels whenever this exchange is itself a relabeling (always in a paired design). This halves the number of refits, and the test stays exact. In a paired design with n patients, there are 2^(n-1) relabelings, and the smallest attainable p-value is 2^(1-n) instead of a nominal 2^-n that depended on the forest seeds.</li>
+<li>The vignette explains that ROC curves and AUCs use the mean scores of each replicate and condition.</li>
+<li>The vignette scales the well means before the PCA. Robust z-scores are extreme for features with a median absolute deviation close to zero, and one well dominated the first principal component.</li>
 </ul><p>Bug fixes:</p>
 <ul><li>
 <code><a href="../reference/plotROC.html">plotROC()</a></code> and <code><a href="../reference/plotAUC.html">plotAUC()</a></code> take the interest and reference levels from the settings of <code><a href="../reference/predictLOO.html">predictLOO()</a></code> instead of from the order of the factor levels of <code>target</code>. Before, a character <code>target</code> whose interest level sorted first alphabetically, such as AMG900 against DMSO, swapped the two levels and turned every AUC into one minus the AUC.</li>
 <li>
 <code><a href="../reference/predictLOO.html">predictLOO()</a></code> orders the levels of a character <code>target</code> with the reference level first.</li>
-<li>The vignette explains that ROC curves and AUCs use the mean scores of each replicate and condition.</li>
-<li>The vignette scales the well means before the PCA. Robust z-scores are extreme for features with a median absolute deviation close to zero, and one well dominated the first principal component.</li>
 </ul></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

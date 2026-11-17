@@ -142,6 +142,11 @@ Changes to improve the package but unrelated to the Bioconductor review:
   stays exact. In a paired design with n patients, there are 2^(n-1)
   relabelings, and the smallest attainable p-value is 2^(1-n) instead of
   a nominal 2^-n that depended on the forest seeds.
+- The vignette explains that ROC curves and AUCs use the mean scores of
+  each replicate and condition.
+- The vignette scales the well means before the PCA. Robust z-scores are
+  extreme for features with a median absolute deviation close to zero,
+  and one well dominated the first principal component.
 
 Bug fixes:
 
@@ -157,8 +162,3 @@ Bug fixes:
 - [`predictLOO()`](https://christofseiler.github.io/cellpaintr/reference/predictLOO.md)
   orders the levels of a character `target` with the reference level
   first.
-- The vignette explains that ROC curves and AUCs use the mean scores of
-  each replicate and condition.
-- The vignette scales the well means before the PCA. Robust z-scores are
-  extreme for features with a median absolute deviation close to zero,
-  and one well dominated the first principal component.
