@@ -322,12 +322,20 @@ principal component analysis from <code>scater</code>.</p>
 <span>    assays <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>means <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">aggr</span><span class="op">$</span><span class="va">sums</span><span class="op">)</span> <span class="op">/</span> <span class="va">aggr</span><span class="op">$</span><span class="va">counts</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>    colData <span class="op">=</span> <span class="fu">DataFrame</span><span class="op">(</span><span class="va">aggr</span><span class="op">$</span><span class="va">combinations</span>, ncells <span class="op">=</span> <span class="va">aggr</span><span class="op">$</span><span class="va">counts</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="va">sce_wells</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocSingular/man/runPCA.html" class="external-link">runPCA</a></span><span class="op">(</span><span class="va">sce_wells</span>, exprs_values <span class="op">=</span> <span class="st">"means"</span>, ncomponents <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<span><span class="va">sce_wells</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/BiocSingular/man/runPCA.html" class="external-link">runPCA</a></span><span class="op">(</span><span class="va">sce_wells</span>,</span>
+<span>    exprs_values <span class="op">=</span> <span class="st">"means"</span>, ncomponents <span class="op">=</span> <span class="fl">10</span>, scale <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/scater/man/plotReducedDim.html" class="external-link">plotReducedDim</a></span><span class="op">(</span><span class="va">sce_wells</span>, dimred <span class="op">=</span> <span class="st">"PCA"</span>, colour_by <span class="op">=</span> <span class="st">"Compound"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="cellpaintr-vignette_files/figure-html/aggregate-1.png" class="r-plt" alt="" width="700.0000032"></p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/scater/man/plotReducedDim.html" class="external-link">plotReducedDim</a></span><span class="op">(</span><span class="va">sce_wells</span>, dimred <span class="op">=</span> <span class="st">"PCA"</span>, colour_by <span class="op">=</span> <span class="st">"Plate"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="cellpaintr-vignette_files/figure-html/aggregate-2.png" class="r-plt" alt="" width="700.0000032"></p>
+<p>We scale the well means before the PCA (<code>scale = TRUE</code>).
+Robust z-scores divide by the median absolute deviation, which is close
+to zero for some features, such as the minimum intensity at the cell
+edge, so a few cells get extreme values that would otherwise dominate
+the first principal component. The random forests below are not
+affected, because trees do not depend on the scale of a feature.</p>
 <p>If the wells separate by compound, the compounds change the cells; if
 they separate by plate, there are batch effects between plates.
 <code><a href="../reference/plotPCACor.html">plotPCACor()</a></code> shows the features most correlated with a
@@ -517,9 +525,14 @@ threshold of 0.05.</p>
 <span>    stats <span class="op">=</span> <span class="va">stats_corrected</span>, p_cutoff <span class="op">=</span> <span class="fl">0.05</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p><img src="cellpaintr-vignette_files/figure-html/plot-volcano-1.png" class="r-plt" alt="" width="700.0000032"></p>
-<p>ROC curves and areas under the curve describe how well the scores of
-each feature group separate the two conditions, across all cells of all
-replicates.</p>
+<p>ROC curves and areas under the curve (AUC) describe how well the
+scores of each feature group separate the two conditions. Both use the
+mean score of each replicate and condition, here eight points per
+feature group (four plates times two compounds), so an AUC of 1 means
+that every AMG900 mean score lies above every DMSO mean score, whichever
+plate they come from. The AUC is a descriptive summary; the tests of
+<code><a href="../reference/calculateStats.html">calculateStats()</a></code> instead compare the conditions within each
+replicate.</p>
 <div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plotAUC.html">plotAUC</a></span><span class="op">(</span><span class="va">sce_amg900</span>, target <span class="op">=</span> <span class="st">"Compound"</span>, group <span class="op">=</span> <span class="st">"Plate"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="cellpaintr-vignette_files/figure-html/plot-roc-1.png" class="r-plt" alt="" width="700.0000032"></p>

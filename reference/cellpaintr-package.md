@@ -1,4 +1,4 @@
-# cellpaintr: perturbation analysis of Cell Painting data with few replicates
+# cellpaintr: perturbation analysis of Cell Painting data
 
 cellpaintr tests whether a perturbation, such as a drug, changes the
 morphology of cells reproducibly across a handful of replicates, such as

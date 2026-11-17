@@ -270,7 +270,9 @@ sce_wells <- SingleCellExperiment(
     assays = list(means = t(t(aggr$sums) / aggr$counts)),
     colData = DataFrame(aggr$combinations, ncells = aggr$counts)
 )
-sce_wells <- runPCA(sce_wells, exprs_values = "means", ncomponents = 10)
+sce_wells <- runPCA(sce_wells,
+    exprs_values = "means", ncomponents = 10, scale = TRUE
+)
 plotReducedDim(sce_wells, dimred = "PCA", colour_by = "Compound")
 ```
 
@@ -282,6 +284,13 @@ plotReducedDim(sce_wells, dimred = "PCA", colour_by = "Plate")
 ```
 
 ![](cellpaintr-vignette_files/figure-html/aggregate-2.png)
+
+We scale the well means before the PCA (`scale = TRUE`). Robust z-scores
+divide by the median absolute deviation, which is close to zero for some
+features, such as the minimum intensity at the cell edge, so a few cells
+get extreme values that would otherwise dominate the first principal
+component. The random forests below are not affected, because trees do
+not depend on the scale of a feature.
 
 If the wells separate by compound, the compounds change the cells; if
 they separate by plate, there are batch effects between plates.
@@ -488,9 +497,14 @@ volcanoPlot(sce_amg900,
 
 ![](cellpaintr-vignette_files/figure-html/plot-volcano-1.png)
 
-ROC curves and areas under the curve describe how well the scores of
-each feature group separate the two conditions, across all cells of all
-replicates.
+ROC curves and areas under the curve (AUC) describe how well the scores
+of each feature group separate the two conditions. Both use the mean
+score of each replicate and condition, here eight points per feature
+group (four plates times two compounds), so an AUC of 1 means that every
+AMG900 mean score lies above every DMSO mean score, whichever plate they
+come from. The AUC is a descriptive summary; the tests of
+[`calculateStats()`](https://christofseiler.github.io/cellpaintr/reference/calculateStats.md)
+instead compare the conditions within each replicate.
 
 ``` r
 
