@@ -34,11 +34,16 @@ tests on replicates:
 
 Profiling pipelines such as pycytominer aggregate single cells into
 well-level profiles and compare profiles by their similarity. cellpaintr
-instead trains on single cells, so changes in a subpopulation of cells
-or in the shape of a feature distribution can contribute to the test. It
-keeps the data in a `SingleCellExperiment`, so that tools from
-Bioconductor single-cell workflows, such as `scater` and `scrapper`,
-apply without conversion.
+instead trains on single cells, so it learns the direction of an effect
+from the data, which makes it powerful when all cells shift, even
+slightly, in many features, and it detects changes in the spread or
+shape of a feature distribution that leave the means unchanged. A strong
+response of a small subpopulation of cells, on the other hand, is
+diluted in the mean score of a replicate; a location test on replicate
+means, the standard patient-level analysis, detects such responses more
+readily. It keeps the data in a `SingleCellExperiment`, so that tools
+from Bioconductor single-cell workflows, such as `scater` and
+`scrapper`, apply without conversion.
 
 ## Installation
 
@@ -700,12 +705,12 @@ sessionInfo()
     ## [40] readr_2.2.0         Matrix_1.7-4        tidyselect_1.2.1   
     ## [43] abind_1.4-8         yaml_2.3.12         viridis_0.6.5      
     ## [46] codetools_0.2-20    listenv_1.1.0       lattice_0.22-9     
-    ## [49] tibble_3.3.1        withr_3.0.3         S7_0.2.2           
+    ## [49] tibble_3.3.1        withr_3.0.3         S7_1.0.0           
     ## [52] evaluate_1.0.5      desc_1.4.3          pillar_1.11.1      
     ## [55] BiocManager_1.30.27 vroom_1.7.1         hms_1.1.4          
     ## [58] scales_1.4.0        globals_0.20.0      glue_1.8.1         
     ## [61] tools_4.5.3         BiocNeighbors_2.4.0 ScaledMatrix_1.18.0
-    ## [64] fs_2.1.0            grid_4.5.3          yardstick_1.4.0    
+    ## [64] fs_2.1.0            grid_4.5.3          yardstick_1.5.0    
     ## [67] tidyr_1.3.2         beeswarm_0.4.0      BiocSingular_1.26.1
     ## [70] vipor_0.4.7         cli_3.6.6           rsvd_2.0.0         
     ## [73] textshaping_1.0.5   parsnip_1.6.1       S4Arrays_1.10.1    

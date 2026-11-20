@@ -71,7 +71,7 @@ Ospelt</h4>
             <address class="author_afil">
       Center of Experimental Rheumatology, Department of Rheumatology,
 University Hospital Zurich, University of Zurich,
-Switzerland<br><h4 data-toc-skip class="date">2026-11-17</h4>
+Switzerland<br><h4 data-toc-skip class="date">2026-11-20</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ChristofSeiler/cellpaintr/blob/main/vignettes/cellpaintr-vignette.Rmd" class="external-link"><code>vignettes/cellpaintr-vignette.Rmd</code></a></small>
       <div class="d-none name"><code>cellpaintr-vignette.Rmd</code></div>
@@ -115,11 +115,17 @@ channels, and summarized in a volcano plot.</li>
 </ol>
 <p>Profiling pipelines such as pycytominer aggregate single cells into
 well-level profiles and compare profiles by their similarity. cellpaintr
-instead trains on single cells, so changes in a subpopulation of cells
-or in the shape of a feature distribution can contribute to the test. It
-keeps the data in a <code>SingleCellExperiment</code>, so that tools
-from Bioconductor single-cell workflows, such as <code>scater</code> and
-<code>scrapper</code>, apply without conversion.</p>
+instead trains on single cells, so it learns the direction of an effect
+from the data, which makes it powerful when all cells shift, even
+slightly, in many features, and it detects changes in the spread or
+shape of a feature distribution that leave the means unchanged. A strong
+response of a small subpopulation of cells, on the other hand, is
+diluted in the mean score of a replicate; a location test on replicate
+means, the standard patient-level analysis, detects such responses more
+readily. It keeps the data in a <code>SingleCellExperiment</code>, so
+that tools from Bioconductor single-cell workflows, such as
+<code>scater</code> and <code>scrapper</code>, apply without
+conversion.</p>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -705,12 +711,12 @@ over all drugs and feature groups.</p>
 <span><span class="co">## [40] readr_2.2.0         Matrix_1.7-4        tidyselect_1.2.1   </span></span>
 <span><span class="co">## [43] abind_1.4-8         yaml_2.3.12         viridis_0.6.5      </span></span>
 <span><span class="co">## [46] codetools_0.2-20    listenv_1.1.0       lattice_0.22-9     </span></span>
-<span><span class="co">## [49] tibble_3.3.1        withr_3.0.3         S7_0.2.2           </span></span>
+<span><span class="co">## [49] tibble_3.3.1        withr_3.0.3         S7_1.0.0           </span></span>
 <span><span class="co">## [52] evaluate_1.0.5      desc_1.4.3          pillar_1.11.1      </span></span>
 <span><span class="co">## [55] BiocManager_1.30.27 vroom_1.7.1         hms_1.1.4          </span></span>
 <span><span class="co">## [58] scales_1.4.0        globals_0.20.0      glue_1.8.1         </span></span>
 <span><span class="co">## [61] tools_4.5.3         BiocNeighbors_2.4.0 ScaledMatrix_1.18.0</span></span>
-<span><span class="co">## [64] fs_2.1.0            grid_4.5.3          yardstick_1.4.0    </span></span>
+<span><span class="co">## [64] fs_2.1.0            grid_4.5.3          yardstick_1.5.0    </span></span>
 <span><span class="co">## [67] tidyr_1.3.2         beeswarm_0.4.0      BiocSingular_1.26.1</span></span>
 <span><span class="co">## [70] vipor_0.4.7         cli_3.6.6           rsvd_2.0.0         </span></span>
 <span><span class="co">## [73] textshaping_1.0.5   parsnip_1.6.1       S4Arrays_1.10.1    </span></span>

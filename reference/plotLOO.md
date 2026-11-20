@@ -54,7 +54,7 @@ sce_single <- predictLOO(
     types = types,
     n_threads = 1
 )
-#>  ■■■■■■■■■■■■■■■■■■■■■■■           75% |  ETA:  1s
+#>  ■■■■■■■■■■■■■■■■                  50% |  ETA:  1s
 
 plotLOO(sce_single, target = "Drug", group = "Patient")
 
