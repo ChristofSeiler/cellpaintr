@@ -148,7 +148,7 @@ Changes to improve the package but unrelated to the Bioconductor review:
   extreme for features with a median absolute deviation close to zero,
   and one well dominated the first principal component.
 - The DESCRIPTION and the vignette describe when cellpaintr is more
-  powerful than a location test on patient means (all cells shift, or
+  powerful than a location test on patient means (most cells shift, or
   the spread of features changes) and when it is less powerful (a strong
   response of a small subpopulation), following a comparison on effects
   spiked into JUMP control wells.

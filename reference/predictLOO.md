@@ -106,5 +106,4 @@ sce_single <- predictLOO(
     types = types,
     n_threads = 1
 )
-#>  ■■■■■■■■■■■■■■■■■■■■■■■           75% |  ETA:  1s
 ```

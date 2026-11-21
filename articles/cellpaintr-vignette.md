@@ -35,7 +35,7 @@ tests on replicates:
 Profiling pipelines such as pycytominer aggregate single cells into
 well-level profiles and compare profiles by their similarity. cellpaintr
 instead trains on single cells, so it learns the direction of an effect
-from the data, which makes it powerful when all cells shift, even
+from the data, which makes it powerful when most cells shift, even
 slightly, in many features, and it detects changes in the spread or
 shape of a feature distribution that leave the means unchanged. A strong
 response of a small subpopulation of cells, on the other hand, is
@@ -713,8 +713,8 @@ sessionInfo()
     ## [64] fs_2.1.0            grid_4.5.3          yardstick_1.5.0    
     ## [67] tidyr_1.3.2         beeswarm_0.4.0      BiocSingular_1.26.1
     ## [70] vipor_0.4.7         cli_3.6.6           rsvd_2.0.0         
-    ## [73] textshaping_1.0.5   parsnip_1.6.1       S4Arrays_1.10.1    
-    ## [76] viridisLite_0.4.3   gtable_0.3.6        sass_0.4.10        
+    ## [73] textshaping_1.1.0   parsnip_1.6.1       S4Arrays_1.10.1    
+    ## [76] viridisLite_0.4.3   gtable_0.3.6        sass_0.5.0         
     ## [79] digest_0.6.39       SparseArray_1.10.10 farver_2.1.2       
     ## [82] htmltools_0.5.9     pkgdown_2.2.1       lifecycle_1.0.5    
     ## [85] hardhat_1.4.3       sparsevctrs_0.4.0   bit64_4.8.6
