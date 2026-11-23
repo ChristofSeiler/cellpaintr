@@ -103,6 +103,8 @@
 <code><a href="../reference/plotROC.html">plotROC()</a></code> and <code><a href="../reference/plotAUC.html">plotAUC()</a></code> take the interest and reference levels from the settings of <code><a href="../reference/predictLOO.html">predictLOO()</a></code> instead of from the order of the factor levels of <code>target</code>. Before, a character <code>target</code> whose interest level sorted first alphabetically, such as AMG900 against DMSO, swapped the two levels and turned every AUC into one minus the AUC.</li>
 <li>
 <code><a href="../reference/predictLOO.html">predictLOO()</a></code> orders the levels of a character <code>target</code> with the reference level first.</li>
+<li>
+<code><a href="../reference/removeRowColEffect.html">removeRowColEffect()</a></code> subtracted the row and column effects of the wrong rows or columns when the first column of a plate lacked a row or the first row lacked a column, because it matched the effects to cells by position. It now matches them by name, and its median polish leaves out empty wells instead of setting their medians to zero.</li>
 </ul></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

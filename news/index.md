@@ -167,3 +167,9 @@ Bug fixes:
 - [`predictLOO()`](https://christofseiler.github.io/cellpaintr/reference/predictLOO.md)
   orders the levels of a character `target` with the reference level
   first.
+- [`removeRowColEffect()`](https://christofseiler.github.io/cellpaintr/reference/removeRowColEffect.md)
+  subtracted the row and column effects of the wrong rows or columns
+  when the first column of a plate lacked a row or the first row lacked
+  a column, because it matched the effects to cells by position. It now
+  matches them by name, and its median polish leaves out empty wells
+  instead of setting their medians to zero.
