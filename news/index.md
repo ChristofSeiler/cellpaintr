@@ -173,3 +173,21 @@ Bug fixes:
   a column, because it matched the effects to cells by position. It now
   matches them by name, and its median polish leaves out empty wells
   instead of setting their medians to zero.
+
+## cellpaintr 0.99.8
+
+Changes in response to the second Bioconductor review:
+
+- [`removeRowColEffect()`](https://christofseiler.github.io/cellpaintr/reference/removeRowColEffect.md)
+  has a `plate` argument: with the column of the plate or batch of each
+  cell, it fits the median polish to each plate separately. Without it,
+  all cells are polished as one plate, and the function warns if
+  `colData(sce)` has a `Plate` column with several plates.
+- The vignette’s example of parallel permutations uses two workers.
+- The vignette and
+  [`?calculateStats`](https://christofseiler.github.io/cellpaintr/reference/calculateStats.md)
+  cite the paper that derives the corrected t-tests and studies their
+  type I error and power with 4 to 12 replicates; the preprint will be
+  available soon.
+- The biocViews include DataImport, CellBasedAssays, and
+  StatisticalMethod.

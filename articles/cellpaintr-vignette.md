@@ -242,14 +242,17 @@ evaporation at the edges.
 fits Tukey’s median polish to the median of each feature in each well
 and subtracts the row and column effects from every cell. It needs the
 factors `Row` and `Col` in the column data and many wells per plate, so
-that row and column effects can be told apart from compound effects. The
-example data have six wells per plate, so we skip this step:
+that row and column effects can be told apart from compound effects. Row
+and column effects differ between plates, so with several plates, pass
+the column with the plate (or batch) of each cell as `plate`, and the
+median polish is fitted to each plate separately. The example data have
+six wells per plate, so we skip this step:
 
 ``` r
 
 sce$Row <- factor(substr(sce$Well, 1, 1))
 sce$Col <- factor(as.integer(substr(sce$Well, 2, 3)))
-sce <- removeRowColEffect(sce)
+sce <- removeRowColEffect(sce, plate = "Plate")
 ```
 
 Note that in the JUMP layout the positive controls sit in the outer
@@ -425,7 +428,11 @@ t-statistic is too large. If each score difference is a sum of pairwise
 interactions with the other replicates, it is too large by the factor
 $`\sqrt{2(n-1)/(n-2)}`$, about 1.73 with four replicates; the corrected
 t-test divides by it. Its p-values are not limited to multiples of
-$`2^{1-n}`$, but it is approximate.
+$`2^{1-n}`$, but it is approximate. Laphanuwat, Ospelt, and Seiler (in
+preparation) derive this factor and compare the type I error and power
+of all tests with 4 to 12 replicates, in simulations and with effects
+spiked into real control wells; we plan to make the preprint available
+soon.
 
 ``` r
 
@@ -577,7 +584,7 @@ the number of cores.
 
 ``` r
 
-future::plan(future::multisession, workers = 4)
+future::plan(future::multisession, workers = 2)
 stats <- calculateStats(sce_amg900, target = "Compound", group = "Plate")
 future::plan(future::sequential)
 ```
@@ -647,6 +654,15 @@ tb_stats |>
 
 ![](cellpaintr-vignette_files/figure-html/plot-volcano-custom-1.png)
 
+## References
+
+Laphanuwat P, Ospelt C, Seiler C. cellpaintr: pre-validation with small
+sample sizes. In preparation; we plan to make the preprint available
+soon.
+
+Nadeau C, Bengio Y (2003). Inference for the generalization error.
+*Machine Learning*, 52(3), 239–281.
+
 ## Session information
 
 ``` r
@@ -680,7 +696,7 @@ sessionInfo()
     ##  [3] dplyr_1.2.1                 purrr_1.2.2                
     ##  [5] scrapper_1.4.0              scater_1.38.1              
     ##  [7] ggplot2_4.0.4               scuttle_1.20.0             
-    ##  [9] cellpaintr_0.99.7           SingleCellExperiment_1.32.0
+    ##  [9] cellpaintr_0.99.8           SingleCellExperiment_1.32.0
     ## [11] SummarizedExperiment_1.40.0 Biobase_2.70.0             
     ## [13] GenomicRanges_1.62.1        Seqinfo_1.0.0              
     ## [15] IRanges_2.44.0              S4Vectors_0.48.1           

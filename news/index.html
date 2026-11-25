@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">cellpaintr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -105,6 +105,15 @@
 <code><a href="../reference/predictLOO.html">predictLOO()</a></code> orders the levels of a character <code>target</code> with the reference level first.</li>
 <li>
 <code><a href="../reference/removeRowColEffect.html">removeRowColEffect()</a></code> subtracted the row and column effects of the wrong rows or columns when the first column of a plate lacked a row or the first row lacked a column, because it matched the effects to cells by position. It now matches them by name, and its median polish leaves out empty wells instead of setting their medians to zero.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.99.8" id="cellpaintr-0998">cellpaintr 0.99.8<a class="anchor" aria-label="anchor" href="#cellpaintr-0998"></a></h2>
+<p>Changes in response to the second Bioconductor review:</p>
+<ul><li>
+<code><a href="../reference/removeRowColEffect.html">removeRowColEffect()</a></code> has a <code>plate</code> argument: with the column of the plate or batch of each cell, it fits the median polish to each plate separately. Without it, all cells are polished as one plate, and the function warns if <code>colData(sce)</code> has a <code>Plate</code> column with several plates.</li>
+<li>The vignette’s example of parallel permutations uses two workers.</li>
+<li>The vignette and <code><a href="../reference/calculateStats.html">?calculateStats</a></code> cite the paper that derives the corrected t-tests and studies their type I error and power with 4 to 12 replicates; the preprint will be available soon.</li>
+<li>The biocViews include DataImport, CellBasedAssays, and StatisticalMethod.</li>
 </ul></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

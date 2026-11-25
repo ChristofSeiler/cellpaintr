@@ -124,6 +124,16 @@ With \`method = "t"\`, the p-value comes from the t-distribution. This
 is fast but anti-conservative, because the score differences of
 different patients are positively correlated.
 
+## References
+
+Laphanuwat P, Ospelt C, Seiler C. cellpaintr: pre-validation with small
+sample sizes. In preparation; we plan to make the preprint available
+soon. It derives the corrections and compares the type I error and power
+of all tests with 4 to 12 patients.
+
+Nadeau C, Bengio Y (2003). Inference for the generalization error.
+Machine Learning, 52(3), 239-281.
+
 ## Examples
 
 ``` r
